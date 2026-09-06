@@ -49,10 +49,11 @@ export function BoughtDateSheet() {
         </button>
       </div>
 
-      <div className="field">
+      <div className="field bought-date-field">
         <label htmlFor="bought-date">Or pick a date</label>
         <input
           id="bought-date"
+          className="bought-date-input"
           type="date"
           max={today}
           value={customDate}
