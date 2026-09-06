@@ -25,13 +25,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  height: calc(176px + var(--safe-bottom));
+  height: calc(var(--tab-bar-clearance) + var(--safe-bottom));
   pointer-events: none;
   background: var(--liquid-glass-scroll-edge);
-  backdrop-filter: blur(24px) saturate(165%);
-  -webkit-backdrop-filter: blur(24px) saturate(165%);
-  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.18) 34%, black 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.18) 34%, black 100%);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.12) 55%, black 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.12) 55%, black 100%);
   z-index: 40;
 }
 

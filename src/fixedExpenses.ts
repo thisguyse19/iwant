@@ -90,7 +90,7 @@ const MS_PER_DAY = 86400000
 function elapsedDaysInPeriod(period: FixedExpensePeriodContext, now = Date.now()): number {
   if (now < period.startMs) return 0
   if (now >= period.endMs) return period.daysInPeriod
-  return Math.max(0, period.dayIndex - 1)
+  return Math.max(0, period.dayIndex)
 }
 
 export function recurringActualUnitKey(
@@ -239,7 +239,11 @@ export function getBudgetSpendUnits(
       }
       break
     case 'week': {
-      const elapsedWeeks = Math.floor(elapsedDays / 7)
+      const elapsedWeeks = now >= period.endMs
+        ? Math.floor(elapsedDays / 7)
+        : period.dayIndex > 0
+          ? Math.floor((period.dayIndex - 1) / 7) + 1
+          : 0
       for (let w = 0; w < elapsedWeeks; w++) {
         const startMs = period.startMs + w * 7 * MS_PER_DAY
         const key = recurringActualUnitKey(e, startMs, period.startMs)
@@ -257,7 +261,18 @@ export function getBudgetSpendUnits(
     }
     case 'month':
       for (const dueAt of monthOccurrencesInPeriod(e, period)) {
-        if (dueAt >= now) continue
+        if (now >= period.startMs && now < period.endMs) {
+          const nowDate = new Date(now)
+          const dueDate = new Date(dueAt)
+          if (
+            dueDate.getFullYear() > nowDate.getFullYear()
+            || (dueDate.getFullYear() === nowDate.getFullYear() && dueDate.getMonth() > nowDate.getMonth())
+          ) {
+            continue
+          }
+        } else if (dueAt >= now) {
+          continue
+        }
         const key = recurringActualUnitKey(e, dueAt, period.startMs)
         const label = new Date(dueAt).toLocaleDateString(undefined, {
           month: 'long',
@@ -268,7 +283,11 @@ export function getBudgetSpendUnits(
       break
     case 'year':
       for (const dueAt of yearOccurrencesInPeriod(e, period)) {
-        if (dueAt >= now) continue
+        if (now >= period.startMs && now < period.endMs) {
+          if (new Date(dueAt).getFullYear() > new Date(now).getFullYear()) continue
+        } else if (dueAt >= now) {
+          continue
+        }
         const key = recurringActualUnitKey(e, dueAt, period.startMs)
         const label = new Date(dueAt).toLocaleDateString(undefined, {
           year: 'numeric',
@@ -302,19 +321,28 @@ export function getBudgetedExpenseDefaultSpent(
   return getBudgetSpendUnits(expense, period, [], now).reduce((sum, unit) => sum + unit.defaultAmount, 0)
 }
 
-export function formatBudgetUnitIntervalLabel(interval: FixedExpenseInterval): string {
+export function formatBudgetUnitIntervalLabel(
+  interval: FixedExpenseInterval,
+  capitalize = false,
+): string {
+  let label: string
   switch (interval) {
     case 'day':
-      return 'day'
+      label = 'day'
+      break
     case 'week':
-      return 'week'
+      label = 'week'
+      break
     case 'month':
-      return 'month'
+      label = 'month'
+      break
     case 'year':
-      return 'year'
+      label = 'year'
+      break
     default:
-      return 'period'
+      label = 'period'
   }
+  return capitalize ? `${label.charAt(0).toUpperCase()}${label.slice(1)}` : label
 }
 
 export function getFixedExpensePeriodTotal(expense: FixedExpense, period: FixedExpensePeriodContext): number {

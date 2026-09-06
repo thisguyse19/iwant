@@ -798,9 +798,9 @@ export function BudgetScreen() {
                       </div>
                       {periodUnits.length > 0 && (
                         <ul className="budget-log-preview">
-                          {periodUnits.slice(-3).map((unit) => (
+                          {periodUnits.slice(-5).map((unit) => (
                             <li key={unit.key} className="budget-log-preview-row">
-                              <span>
+                              <span className="budget-log-preview-label">
                                 {unit.label}
                                 {unit.isOverride ? (
                                   <span className="budget-log-preview-tag">logged</span>
@@ -813,11 +813,6 @@ export function BudgetScreen() {
                               </span>
                             </li>
                           ))}
-                          {periodUnits.length > 3 && (
-                            <li className="budget-log-preview-more">
-                              +{periodUnits.length - 3} more this period
-                            </li>
-                          )}
                         </ul>
                       )}
                     </div>
@@ -1114,7 +1109,7 @@ export function BudgetScreen() {
               <>
                 <div className="field">
                   <span className="field-label">
-                    {formatBudgetUnitIntervalLabel(logExpenseNormalized.interval)} to log
+                    {formatBudgetUnitIntervalLabel(logExpenseNormalized.interval, true)} to log
                   </span>
                   <div className="budget-log-unit-list">
                     {logSheetUnits.map((unit) => (
