@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   currencySymbol,
   formatAmountValue,
@@ -8,9 +8,6 @@ import {
   vibrateTap,
 } from '../utils'
 import './AmountInput.css'
-
-const PIXELS_PER_STEP = 26
-const DRAG_CLICK_THRESHOLD = 6
 
 interface AmountInputProps {
   id?: string
@@ -34,63 +31,29 @@ export function AmountInput({
   compact = false,
 }: AmountInputProps) {
   const [editing, setEditing] = useState(false)
-  const [dragY, setDragY] = useState(0)
-  const dragStartY = useRef(0)
-  const suppressClickRef = useRef(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const step = currency === 'JPY' ? 1 : 1
-  const baseAmount = parseAmountValue(value, allowEmpty)
-  const dragSteps = dragY / PIXELS_PER_STEP
-  const previewAmount = Math.max(0, baseAmount - dragSteps * step)
+  const amount = parseAmountValue(value, allowEmpty)
 
-  const formatWheel = useCallback(
-    (amount: number) => {
-      if (allowEmpty && value === '' && amount === 0 && dragY === 0) {
-        return placeholder
-      }
-      return formatPrice(amount, currency)
-    },
-    [allowEmpty, currency, dragY, placeholder, value],
-  )
-
-  const commitDrag = useCallback(() => {
-    const steps = Math.round(dragY / PIXELS_PER_STEP)
-    if (steps !== 0) {
-      const next = Math.max(0, baseAmount - steps * step)
-      if (allowEmpty && next === 0) {
-        onChange('')
-      } else {
-        onChange(formatAmountValue(next, currency))
-      }
-      vibrateTap()
+  const setAmount = (next: number) => {
+    if (allowEmpty && next <= 0) {
+      onChange('')
+      return
     }
-    setDragY(0)
-  }, [allowEmpty, baseAmount, currency, dragY, onChange, step])
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (editing) return
-    suppressClickRef.current = false
-    e.currentTarget.setPointerCapture(e.pointerId)
-    dragStartY.current = e.clientY
+    onChange(formatAmountValue(Math.max(0, next), currency))
   }
 
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (editing || !e.currentTarget.hasPointerCapture(e.pointerId)) return
-    const delta = e.clientY - dragStartY.current
-    if (Math.abs(delta) > DRAG_CLICK_THRESHOLD) suppressClickRef.current = true
-    setDragY(delta)
+  const adjust = (delta: number) => {
+    setAmount(amount + delta)
+    vibrateTap()
   }
 
-  const handlePointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!e.currentTarget.hasPointerCapture(e.pointerId)) return
-    e.currentTarget.releasePointerCapture(e.pointerId)
-    commitDrag()
-  }
+  const displayValue =
+    allowEmpty && value === '' ? placeholder : formatPrice(amount, currency)
 
   const enterEditing = () => {
     setEditing(true)
-    setDragY(0)
   }
 
   const exitEditing = () => {
@@ -143,52 +106,47 @@ export function AmountInput({
   return (
     <div className={`amount-input ${compact ? 'compact' : ''}`}>
       {label && <span className="amount-input-label">{label}</span>}
-      <div
-        className="amount-input-wheel haptic-skip"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerEnd}
-        onPointerCancel={handlePointerEnd}
-        onClick={() => {
-          if (!suppressClickRef.current) enterEditing()
-          suppressClickRef.current = false
-        }}
-        role="slider"
-        aria-valuemin={0}
-        aria-valuenow={previewAmount}
-        aria-valuetext={formatWheel(previewAmount)}
-        aria-label={label ?? 'Amount'}
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            enterEditing()
-          }
-          if (e.key === 'ArrowUp') {
-            e.preventDefault()
-            const next = Math.max(0, baseAmount + step)
-            onChange(formatAmountValue(next, currency))
-            vibrateTap()
-          }
-          if (e.key === 'ArrowDown') {
-            e.preventDefault()
-            const next = Math.max(0, baseAmount - step)
-            if (allowEmpty && next === 0) onChange('')
-            else onChange(formatAmountValue(next, currency))
-            vibrateTap()
-          }
-        }}
-      >
-        <div
-          className="amount-input-track"
-          style={{ transform: `translateY(calc(${dragY * 0.4}px))` }}
+      <div className="amount-input-stepper">
+        <button
+          type="button"
+          className="amount-input-step"
+          onClick={() => adjust(-step)}
+          aria-label="Decrease amount"
         >
-          <div className="amount-input-slot adjacent">{formatWheel(previewAmount - step)}</div>
-          <div className="amount-input-slot current">{formatWheel(previewAmount)}</div>
-          <div className="amount-input-slot adjacent">{formatWheel(previewAmount + step)}</div>
-        </div>
+          −
+        </button>
+        <button
+          type="button"
+          className="amount-input-display"
+          onClick={enterEditing}
+          aria-label={label ?? 'Amount'}
+        >
+          {displayValue}
+        </button>
+        <button
+          type="button"
+          className="amount-input-step"
+          onClick={() => adjust(step)}
+          aria-label="Increase amount"
+        >
+          +
+        </button>
       </div>
-      <p className="amount-input-hint">Swipe to adjust · Tap to type</p>
+      {currency !== 'JPY' && (
+        <div className="amount-input-quick">
+          {[5, 10, 25].map((n) => (
+            <button
+              key={n}
+              type="button"
+              className="amount-input-quick-btn"
+              onClick={() => adjust(n)}
+            >
+              +{n}
+            </button>
+          ))}
+        </div>
+      )}
+      <p className="amount-input-hint">Tap amount to type · Use + and − to adjust</p>
     </div>
   )
 }

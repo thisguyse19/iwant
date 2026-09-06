@@ -931,41 +931,34 @@ a {
   margin-bottom: 16px;
 }
 
-/* Pride theme: Gilbert Baker rainbow (red, orange, yellow, green, blue, violet) */
+/* Pride theme: blue accent with subtle rainbow touches only */
 :root[data-accent='pride'] .primary-btn {
-  background: var(--pride-gradient);
-  color: #fff;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
+  position: relative;
+  overflow: hidden;
 }
 
-:root[data-accent='pride'] .primary-btn:active:not(:disabled) {
+:root[data-accent='pride'] .primary-btn::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 1px;
   background: var(--pride-gradient);
-  filter: brightness(0.92);
-}
-
-:root[data-accent='pride'] .settings-chip.active {
-  background: var(--pride-gradient);
-  border-color: transparent;
-  color: #fff;
-}
-
-:root[data-accent='pride'] .settings-segmented-btn.active {
-  border-color: var(--pride-blue);
-  background: color-mix(in srgb, var(--pride-blue) 10%, var(--bg-base));
+  opacity: 0.85;
+  pointer-events: none;
 }
 
 :root[data-accent='pride'] .tab-indicator-glass {
-  background: var(--pride-gradient);
-  border-color: rgba(255, 255, 255, 0.35);
+  background: color-mix(in srgb, var(--pride-blue) 88%, white);
+  border-color: color-mix(in srgb, var(--pride-blue) 35%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 0 0 0.5px color-mix(in srgb, var(--pride-violet) 25%, transparent);
 }
 
 :root[data-accent='pride'] .budget-ring-spent {
   stroke: var(--pride-blue);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root[data-accent='pride'] .primary-btn {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-  }
 }
 

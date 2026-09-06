@@ -16,91 +16,86 @@
   text-align: left;
 }
 
-.amount-input-wheel {
-  position: relative;
-  height: 132px;
-  margin: 0 -8px;
-  overflow: hidden;
-  touch-action: none;
-  cursor: grab;
-  border-radius: var(--radius-lg);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--bg-elevated) 80%, transparent) 0%,
-    var(--bg-elevated) 42%,
-    var(--bg-elevated) 58%,
-    color-mix(in srgb, var(--bg-elevated) 80%, transparent) 100%
-  );
-  border: 0.5px solid var(--border-subtle);
-}
-
-.amount-input.compact .amount-input-wheel {
-  height: 96px;
-}
-
-.amount-input-wheel:active {
-  cursor: grabbing;
-}
-
-.amount-input-wheel::before,
-.amount-input-wheel::after {
-  content: '';
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  height: 1px;
-  background: color-mix(in srgb, var(--border-strong) 70%, transparent);
-  z-index: 2;
-  pointer-events: none;
-}
-
-.amount-input-wheel::before {
-  top: calc(50% - 24px);
-}
-
-.amount-input-wheel::after {
-  top: calc(50% + 24px);
-}
-
-.amount-input-track {
+.amount-input-stepper {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 100%;
-  will-change: transform;
+  gap: 10px;
+  padding: 8px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  border: 0.5px solid var(--border-subtle);
+  touch-action: manipulation;
 }
 
-.amount-input-slot {
-  font-family: var(--font-amount);
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1, 'lnum' 1;
+.amount-input-step {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 0.5px solid var(--border-subtle);
+  font-size: 28px;
+  font-weight: 500;
   line-height: 1;
-  padding: 6px 0;
-  white-space: nowrap;
-  transition: opacity 0.12s;
+  color: var(--accent);
+  transition: transform 0.15s var(--spring), background 0.15s;
 }
 
-.amount-input-slot.current {
-  font-size: 44px;
+.amount-input.compact .amount-input-step {
+  width: 44px;
+  height: 44px;
+  font-size: 24px;
+}
+
+.amount-input-step:active {
+  transform: scale(0.94);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-card));
+}
+
+.amount-input-display {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 8px;
+  font-family: var(--font-amount);
+  font-size: 40px;
   font-weight: 600;
   letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
   color: var(--text-primary);
+  border-radius: var(--radius-md);
+  transition: background 0.15s;
 }
 
-.amount-input.compact .amount-input-slot.current {
-  font-size: 32px;
+.amount-input.compact .amount-input-display {
+  font-size: 30px;
+  padding: 8px 6px;
 }
 
-.amount-input-slot.adjacent {
-  font-size: 22px;
-  font-weight: 500;
-  color: var(--text-tertiary);
-  opacity: 0.45;
+.amount-input-display:active {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
 }
 
-.amount-input.compact .amount-input-slot.adjacent {
-  font-size: 18px;
+.amount-input-quick {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.amount-input-quick-btn {
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-elevated));
+  border: 0.5px solid color-mix(in srgb, var(--accent) 20%, var(--border-subtle));
+  border-radius: 999px;
+  transition: transform 0.15s var(--spring);
+}
+
+.amount-input-quick-btn:active {
+  transform: scale(0.96);
 }
 
 .amount-input-hint {
@@ -120,6 +115,7 @@
   background: var(--bg-elevated);
   border: 0.5px solid var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+  touch-action: manipulation;
 }
 
 .amount-input.compact .amount-input-typing {
