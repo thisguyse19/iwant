@@ -655,9 +655,6 @@ export function BudgetScreen() {
                 <span className="budget-stat-value">
                   {formatPrice(recurringForProgress, summary.currency)}
                 </span>
-                {summary.period.isCurrent && (
-                  <span className="budget-stat-note">incl. pocket</span>
-                )}
               </div>
             )}
             {summary.budgeted > 0 && heroView !== 'freeplay' && (
