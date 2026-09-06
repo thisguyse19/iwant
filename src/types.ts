@@ -82,7 +82,7 @@ export interface FixedExpense {
 
 export type FixedExpenseCounting = 'accrue' | 'lump'
 export type BudgetHeroView = 'actual' | 'projected' | 'spent' | 'budget'
-export type AccentStyle = 'slate' | 'terracotta' | 'forest'
+export type AccentStyle = 'slate' | 'terracotta' | 'forest' | 'pride'
 
 export interface AppSettings {
   monthlyBudget?: number

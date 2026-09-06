@@ -1,17 +1,31 @@
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  GBP: '£',
-  USD: '$',
-  EUR: '€',
-  SGD: 'S$',
-  AUD: 'A$',
-  CAD: 'C$',
-  JPY: '¥',
+const CURRENCY_LOCALES: Record<string, string> = {
+  GBP: 'en-GB',
+  USD: 'en-US',
+  EUR: 'en-IE',
+  SGD: 'en-SG',
+  AUD: 'en-AU',
+  CAD: 'en-CA',
+  JPY: 'ja-JP',
+}
+
+function currencyLocale(currency: string): string {
+  return CURRENCY_LOCALES[currency] ?? 'en-US'
+}
+
+function fractionDigits(amount: number, currency: string): { min: number; max: number } {
+  if (currency === 'JPY') return { min: 0, max: 0 }
+  const hasCents = Math.abs(amount % 1) > 0.001
+  return { min: hasCents ? 2 : 0, max: 2 }
 }
 
 export function formatPrice(amount: number, currency: string): string {
-  const symbol = CURRENCY_SYMBOLS[currency] ?? currency + ' '
-  const formatted = amount % 1 === 0 ? amount.toString() : amount.toFixed(2)
-  return `${symbol}${formatted}`
+  const { min, max } = fractionDigits(amount, currency)
+  return new Intl.NumberFormat(currencyLocale(currency), {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: min,
+    maximumFractionDigits: max,
+  }).format(amount)
 }
 
 export function formatPriceOptional(amount?: number, currency?: string): string {

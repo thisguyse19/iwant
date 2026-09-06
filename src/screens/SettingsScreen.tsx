@@ -5,10 +5,11 @@ import { CURRENCIES, type AccentStyle, type BudgetHeroView, type FixedExpenseCou
 import { ScreenChrome } from '../components/ScreenChrome'
 import './SettingsScreen.css'
 
-const ACCENT_OPTIONS: Array<{ id: AccentStyle; label: string; swatch: string }> = [
+const ACCENT_OPTIONS: Array<{ id: AccentStyle; label: string; swatch?: string; pride?: boolean }> = [
   { id: 'slate', label: 'Slate', swatch: '#3d5a6e' },
   { id: 'terracotta', label: 'Terracotta', swatch: '#b85c38' },
   { id: 'forest', label: 'Forest', swatch: '#4a6b52' },
+  { id: 'pride', label: 'Pride', pride: true },
 ]
 
 const HERO_VIEW_OPTIONS: Array<{ id: BudgetHeroView; label: string }> = [
@@ -115,7 +116,11 @@ export function SettingsScreen() {
                 className={`settings-accent-btn ${(settings.accentStyle ?? 'slate') === opt.id ? 'active' : ''}`}
                 onClick={() => updateSettings({ accentStyle: opt.id })}
               >
-                <span className="settings-accent-swatch" style={{ background: opt.swatch }} />
+                {opt.pride ? (
+                  <span className="settings-accent-swatch settings-accent-swatch-pride" />
+                ) : (
+                  <span className="settings-accent-swatch" style={{ background: opt.swatch }} />
+                )}
                 {opt.label}
               </button>
             ))}
