@@ -96,8 +96,6 @@ export function ScreenChrome({
 
             <div className="screen-sticky-side screen-sticky-trailing">{trailing}</div>
           </div>
-
-          {toolbar && <div className="screen-sticky-toolbar">{toolbar}</div>}
         </header>
 
         <div className="screen-hero">
@@ -121,6 +119,8 @@ export function ScreenChrome({
           </div>
           {subtitle && <p className="screen-hero-subtitle">{subtitle}</p>}
         </div>
+
+        {toolbar && <div className="screen-toolbar-sticky">{toolbar}</div>}
 
         <div className="screen-body">{children}</div>
       </div>

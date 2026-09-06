@@ -172,12 +172,12 @@
   opacity: 0.55;
 }
 
-.screen-sticky-toolbar {
-  position: relative;
-  z-index: 2;
-  padding-top: 2px;
-  padding-bottom: 8px;
-  pointer-events: auto;
+.screen-toolbar-sticky {
+  position: sticky;
+  top: calc(var(--safe-top) + 44px);
+  z-index: 24;
+  margin: 0 -16px 12px;
+  padding: 2px 16px 8px;
 }
 
 .screen-body {

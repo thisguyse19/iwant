@@ -20,6 +20,7 @@
 }
 
 .screen-sticky-toolbar,
+.screen-toolbar-sticky,
 .screen-body > .item-list,
 .screen-body > .total-bar {
   animation: fadeSlideUp 0.44s var(--spring) 0.06s both;
@@ -196,7 +197,7 @@
 @media (prefers-reduced-motion: reduce) {
   .screen-enter,
   .screen-enter .screen-hero,
-  .screen-sticky-toolbar,
+  .screen-toolbar-sticky,
   .screen-body > .item-list,
   .screen-body > .total-bar,
   .total-bar,
