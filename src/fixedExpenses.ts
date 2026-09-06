@@ -6,7 +6,7 @@ import type {
   RecurringExpenseActual,
   RecurringExpenseKind,
 } from './types'
-import { formatPrice } from './utils'
+import { formatPrice, startOfDayMs } from './utils'
 
 export interface FixedExpensePeriodContext {
   startMs: number
@@ -73,6 +73,248 @@ export function getRecurringActualsInPeriod(
 
 export function sumRecurringActuals(actuals: RecurringExpenseActual[]): number {
   return actuals.reduce((sum, a) => sum + a.amount, 0)
+}
+
+export interface BudgetSpendUnit {
+  key: string
+  label: string
+  startMs: number
+  defaultAmount: number
+  amount: number
+  isOverride: boolean
+  overrideId?: string
+}
+
+const MS_PER_DAY = 86400000
+
+function elapsedDaysInPeriod(period: FixedExpensePeriodContext, now = Date.now()): number {
+  if (now < period.startMs) return 0
+  if (now >= period.endMs) return period.daysInPeriod
+  return Math.max(0, period.dayIndex - 1)
+}
+
+export function recurringActualUnitKey(
+  expense: FixedExpense,
+  unitStartMs: number,
+  periodStartMs: number,
+): string {
+  const e = normalizeFixedExpense(expense)
+  switch (e.interval) {
+    case 'day':
+      return `day:${startOfDayMs(unitStartMs)}`
+    case 'week': {
+      const dayOffset = Math.floor((startOfDayMs(unitStartMs) - periodStartMs) / MS_PER_DAY)
+      const weekIndex = Math.floor(dayOffset / 7)
+      return `week:${periodStartMs}:${weekIndex}`
+    }
+    case 'month':
+      return `month:${startOfDayMs(unitStartMs)}`
+    case 'year':
+      return `year:${new Date(unitStartMs).getFullYear()}`
+    default:
+      return `unit:${unitStartMs}`
+  }
+}
+
+function resolveActualUnitKey(
+  expense: FixedExpense,
+  actual: RecurringExpenseActual,
+  periodStartMs: number,
+): string {
+  if (actual.unitKey) return actual.unitKey
+  return recurringActualUnitKey(expense, actual.spentAt, periodStartMs)
+}
+
+function overrideMapForExpense(
+  expense: FixedExpense,
+  actuals: RecurringExpenseActual[],
+  periodStartMs: number,
+): Map<string, RecurringExpenseActual> {
+  const map = new Map<string, RecurringExpenseActual>()
+  for (const actual of actuals) {
+    if (actual.expenseId !== expense.id) continue
+    const key = resolveActualUnitKey(expense, actual, periodStartMs)
+    map.set(key, actual)
+  }
+  return map
+}
+
+function formatDayUnitLabel(startMs: number): string {
+  return new Date(startMs).toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function formatWeekUnitLabel(periodStartMs: number, weekIndex: number): string {
+  const startMs = periodStartMs + weekIndex * 7 * MS_PER_DAY
+  const endMs = startMs + 6 * MS_PER_DAY
+  const start = new Date(startMs).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+  const end = new Date(endMs).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+  return `Week ${weekIndex + 1} (${start}–${end})`
+}
+
+function monthOccurrencesInPeriod(expense: FixedExpense, period: FixedExpensePeriodContext): number[] {
+  const e = normalizeFixedExpense(expense)
+  const start = new Date(period.startMs)
+  const end = new Date(period.endMs)
+  let year = start.getFullYear()
+  let month = start.getMonth()
+  const endYear = end.getFullYear()
+  const endMonth = end.getMonth()
+  const dueTimes: number[] = []
+
+  while (year < endYear || (year === endYear && month <= endMonth)) {
+    const lastDay = new Date(year, month + 1, 0).getDate()
+    const day = Math.min(e.dayOfMonth, lastDay)
+    const dueAt = new Date(year, month, day, 12, 0, 0, 0).getTime()
+    if (dueAt >= period.startMs && dueAt < period.endMs) dueTimes.push(dueAt)
+    month += 1
+    if (month > 11) {
+      month = 0
+      year += 1
+    }
+  }
+  return dueTimes
+}
+
+function yearOccurrencesInPeriod(expense: FixedExpense, period: FixedExpensePeriodContext): number[] {
+  const e = normalizeFixedExpense(expense)
+  const anchor = new Date(e.createdAt)
+  const anchorMonth = anchor.getMonth()
+  const startYear = new Date(period.startMs).getFullYear()
+  const endYear = new Date(period.endMs - 1).getFullYear()
+  const dueTimes: number[] = []
+
+  for (let year = startYear; year <= endYear; year++) {
+    const lastDay = new Date(year, anchorMonth + 1, 0).getDate()
+    const day = Math.min(e.dayOfMonth, lastDay)
+    const dueAt = new Date(year, anchorMonth, day, 12, 0, 0, 0).getTime()
+    if (dueAt >= period.startMs && dueAt < period.endMs) dueTimes.push(dueAt)
+  }
+  return dueTimes
+}
+
+function buildSpendUnit(
+  overrides: Map<string, RecurringExpenseActual>,
+  key: string,
+  label: string,
+  startMs: number,
+  defaultAmount: number,
+): BudgetSpendUnit {
+  const override = overrides.get(key)
+  return {
+    key,
+    label,
+    startMs,
+    defaultAmount,
+    amount: override?.amount ?? defaultAmount,
+    isOverride: override != null,
+    overrideId: override?.id,
+  }
+}
+
+export function getBudgetSpendUnits(
+  expense: FixedExpense,
+  period: FixedExpensePeriodContext,
+  actuals: RecurringExpenseActual[],
+  now = Date.now(),
+): BudgetSpendUnit[] {
+  const e = normalizeFixedExpense(expense)
+  if (e.kind !== 'budgeted') return []
+
+  const overrides = overrideMapForExpense(e, actuals, period.startMs)
+  const elapsedDays = elapsedDaysInPeriod(period, now)
+  const units: BudgetSpendUnit[] = []
+
+  switch (e.interval) {
+    case 'day':
+      for (let d = 0; d < elapsedDays; d++) {
+        const startMs = period.startMs + d * MS_PER_DAY
+        const key = recurringActualUnitKey(e, startMs, period.startMs)
+        units.push(
+          buildSpendUnit(overrides, key, formatDayUnitLabel(startMs), startMs, e.amount),
+        )
+      }
+      break
+    case 'week': {
+      const elapsedWeeks = Math.floor(elapsedDays / 7)
+      for (let w = 0; w < elapsedWeeks; w++) {
+        const startMs = period.startMs + w * 7 * MS_PER_DAY
+        const key = recurringActualUnitKey(e, startMs, period.startMs)
+        units.push(
+          buildSpendUnit(
+            overrides,
+            key,
+            formatWeekUnitLabel(period.startMs, w),
+            startMs,
+            e.amount,
+          ),
+        )
+      }
+      break
+    }
+    case 'month':
+      for (const dueAt of monthOccurrencesInPeriod(e, period)) {
+        if (dueAt >= now) continue
+        const key = recurringActualUnitKey(e, dueAt, period.startMs)
+        const label = new Date(dueAt).toLocaleDateString(undefined, {
+          month: 'long',
+          day: 'numeric',
+        })
+        units.push(buildSpendUnit(overrides, key, label, dueAt, e.amount))
+      }
+      break
+    case 'year':
+      for (const dueAt of yearOccurrencesInPeriod(e, period)) {
+        if (dueAt >= now) continue
+        const key = recurringActualUnitKey(e, dueAt, period.startMs)
+        const label = new Date(dueAt).toLocaleDateString(undefined, {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })
+        units.push(buildSpendUnit(overrides, key, label, dueAt, e.amount))
+      }
+      break
+    default:
+      break
+  }
+
+  return units
+}
+
+export function getBudgetedExpenseSpent(
+  expense: FixedExpense,
+  period: FixedExpensePeriodContext,
+  actuals: RecurringExpenseActual[],
+  now = Date.now(),
+): number {
+  return getBudgetSpendUnits(expense, period, actuals, now).reduce((sum, unit) => sum + unit.amount, 0)
+}
+
+export function getBudgetedExpenseDefaultSpent(
+  expense: FixedExpense,
+  period: FixedExpensePeriodContext,
+  now = Date.now(),
+): number {
+  return getBudgetSpendUnits(expense, period, [], now).reduce((sum, unit) => sum + unit.defaultAmount, 0)
+}
+
+export function formatBudgetUnitIntervalLabel(interval: FixedExpenseInterval): string {
+  switch (interval) {
+    case 'day':
+      return 'day'
+    case 'week':
+      return 'week'
+    case 'month':
+      return 'month'
+    case 'year':
+      return 'year'
+    default:
+      return 'period'
+  }
 }
 
 export function getFixedExpensePeriodTotal(expense: FixedExpense, period: FixedExpensePeriodContext): number {

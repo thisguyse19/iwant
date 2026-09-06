@@ -97,7 +97,10 @@ export interface RecurringExpenseActual {
   id: string
   expenseId: string
   amount: number
+  /** Start of the budget unit this entry overrides (day, week, etc.) */
   spentAt: number
+  /** Stable key for the budget unit, e.g. day:1735689600000 */
+  unitKey?: string
   createdAt: number
 }
 
