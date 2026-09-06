@@ -41,16 +41,17 @@
   --nav-chrome-bg: rgba(249, 249, 251, 0.76);
   --spring: cubic-bezier(0.32, 0.72, 0, 1);
   /* Regular material — dense frost, environmental tint, no artificial brightness */
-  --liquid-glass-bg: rgba(242, 242, 247, 0.4);
+  --liquid-glass-bg: rgba(242, 242, 247, 0.52);
   --liquid-glass-frost: rgba(235, 235, 240, 0.42);
   --liquid-glass-tint: rgba(120, 120, 128, 0.08);
   --liquid-glass-border: rgba(0, 0, 0, 0.06);
-  --liquid-glass-border-inner: rgba(255, 255, 255, 0.28);
+  --liquid-glass-border-inner: rgba(255, 255, 255, 0.38);
   --liquid-glass-border-outer: rgba(0, 0, 0, 0.04);
   --liquid-glass-blur: blur(30px) saturate(185%);
   --liquid-glass-blur-secondary: blur(18px) saturate(165%);
   --liquid-glass-blur-indicator: blur(22px) saturate(190%);
   --liquid-glass-shadow:
+    0 0.5px 0 rgba(255, 255, 255, 0.28) inset,
     0 -0.5px 0 rgba(0, 0, 0, 0.04) inset,
     0 0 0 0.5px var(--liquid-glass-border),
     0 10px 36px rgba(0, 0, 0, 0.1),
@@ -98,12 +99,12 @@
     rgba(245, 245, 247, 0.48) 76%,
     rgba(245, 245, 247, 0.68) 100%
   );
-  --liquid-glass-indicator: rgba(0, 0, 0, 0.34);
-  --liquid-glass-indicator-border: rgba(0, 0, 0, 0.1);
+  --liquid-glass-indicator: rgba(0, 0, 0, 0.16);
+  --liquid-glass-indicator-border: rgba(255, 255, 255, 0.26);
   --liquid-glass-indicator-shadow:
-    0 -0.5px 0 rgba(0, 0, 0, 0.08) inset,
-    0 1px 4px rgba(0, 0, 0, 0.12),
-    0 0 0 0.5px rgba(0, 0, 0, 0.06);
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.32),
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 0 0 0.5px rgba(0, 0, 0, 0.04);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -124,7 +125,7 @@
     --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.5);
     --tab-inactive: rgba(235, 235, 245, 0.5);
     --nav-chrome-bg: rgba(28, 28, 30, 0.82);
-    --liquid-glass-bg: rgba(36, 36, 38, 0.48);
+    --liquid-glass-bg: rgba(36, 36, 38, 0.58);
     --liquid-glass-frost: rgba(44, 44, 46, 0.48);
     --liquid-glass-tint: rgba(120, 120, 128, 0.14);
     --liquid-glass-border: rgba(255, 255, 255, 0.1);

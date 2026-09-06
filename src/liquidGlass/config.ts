@@ -2,23 +2,23 @@ import type { GlassConfig } from '@ybouane/liquidglass'
 
 /**
  * Apple-style liquid glass — sharp refracted background, edge lensing.
- * Avoid high blurAmount / tintStrength (reads as frosted plastic).
+ * Glassiness comes from refraction + edge highlight, not heavy blur/tint.
  */
 export const TAB_PILL_GLASS: Partial<GlassConfig> = {
-  blurAmount: 0.08,
-  refraction: 0.84,
-  chromAberration: 0.1,
-  edgeHighlight: 0.12,
-  specular: 0.02,
+  blurAmount: 0.12,
+  refraction: 0.8,
+  chromAberration: 0.09,
+  edgeHighlight: 0.2,
+  specular: 0.05,
   fresnel: 0.94,
-  distortion: 0.022,
+  distortion: 0.021,
   cornerRadius: 31,
-  zRadius: 22,
-  opacity: 0.82,
+  zRadius: 28,
+  opacity: 1,
   saturation: 0.08,
   tintStrength: 0,
-  brightness: -0.12,
-  shadowOpacity: 0.24,
+  brightness: -0.04,
+  shadowOpacity: 0.26,
   shadowSpread: 14,
   shadowOffsetY: 3,
   floating: false,
@@ -31,16 +31,16 @@ export const TAB_ACTION_GLASS: Partial<GlassConfig> = {
   cornerRadius: 31,
   zRadius: 28,
   button: true,
-  specular: 0.1,
-  refraction: 0.8,
+  specular: 0.08,
+  refraction: 0.76,
 }
 
 export const ADD_MENU_GLASS: Partial<GlassConfig> = {
   ...TAB_PILL_GLASS,
   cornerRadius: 22,
   zRadius: 22,
-  blurAmount: 0.16,
-  refraction: 0.68,
+  blurAmount: 0.14,
+  refraction: 0.72,
   shadowSpread: 16,
 }
 
