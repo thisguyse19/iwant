@@ -12,6 +12,7 @@ import { ItemEditSheet } from './screens/ItemEditSheet'
 import { BoughtDateSheet } from './screens/BoughtDateSheet'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { installGlobalHaptics, refreshHapticOverlays } from './haptics'
+import { installScrollTapGuard } from './scrollTap'
 import { setHapticEnabled } from './utils'
 import './styles/global.css'
 
@@ -32,7 +33,12 @@ function AppMain() {
   useEffect(() => {
     const shell = shellRef.current
     if (!shell || loading) return
-    return installGlobalHaptics(shell)
+    const removeHaptics = installGlobalHaptics(shell)
+    const removeScrollTap = installScrollTapGuard(shell)
+    return () => {
+      removeHaptics()
+      removeScrollTap()
+    }
   }, [loading])
 
   const {

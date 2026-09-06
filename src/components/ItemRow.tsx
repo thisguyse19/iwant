@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type TransitionEvent } from '
 import { getCategory, PRIORITY_PILL, type WishlistItem } from '../types'
 import { useApp } from '../store'
 import { formatPriceOptional, formatBoughtDate, formatListAge, vibrateTap } from '../utils'
+import { getScrollParent } from '../utils/scrollParent'
 import './CategoryPicker.css'
 
 interface ItemRowProps {
@@ -118,10 +119,16 @@ export function ItemRow({
 
     if (drag.axis === null) {
       if (Math.abs(dx) < AXIS_LOCK_PX && Math.abs(dy) < AXIS_LOCK_PX) return
-      drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
-      if (drag.axis === 'y') {
-        resetDrag()
-        return
+      const scrollParent = getScrollParent(rootRef.current)
+      const atScrollTop = !scrollParent || scrollParent.scrollTop <= 1
+      if (atScrollTop) {
+        drag.axis = 'x'
+      } else {
+        drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+        if (drag.axis === 'y') {
+          resetDrag()
+          return
+        }
       }
       bindDocumentEnd()
     }

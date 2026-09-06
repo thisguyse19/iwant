@@ -19,8 +19,9 @@ export function Sheet({
   autoFocus = false,
 }: SheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
-  const dragRef = useRef({ startY: 0, currentY: 0, dragging: false })
+  const dragRef = useRef({ startY: 0, currentY: 0, dragging: false, fromBody: false })
   const rafRef = useRef<number | null>(null)
   const [mounted, setMounted] = useState(open)
 
@@ -43,7 +44,7 @@ export function Sheet({
   useEffect(() => {
     if (open) {
       setMounted(true)
-      dragRef.current = { startY: 0, currentY: 0, dragging: false }
+      dragRef.current = { startY: 0, currentY: 0, dragging: false, fromBody: false }
       requestAnimationFrame(() => {
         applyOffset(window.innerHeight, false)
         if (backdropRef.current) backdropRef.current.style.opacity = '0'
@@ -87,8 +88,29 @@ export function Sheet({
     [dismiss, applyOffset],
   )
 
-  const onDragStart = (clientY: number) => {
-    dragRef.current = { startY: clientY, currentY: 0, dragging: true }
+  const onDragStart = (clientY: number, fromBody = false) => {
+    dragRef.current = { startY: clientY, currentY: 0, dragging: true, fromBody }
+  }
+
+  const onBodyTouchStart = (e: React.TouchEvent) => {
+    const body = bodyRef.current
+    if (!body || body.scrollTop > 0) return
+    onDragStart(e.touches[0].clientY, true)
+  }
+
+  const onBodyTouchMove = (e: React.TouchEvent) => {
+    if (!dragRef.current.dragging || !dragRef.current.fromBody) return
+    const delta = e.touches[0].clientY - dragRef.current.startY
+    if (delta <= 0) {
+      dragRef.current.dragging = false
+      return
+    }
+    e.preventDefault()
+    onDragMove(e.touches[0].clientY)
+  }
+
+  const onBodyTouchEnd = () => {
+    if (dragRef.current.fromBody) onDragEnd()
   }
 
   const onDragMove = (clientY: number) => {
@@ -146,7 +168,16 @@ export function Sheet({
             {headerAction}
           </div>
         </div>
-        <div className="sheet-body">{children}</div>
+        <div
+          className="sheet-body"
+          ref={bodyRef}
+          onTouchStart={onBodyTouchStart}
+          onTouchMove={onBodyTouchMove}
+          onTouchEnd={onBodyTouchEnd}
+          onTouchCancel={onBodyTouchEnd}
+        >
+          {children}
+        </div>
       </div>
     </>,
     document.body,
