@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type TransitionEvent } from 'react'
 import { getCategory, PRIORITY_PILL, type WishlistItem } from '../types'
+import { useApp } from '../store'
 import { formatPriceOptional, formatBoughtDate, formatListAge } from '../utils'
 import './CategoryPicker.css'
 
@@ -34,7 +35,10 @@ export function ItemRow({
   exiting = null,
   onExitComplete,
 }: ItemRowProps) {
+  const { settings } = useApp()
   const category = getCategory(item.category)
+  const showImages = settings.showWishlistImages !== false
+  const showStripes = settings.showCategoryStripes !== false
   const priorityPill = item.priority === 'high' ? PRIORITY_PILL.high : null
   const isActive = item.status === 'queued' || item.status === 'ready'
   const hasSwipe = isActive && (onMarkBought || onRemove) && !selectable
@@ -220,7 +224,8 @@ export function ItemRow({
 
       <div
         ref={contentRef}
-        className="item-row"
+        className={`item-row ${showStripes && category ? 'item-row-striped' : ''}`}
+        style={showStripes && category ? { '--row-stripe': category.color } as React.CSSProperties : undefined}
         onTransitionEnd={onSwipeTransitionEnd}
         onTouchStart={(e) => onGestureStart(e.touches[0].clientX, e.touches[0].clientY)}
         onTouchMove={(e) => {
@@ -259,10 +264,12 @@ export function ItemRow({
               )}
             </span>
           )}
-          {item.imageUrl ? (
-            <img src={item.imageUrl} alt="" className="item-thumb" />
-          ) : (
-            <span className="item-thumb item-thumb-placeholder" aria-hidden="true" />
+          {showImages && (
+            item.imageUrl ? (
+              <img src={item.imageUrl} alt="" className="item-thumb" />
+            ) : (
+              <span className="item-thumb item-thumb-placeholder" aria-hidden="true" />
+            )
           )}
           <div className="item-content">
             <div className="item-title">{item.title}</div>

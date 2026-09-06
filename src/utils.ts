@@ -93,20 +93,30 @@ export function detectClipboardContent(text: string): {
   return { title: trimmed }
 }
 
+let hapticEnabled = true
+
+export function setHapticEnabled(enabled: boolean) {
+  hapticEnabled = enabled
+}
+
 export function vibrate(ms = 10) {
+  if (!hapticEnabled) return
   if (navigator.vibrate) navigator.vibrate(ms)
 }
 
 export function vibrateTap() {
+  if (!hapticEnabled) return
   vibrate(8)
 }
 
 /** Short knock — delete, remove */
 export function vibrateRemove() {
+  if (!hapticEnabled) return
   if (navigator.vibrate) navigator.vibrate(16)
 }
 
 /** Softer double tap — marked bought */
 export function vibrateBought() {
+  if (!hapticEnabled) return
   if (navigator.vibrate) navigator.vibrate([10, 36, 14])
 }

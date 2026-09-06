@@ -1,8 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../store'
 import * as db from '../db'
-import { CURRENCIES } from '../types'
+import { CURRENCIES, type AccentStyle, type BudgetHeroView, type FixedExpenseCounting } from '../types'
 import { ScreenChrome } from '../components/ScreenChrome'
+import './SettingsScreen.css'
+
+const ACCENT_OPTIONS: Array<{ id: AccentStyle; label: string; swatch: string }> = [
+  { id: 'slate', label: 'Slate', swatch: '#3d5a6e' },
+  { id: 'terracotta', label: 'Terracotta', swatch: '#b85c38' },
+  { id: 'forest', label: 'Forest', swatch: '#4a6b52' },
+]
+
+const HERO_VIEW_OPTIONS: Array<{ id: BudgetHeroView; label: string }> = [
+  { id: 'actual', label: 'Actual left' },
+  { id: 'projected', label: 'Projected left' },
+  { id: 'spent', label: 'Spent' },
+  { id: 'budget', label: 'Budget cap' },
+]
 
 export function SettingsScreen() {
   const { exportData, importData, settings, updateSettings } = useApp()
@@ -38,8 +52,111 @@ export function SettingsScreen() {
     e.target.value = ''
   }
 
+  const counting = settings.fixedExpenseCounting ?? 'lump'
+  const heroView = settings.budgetHeroView ?? 'actual'
+
   return (
     <ScreenChrome title="Settings">
+      <h2 className="settings-section-title">Budget</h2>
+      <div className="settings-group">
+        <div className="settings-row settings-row-stack">
+          <span>Fixed expense counting</span>
+          <p className="settings-row-hint">
+            How monthly costs affect actual budget left.
+          </p>
+          <div className="settings-segmented" role="radiogroup" aria-label="Fixed expense counting">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={counting === 'lump'}
+              className={`settings-segmented-btn ${counting === 'lump' ? 'active' : ''}`}
+              onClick={() => updateSettings({ fixedExpenseCounting: 'lump' as FixedExpenseCounting })}
+            >
+              Full month
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={counting === 'accrue'}
+              className={`settings-segmented-btn ${counting === 'accrue' ? 'active' : ''}`}
+              onClick={() => updateSettings({ fixedExpenseCounting: 'accrue' as FixedExpenseCounting })}
+            >
+              Daily spread
+            </button>
+          </div>
+        </div>
+
+        <div className="settings-row settings-row-stack">
+          <span>Default budget card view</span>
+          <div className="settings-chip-grid">
+            {HERO_VIEW_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                className={`settings-chip ${heroView === opt.id ? 'active' : ''}`}
+                onClick={() => updateSettings({ budgetHeroView: opt.id })}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <h2 className="settings-section-title">Appearance</h2>
+      <div className="settings-group">
+        <div className="settings-row settings-row-stack">
+          <span>Accent colour</span>
+          <div className="settings-accent-grid">
+            {ACCENT_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                className={`settings-accent-btn ${(settings.accentStyle ?? 'slate') === opt.id ? 'active' : ''}`}
+                onClick={() => updateSettings({ accentStyle: opt.id })}
+              >
+                <span className="settings-accent-swatch" style={{ background: opt.swatch }} />
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <label className="settings-row settings-toggle-row">
+          <span>Category colour stripes</span>
+          <input
+            type="checkbox"
+            className="settings-toggle"
+            checked={settings.showCategoryStripes !== false}
+            onChange={(e) => updateSettings({ showCategoryStripes: e.target.checked })}
+          />
+        </label>
+
+        <label className="settings-row settings-toggle-row">
+          <span>Show wishlist thumbnails</span>
+          <input
+            type="checkbox"
+            className="settings-toggle"
+            checked={settings.showWishlistImages !== false}
+            onChange={(e) => updateSettings({ showWishlistImages: e.target.checked })}
+          />
+        </label>
+      </div>
+
+      <h2 className="settings-section-title">Feedback</h2>
+      <div className="settings-group">
+        <label className="settings-row settings-toggle-row">
+          <span>Haptic feedback</span>
+          <input
+            type="checkbox"
+            className="settings-toggle"
+            checked={settings.hapticFeedback !== false}
+            onChange={(e) => updateSettings({ hapticFeedback: e.target.checked })}
+          />
+        </label>
+      </div>
+
+      <h2 className="settings-section-title">Data</h2>
       <div className="settings-group">
         <div className="settings-row" style={{ cursor: 'default' }}>
           <span>Currency</span>
@@ -58,9 +175,6 @@ export function SettingsScreen() {
           <span>Storage used</span>
           <span className="settings-row-value">{storage}</span>
         </div>
-      </div>
-
-      <div className="settings-group">
         <button type="button" className="settings-row" onClick={handleExport}>
           Export data
         </button>

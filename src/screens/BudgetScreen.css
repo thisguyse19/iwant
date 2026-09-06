@@ -76,12 +76,29 @@
 }
 
 .budget-hero-card {
+  position: relative;
   padding: 18px 16px 16px;
-  background: color-mix(in srgb, var(--bg-card) 88%, var(--accent) 4%);
+  background:
+    radial-gradient(ellipse 120% 80% at 100% -20%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 55%),
+    radial-gradient(ellipse 80% 60% at -10% 110%, color-mix(in srgb, var(--interval-week) 10%, transparent), transparent 50%),
+    color-mix(in srgb, var(--bg-card) 86%, var(--accent) 5%);
   border-radius: var(--radius-lg);
-  border: 0.5px solid var(--border-subtle);
+  border: 0.5px solid color-mix(in srgb, var(--accent) 18%, var(--border-subtle));
   margin-bottom: 16px;
   box-shadow: var(--shadow-list);
+  overflow: hidden;
+}
+
+.budget-hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--interval-day), var(--interval-week));
+  border-radius: 0 0 2px 2px;
+  opacity: 0.55;
 }
 
 .budget-hero-top {
@@ -89,6 +106,42 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+}
+
+.budget-hero-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.budget-hero-view-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 6px 0 10px;
+  padding: 3px;
+  background: color-mix(in srgb, var(--bg-elevated) 70%, var(--accent) 6%);
+  border-radius: var(--radius-sm);
+  border: 0.5px solid var(--border-subtle);
+}
+
+.budget-hero-view-tab {
+  flex: 1;
+  padding: 5px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-tertiary);
+  border-radius: 7px;
+  transition: background 0.2s var(--spring), color 0.2s var(--spring);
+}
+
+.budget-hero-view-tab.active {
+  background: var(--bg-card);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.budget-hero-view-tab:active {
+  transform: scale(0.97);
 }
 
 .budget-hero-period {
@@ -232,6 +285,27 @@
   background: var(--bg-elevated);
   border-radius: var(--radius-sm);
   border: 0.5px solid var(--border-subtle);
+  border-left: 3px solid var(--border-subtle);
+}
+
+.budget-stat-budget {
+  border-left-color: var(--accent);
+}
+
+.budget-stat-spent {
+  border-left-color: var(--interval-day);
+}
+
+.budget-stat-fixed {
+  border-left-color: var(--interval-month);
+}
+
+.budget-stat-planned {
+  border-left-color: var(--interval-week);
+}
+
+.budget-stat-days {
+  border-left-color: color-mix(in srgb, var(--accent) 50%, var(--text-tertiary));
 }
 
 .budget-stat-label {
@@ -371,13 +445,64 @@
 .budget-fixed-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
   padding: 12px 14px;
   text-align: left;
   border-bottom: 0.5px solid var(--border-subtle);
   transition: background 0.15s;
+}
+
+.budget-fixed-interval {
+  width: 4px;
+  align-self: stretch;
+  border-radius: 2px;
+  flex-shrink: 0;
+  min-height: 36px;
+}
+
+.budget-fixed-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.budget-fixed-amount-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.budget-fixed-rate {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.budget-interval-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.budget-interval-btn {
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1.5px solid var(--border-subtle);
+  transition: border-color 0.2s var(--spring), background 0.2s var(--spring);
+}
+
+.budget-interval-btn.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-elevated));
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .budget-fixed-row:last-child {
