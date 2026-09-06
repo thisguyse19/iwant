@@ -51,7 +51,8 @@
   position: absolute;
   bottom: calc(var(--tab-bar-float) + var(--safe-bottom));
   left: var(--tab-bar-h-inset);
-  width: calc(100% - (var(--tab-bar-h-inset) * 2) - var(--tab-bar-action-size) - var(--tab-bar-gap));
+  right: calc(var(--tab-bar-h-inset) + var(--tab-bar-action-size) + var(--tab-bar-gap));
+  width: auto;
   height: var(--tab-bar-pill-h);
   min-height: var(--tab-bar-pill-h);
   max-height: var(--tab-bar-pill-h);

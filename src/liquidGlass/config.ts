@@ -44,11 +44,10 @@ export const ADD_MENU_GLASS: Partial<GlassConfig> = {
   shadowSpread: 16,
 }
 
-/** Lock layout box before WebGL reads offsetWidth/offsetHeight. */
+/** Keep glass panels sized by CSS — clear any stale inline dimensions. */
 export function pinGlassDimensions(el: HTMLElement) {
-  const rect = el.getBoundingClientRect()
-  if (rect.width > 0) el.style.width = `${Math.round(rect.width)}px`
-  if (rect.height > 0) el.style.height = `${Math.round(rect.height)}px`
+  el.style.removeProperty('width')
+  el.style.removeProperty('height')
 }
 
 export function setGlassConfig(el: HTMLElement, config: Partial<GlassConfig>) {
