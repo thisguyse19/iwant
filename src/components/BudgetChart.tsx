@@ -100,7 +100,7 @@ export function BudgetChart({
                     <span className="budget-chart-callout-item-title">{item.title}</span>
                     {item.price != null && (
                       <span className="budget-chart-callout-item-price">
-                        {formatPrice(item.price, item.currency)}
+                        {formatPrice(item.price, item.currency || currency)}
                       </span>
                     )}
                   </li>

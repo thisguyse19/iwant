@@ -1,4 +1,4 @@
-import type { AppSettings, WishlistItem } from './types'
+import type { AppSettings, FixedExpense, WishlistItem } from './types'
 
 export interface MonthRef {
   year: number
@@ -26,15 +26,23 @@ export interface DailySpend {
   items: Array<{ id: string; title: string; price?: number; currency: string }>
 }
 
+export interface FixedExpenseEntry {
+  expense: FixedExpense
+  dueAt: number
+}
+
 export interface BudgetPeriodSummary {
   period: BudgetPeriod
   budget: number
   spent: number
+  fixed: number
+  fixedEntries: FixedExpenseEntry[]
   planned: number
   remaining: number
   overBudget: boolean
   hasBudget: boolean
   spentCount: number
+  fixedCount: number
   plannedCount: number
   unpricedActive: number
   dailySpend: DailySpend[]
@@ -138,9 +146,45 @@ function inPeriod(ts: number | undefined, period: BudgetPeriod): boolean {
   return ts >= period.startMs && ts < period.endMs
 }
 
+/** Fixed expenses due within a budget period (one occurrence per calendar month). */
+export function getFixedExpenseEntries(
+  expenses: FixedExpense[],
+  period: BudgetPeriod,
+): FixedExpenseEntry[] {
+  if (!expenses.length) return []
+
+  const start = new Date(period.startMs)
+  const end = new Date(period.endMs)
+  let year = start.getFullYear()
+  let month = start.getMonth()
+  const endYear = end.getFullYear()
+  const endMonth = end.getMonth()
+
+  const entries: FixedExpenseEntry[] = []
+
+  while (year < endYear || (year === endYear && month <= endMonth)) {
+    const lastDay = new Date(year, month + 1, 0).getDate()
+    for (const expense of expenses) {
+      const day = Math.min(expense.dayOfMonth, lastDay)
+      const dueAt = new Date(year, month, day, 12, 0, 0, 0).getTime()
+      if (dueAt >= period.startMs && dueAt < period.endMs) {
+        entries.push({ expense, dueAt })
+      }
+    }
+    month += 1
+    if (month > 11) {
+      month = 0
+      year += 1
+    }
+  }
+
+  return entries.sort((a, b) => a.dueAt - b.dueAt)
+}
+
 export function getDailySpending(
   items: WishlistItem[],
   period: BudgetPeriod,
+  fixedEntries: FixedExpenseEntry[] = [],
 ): DailySpend[] {
   const { startMs, endMs, daysInPeriod } = period
   const msPerDay = 86400000
@@ -166,6 +210,18 @@ export function getDailySpending(
     })
   }
 
+  for (const { expense, dueAt } of fixedEntries) {
+    const index = Math.min(daysInPeriod - 1, Math.floor((dueAt - startMs) / msPerDay))
+    buckets[index].amount += expense.amount
+    buckets[index].itemCount += 1
+    buckets[index].items.push({
+      id: expense.id,
+      title: expense.name,
+      price: expense.amount,
+      currency: '',
+    })
+  }
+
   return buckets
 }
 
@@ -183,14 +239,20 @@ export function summarizeBudgetPeriod(
   )
   const spent = boughtInPeriod.reduce((sum, i) => sum + (i.price ?? 0), 0)
 
+  const fixedExpenses = [...(settings.fixedExpenses ?? [])].sort(
+    (a, b) => a.sortOrder - b.sortOrder || a.createdAt - b.createdAt,
+  )
+  const fixedEntries = getFixedExpenseEntries(fixedExpenses, period)
+  const fixed = fixedEntries.reduce((sum, e) => sum + e.expense.amount, 0)
+
   const active = items.filter((i) => i.status === 'queued' || i.status === 'ready')
   const planned = period.isCurrent
     ? active.reduce((sum, i) => sum + (i.price ?? 0), 0)
     : 0
   const unpricedActive = period.isCurrent ? active.filter((i) => i.price == null).length : 0
 
-  const remaining = budget - spent - planned
-  const dailySpend = getDailySpending(items, period)
+  const remaining = budget - spent - fixed - planned
+  const dailySpend = getDailySpending(items, period, fixedEntries)
   const maxDailySpend = Math.max(...dailySpend.map((d) => d.amount), 1)
 
   const affordable = period.isCurrent
@@ -207,11 +269,14 @@ export function summarizeBudgetPeriod(
     period,
     budget,
     spent,
+    fixed,
+    fixedEntries,
     planned,
     remaining,
     overBudget: budget > 0 && remaining < 0,
     hasBudget: budget > 0,
     spentCount: boughtInPeriod.length,
+    fixedCount: fixedEntries.length,
     plannedCount: period.isCurrent ? active.length : 0,
     unpricedActive,
     dailySpend,

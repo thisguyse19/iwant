@@ -66,10 +66,21 @@ export interface SearchSuggestion {
   source?: 'local' | 'web'
 }
 
+export interface FixedExpense {
+  id: string
+  name: string
+  amount: number
+  /** Day of month the expense is due (1–28) */
+  dayOfMonth: number
+  sortOrder: number
+  createdAt: number
+}
+
 export interface AppSettings {
   monthlyBudget?: number
   /** Per-period overrides keyed by YYYY-MM */
   monthBudgets?: Record<string, number>
+  fixedExpenses?: FixedExpense[]
   currency: string
   budgetResetDay: number
 }
