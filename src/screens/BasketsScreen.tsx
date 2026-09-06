@@ -3,8 +3,6 @@ import { useApp, useBasketItems, useListTotal } from '../store'
 import { formatPrice } from '../utils'
 import './BasketsScreen.css'
 
-import './BasketsScreen.css'
-
 export function BasketsScreen() {
   const { baskets, items, addBasket, setViewingBasket } = useApp()
   const [creating, setCreating] = useState(false)

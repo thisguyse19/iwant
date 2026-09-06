@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import * as db from './db'
-import type { AppSettings, Basket, ListFilter, Priority, WishlistItem } from './types'
+import type { AppSettings, Basket, CategoryFilter, CategoryId, Priority, WishlistItem } from './types'
 import { PRIORITY_ORDER } from './types'
 
 interface AppState {
@@ -16,13 +16,13 @@ interface AppState {
   baskets: Basket[]
   settings: AppSettings
   loading: boolean
-  filter: ListFilter
+  categoryFilter: CategoryFilter
   addOpen: boolean
   addBasketId: string | null
   viewingItem: WishlistItem | null
   editingItem: WishlistItem | null
   viewingBasket: Basket | null
-  setFilter: (filter: ListFilter) => void
+  setCategoryFilter: (filter: CategoryFilter) => void
   setAddOpen: (open: boolean, basketId?: string | null) => void
   setViewingItem: (item: WishlistItem | null) => void
   setEditingItem: (item: WishlistItem | null) => void
@@ -32,6 +32,7 @@ interface AppState {
     title: string
     price?: number
     tag?: string
+    category?: CategoryId
     priority?: Priority
     link?: string
     notes?: string
@@ -69,7 +70,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [baskets, setBaskets] = useState<Basket[]>([])
   const [settings, setSettings] = useState<AppSettings>({ currency: 'GBP', budgetResetDay: 1 })
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<ListFilter>('active')
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
   const [addOpen, setAddOpenState] = useState(false)
   const [addBasketId, setAddBasketId] = useState<string | null>(null)
   const [viewingItem, setViewingItem] = useState<WishlistItem | null>(null)
@@ -112,6 +113,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       title: string
       price?: number
       tag?: string
+      category?: CategoryId
       priority?: Priority
       link?: string
       notes?: string
@@ -126,6 +128,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         currency: settings.currency,
         priority: data.priority ?? 'medium',
         tag: data.tag?.trim() || undefined,
+        category: data.category,
         link: data.link?.trim() || undefined,
         notes: data.notes?.trim() || undefined,
         imageUrl: data.imageUrl,
@@ -251,13 +254,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       baskets,
       settings,
       loading,
-      filter,
+      categoryFilter,
       addOpen,
       addBasketId,
       viewingItem,
       editingItem,
       viewingBasket,
-      setFilter,
+      setCategoryFilter,
       setAddOpen,
       setViewingItem,
       setEditingItem,
@@ -280,7 +283,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       baskets,
       settings,
       loading,
-      filter,
+      categoryFilter,
       addOpen,
       addBasketId,
       viewingItem,
@@ -312,14 +315,22 @@ export function useApp() {
 }
 
 export function useFilteredItems() {
-  const { items, filter } = useApp()
+  const { items, categoryFilter } = useApp()
   return useMemo(() => {
     return items.filter((item) => {
-      if (filter === 'active') return item.status === 'queued' || item.status === 'ready'
-      if (filter === 'ready') return item.status === 'ready'
-      return item.status === 'bought' || item.status === 'dropped'
+      if (item.status !== 'queued' && item.status !== 'ready') return false
+      if (categoryFilter !== 'all' && item.category !== categoryFilter) return false
+      return true
     })
-  }, [items, filter])
+  }, [items, categoryFilter])
+}
+
+export function useActiveItems() {
+  const { items } = useApp()
+  return useMemo(
+    () => items.filter((i) => i.status === 'queued' || i.status === 'ready'),
+    [items],
+  )
 }
 
 export function useListTotal(items: WishlistItem[]) {
@@ -348,30 +359,21 @@ export function useBasketTotal(basketId: string) {
 export function useBudgetSummary() {
   const { items, settings } = useApp()
   return useMemo(() => {
-    const ready = items.filter((i) => i.status === 'ready')
-    const queued = items.filter((i) => i.status === 'queued')
-    const readyTotal = ready.reduce((sum, i) => sum + (i.price ?? 0), 0)
-    const queuedTotal = queued.reduce((sum, i) => sum + (i.price ?? 0), 0)
+    const active = items.filter((i) => i.status === 'queued' || i.status === 'ready')
+    const listTotal = active.reduce((sum, i) => sum + (i.price ?? 0), 0)
     const budget = settings.monthlyBudget ?? 0
-    const remainder = budget - readyTotal
-    const unpricedReady = ready.filter((i) => i.price == null).length
-    const unpricedQueued = queued.filter((i) => i.price == null).length
-    const affordable = ready
+    const remainder = budget - listTotal
+    const unpriced = active.filter((i) => i.price == null).length
+    const affordable = active
       .filter((i) => i.price != null)
-      .filter((i) => {
-        if (!budget) return false
-        return (i.price ?? 0) <= remainder
-      })
+      .filter((i) => budget > 0 && (i.price ?? 0) <= remainder)
     return {
       budget,
-      readyTotal,
-      queuedTotal,
+      listTotal,
       remainder,
-      ready,
-      queued,
+      active,
       affordable,
-      unpricedReady,
-      unpricedQueued,
+      unpriced,
       hasBudget: budget > 0,
     }
   }, [items, settings.monthlyBudget])

@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
-import type { Priority } from '../types'
+import { CategoryPicker } from '../components/CategoryPicker'
+import type { CategoryId, Priority } from '../types'
 
 export function ItemEditSheet() {
   const { editingItem, setEditingItem, updateItem, baskets } = useApp()
   const [title, setTitle] = useState('')
   const [price, setPrice] = useState('')
-  const [tag, setTag] = useState('')
+  const [category, setCategory] = useState<CategoryId | undefined>()
   const [notes, setNotes] = useState('')
   const [link, setLink] = useState('')
   const [basketId, setBasketId] = useState('')
@@ -17,7 +18,7 @@ export function ItemEditSheet() {
     if (!editingItem) return
     setTitle(editingItem.title)
     setPrice(editingItem.price?.toString() ?? '')
-    setTag(editingItem.tag ?? '')
+    setCategory(editingItem.category)
     setNotes(editingItem.notes ?? '')
     setLink(editingItem.link ?? '')
     setBasketId(editingItem.basketId ?? '')
@@ -32,7 +33,7 @@ export function ItemEditSheet() {
     await updateItem(editingItem.id, {
       title: title.trim(),
       price: parsedPrice != null && !isNaN(parsedPrice) ? parsedPrice : undefined,
-      tag: tag.trim() || undefined,
+      category,
       notes: notes.trim() || undefined,
       link: link.trim() || undefined,
       basketId: basketId || undefined,
@@ -53,6 +54,11 @@ export function ItemEditSheet() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
+      </div>
+
+      <div className="field">
+        <label>Category</label>
+        <CategoryPicker value={category} onChange={setCategory} />
       </div>
 
       <div className="field-row">
@@ -78,11 +84,6 @@ export function ItemEditSheet() {
             <option value="low">Low</option>
           </select>
         </div>
-      </div>
-
-      <div className="field">
-        <label htmlFor="edit-tag">Tag</label>
-        <input id="edit-tag" type="text" value={tag} onChange={(e) => setTag(e.target.value)} />
       </div>
 
       <div className="field">

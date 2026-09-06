@@ -1,0 +1,43 @@
+.category-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.category-chip {
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 20px;
+  border: 1.5px solid transparent;
+  color: var(--chip-color);
+  background: var(--chip-bg);
+  transition: transform 0.15s var(--spring), opacity 0.15s;
+}
+
+.category-chip.selected {
+  border-color: var(--chip-color);
+  font-weight: 600;
+}
+
+.category-chip:active {
+  transform: scale(0.96);
+  opacity: 0.85;
+}
+
+.item-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.item-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}

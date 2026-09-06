@@ -1,0 +1,20 @@
+/* Budget screen component styles */
+.budget-hero {
+  padding: 24px 20px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 0.5px solid var(--border-subtle);
+  margin-bottom: 16px;
+}
+
+.budget-edit-btn {
+  margin-top: 16px;
+}
+
+.budget-stats {
+  margin-bottom: 8px;
+}
+
+.budget-section {
+  margin-top: 20px;
+}

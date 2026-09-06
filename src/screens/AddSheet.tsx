@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
 import { SearchAutocomplete } from '../components/SearchAutocomplete'
-import type { Priority, SearchSuggestion } from '../types'
+import { CategoryPicker } from '../components/CategoryPicker'
+import type { CategoryId, Priority, SearchSuggestion } from '../types'
 import { detectClipboardContent, vibrate } from '../utils'
 import { faviconFromUrl } from '../search'
 
@@ -10,7 +11,7 @@ export function AddSheet() {
   const { addOpen, addBasketId, setAddOpen, addItem, items, baskets } = useApp()
   const [title, setTitle] = useState('')
   const [price, setPrice] = useState('')
-  const [tag, setTag] = useState('')
+  const [category, setCategory] = useState<CategoryId | undefined>()
   const [link, setLink] = useState('')
   const [imageUrl, setImageUrl] = useState<string>()
   const [basketId, setBasketId] = useState<string>('')
@@ -25,7 +26,7 @@ export function AddSheet() {
   const reset = () => {
     setTitle('')
     setPrice('')
-    setTag('')
+    setCategory(undefined)
     setLink('')
     setImageUrl(undefined)
     setBasketId('')
@@ -59,7 +60,7 @@ export function AddSheet() {
     if (s.imageUrl) setImageUrl(s.imageUrl)
     if (s.source === 'local' && s.description === 'From your list') {
       const match = items.find((i) => i.title === s.title)
-      if (match?.tag) setTag(match.tag)
+      if (match?.category) setCategory(match.category)
       if (match?.price != null) setPrice(match.price.toString())
     }
   }
@@ -72,7 +73,7 @@ export function AddSheet() {
     await addItem({
       title: title.trim(),
       price: parsedPrice != null && !isNaN(parsedPrice) ? parsedPrice : undefined,
-      tag: tag.trim() || undefined,
+      category,
       link: link.trim() || undefined,
       imageUrl,
       basketId: basketId || undefined,
@@ -112,31 +113,23 @@ export function AddSheet() {
         </div>
       )}
 
-      <div className="field-row">
-        <div className="field">
-          <label htmlFor="add-price">Price</label>
-          <input
-            id="add-price"
-            type="number"
-            inputMode="decimal"
-            min="0"
-            step="any"
-            placeholder="Optional"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="add-tag">Tag</label>
-          <input
-            id="add-tag"
-            type="text"
-            placeholder="Optional"
-            value={tag}
-            onChange={(e) => setTag(e.target.value)}
-            autoComplete="off"
-          />
-        </div>
+      <div className="field">
+        <label>Category</label>
+        <CategoryPicker value={category} onChange={setCategory} />
+      </div>
+
+      <div className="field">
+        <label htmlFor="add-price">Price</label>
+        <input
+          id="add-price"
+          type="number"
+          inputMode="decimal"
+          min="0"
+          step="any"
+          placeholder="Optional"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+        />
       </div>
 
       {baskets.length > 0 && (

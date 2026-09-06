@@ -8,7 +8,7 @@ import { SettingsScreen } from './screens/SettingsScreen'
 import { AddSheet } from './screens/AddSheet'
 import { ItemOverviewSheet } from './screens/ItemOverviewSheet'
 import { ItemEditSheet } from './screens/ItemEditSheet'
-import { BasketDetailSheet } from './screens/BasketDetailSheet'
+import { BasketDetailScreen } from './screens/BasketDetailScreen'
 import { useApp } from './store'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import './styles/global.css'
@@ -17,7 +17,7 @@ export type Tab = 'wishlist' | 'baskets' | 'budget' | 'settings'
 
 function AppContent() {
   const [tab, setTab] = useState<Tab>('wishlist')
-  const { setAddOpen, loading } = useApp()
+  const { setAddOpen, loading, viewingBasket } = useApp()
 
   const {
     needRefresh: [needRefresh],
@@ -30,6 +30,17 @@ function AppContent() {
         <div className="screen">
           <div className="empty-state">Loading…</div>
         </div>
+      </div>
+    )
+  }
+
+  if (viewingBasket) {
+    return (
+      <div className="app-shell">
+        <BasketDetailScreen />
+        <AddSheet />
+        <ItemOverviewSheet />
+        <ItemEditSheet />
       </div>
     )
   }
@@ -50,7 +61,6 @@ function AppContent() {
       <AddSheet />
       <ItemOverviewSheet />
       <ItemEditSheet />
-      <BasketDetailSheet />
 
       {needRefresh && (
         <div className="update-banner">

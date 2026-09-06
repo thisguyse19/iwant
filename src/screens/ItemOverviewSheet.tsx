@@ -1,6 +1,6 @@
 import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
-import type { WishlistItem } from '../types'
+import { getCategory } from '../types'
 import { daysSince, formatPriceOptional, vibrate } from '../utils'
 
 export function ItemOverviewSheet() {
@@ -8,11 +8,11 @@ export function ItemOverviewSheet() {
 
   const close = () => setViewingItem(null)
 
-  const setStatus = async (status: WishlistItem['status']) => {
+  const handleBought = async () => {
     if (!viewingItem) return
     vibrate()
-    await updateItem(viewingItem.id, { status })
-    if (status === 'bought' || status === 'dropped') close()
+    await updateItem(viewingItem.id, { status: 'bought' })
+    close()
   }
 
   const handleDelete = async () => {
@@ -25,6 +25,7 @@ export function ItemOverviewSheet() {
 
   const days = daysSince(viewingItem.createdAt)
   const basket = baskets.find((b) => b.id === viewingItem.basketId)
+  const category = getCategory(viewingItem.category)
 
   return (
     <Sheet
@@ -47,27 +48,34 @@ export function ItemOverviewSheet() {
         {formatPriceOptional(viewingItem.price, viewingItem.currency)}
       </div>
 
+      {(category || viewingItem.priority === 'high') && (
+        <div className="item-pills" style={{ marginBottom: 16 }}>
+          {category && (
+            <span
+              className="item-pill"
+              style={{ color: category.color, background: category.bg }}
+            >
+              {category.label}
+            </span>
+          )}
+          {viewingItem.priority === 'high' && (
+            <span
+              className="item-pill"
+              style={{ color: '#ff3b30', background: 'rgba(255, 59, 48, 0.12)' }}
+            >
+              High
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="detail-meta-block">
-        {viewingItem.tag && (
-          <div className="detail-meta-row">
-            <span>Tag</span>
-            <span>{viewingItem.tag}</span>
-          </div>
-        )}
         {basket && (
           <div className="detail-meta-row">
             <span>Basket</span>
             <span>{basket.name}</span>
           </div>
         )}
-        <div className="detail-meta-row">
-          <span>Status</span>
-          <span style={{ textTransform: 'capitalize' }}>{viewingItem.status}</span>
-        </div>
-        <div className="detail-meta-row">
-          <span>Priority</span>
-          <span style={{ textTransform: 'capitalize' }}>{viewingItem.priority}</span>
-        </div>
         <div className="detail-meta-row">
           <span>On list</span>
           <span>{days === 0 ? 'Today' : `${days} day${days > 1 ? 's' : ''}`}</span>
@@ -93,21 +101,8 @@ export function ItemOverviewSheet() {
       )}
 
       {(viewingItem.status === 'queued' || viewingItem.status === 'ready') && (
-        <div className="detail-actions">
-          {viewingItem.status === 'queued' && (
-            <button type="button" className="secondary-btn" onClick={() => setStatus('ready')}>
-              Ready
-            </button>
-          )}
-          <button type="button" className="primary-btn" onClick={() => setStatus('bought')}>
-            Bought
-          </button>
-        </div>
-      )}
-
-      {viewingItem.status !== 'dropped' && viewingItem.status !== 'bought' && (
-        <button type="button" className="secondary-btn" onClick={() => setStatus('dropped')}>
-          Drop
+        <button type="button" className="primary-btn" onClick={handleBought}>
+          Mark bought
         </button>
       )}
 

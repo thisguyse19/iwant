@@ -4,6 +4,7 @@ import { ItemRow } from '../components/ItemRow'
 import { Sheet } from '../components/Sheet'
 import { formatPrice } from '../utils'
 import '../components/ItemRow.css'
+import './BudgetScreen.css'
 
 export function BudgetScreen() {
   const { settings, updateSettings, setViewingItem, updateItem } = useApp()
@@ -25,11 +26,7 @@ export function BudgetScreen() {
   }
 
   const barPercent = summary.hasBudget
-    ? Math.min(100, (summary.readyTotal / summary.budget) * 100)
-    : 0
-
-  const queuedBarPercent = summary.hasBudget
-    ? Math.min(100 - barPercent, (summary.queuedTotal / summary.budget) * 100)
+    ? Math.min(100, (summary.listTotal / summary.budget) * 100)
     : 0
 
   const remainderLabel = !summary.hasBudget
@@ -44,76 +41,70 @@ export function BudgetScreen() {
         <h1 className="screen-title">Budget</h1>
       </header>
 
-      <div className="budget-hero">
-        <div className="budget-amount" style={{ color: summary.remainder < 0 ? 'var(--destructive)' : undefined }}>
-          {summary.hasBudget ? formatPrice(Math.abs(summary.remainder), settings.currency) : '—'}
+      <div className="budget-content">
+        <div className="budget-hero">
+          <div className="budget-amount" style={{ color: summary.remainder < 0 ? 'var(--destructive)' : undefined }}>
+            {summary.hasBudget ? formatPrice(Math.abs(summary.remainder), settings.currency) : '—'}
+          </div>
+          <div className="budget-label">{remainderLabel}</div>
+
+          {summary.hasBudget && (
+            <div className="budget-bar" aria-hidden="true">
+              <div className="budget-bar-fill" style={{ width: `${barPercent}%` }} />
+            </div>
+          )}
+
+          <button type="button" className="text-btn budget-edit-btn" onClick={openEdit}>
+            {summary.hasBudget ? 'Edit budget' : 'Set budget'}
+          </button>
         </div>
-        <div className="budget-label">{remainderLabel}</div>
 
         {summary.hasBudget && (
-          <div className="budget-bar" aria-hidden="true">
-            <div className="budget-bar-fill" style={{ width: `${barPercent}%` }} />
-            {queuedBarPercent > 0 && (
-              <div className="budget-bar-fill queued" style={{ width: `${queuedBarPercent}%` }} />
+          <div className="budget-stats">
+            <div className="budget-stat-row">
+              <span>On your list</span>
+              <span>{formatPrice(summary.listTotal, settings.currency)}</span>
+            </div>
+            {summary.unpriced > 0 && (
+              <p className="warning-text">
+                {summary.unpriced} item{summary.unpriced > 1 ? 's' : ''} without a price
+              </p>
             )}
           </div>
         )}
 
-        <button type="button" className="text-btn" style={{ marginTop: 16 }} onClick={openEdit}>
-          {summary.hasBudget ? 'Edit budget' : 'Set budget'}
-        </button>
+        {summary.affordable.length > 0 && (
+          <section className="budget-section">
+            <h2 className="section-label">Affordable now</h2>
+            <div className="item-list">
+              {summary.affordable.map((item) => (
+                <ItemRow
+                  key={item.id}
+                  item={item}
+                  onTap={() => setViewingItem(item)}
+                  onMarkBought={() => updateItem(item.id, { status: 'bought' })}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {summary.active.length > 0 && summary.affordable.length === 0 && summary.hasBudget && (
+          <section className="budget-section">
+            <h2 className="section-label">Your list</h2>
+            <div className="item-list">
+              {summary.active.map((item) => (
+                <ItemRow
+                  key={item.id}
+                  item={item}
+                  onTap={() => setViewingItem(item)}
+                  onMarkBought={() => updateItem(item.id, { status: 'bought' })}
+                />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
-
-      {summary.hasBudget && (
-        <>
-          <div className="budget-stat-row">
-            <span>Ready to buy</span>
-            <span>{formatPrice(summary.readyTotal, settings.currency)}</span>
-          </div>
-          <div className="budget-stat-row">
-            <span>Still queued</span>
-            <span>{formatPrice(summary.queuedTotal, settings.currency)}</span>
-          </div>
-          {(summary.unpricedReady > 0 || summary.unpricedQueued > 0) && (
-            <p className="warning-text">
-              {summary.unpricedReady + summary.unpricedQueued} item
-              {summary.unpricedReady + summary.unpricedQueued > 1 ? 's' : ''} without a price
-            </p>
-          )}
-        </>
-      )}
-
-      {summary.affordable.length > 0 && (
-        <section style={{ marginTop: 24 }}>
-          <h2 className="section-label">Affordable now</h2>
-          <div className="item-list">
-            {summary.affordable.map((item) => (
-              <ItemRow
-                key={item.id}
-                item={item}
-                onTap={() => setViewingItem(item)}
-                onMarkBought={() => updateItem(item.id, { status: 'bought' })}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {summary.ready.length > 0 && summary.affordable.length === 0 && summary.hasBudget && (
-        <section style={{ marginTop: 24 }}>
-          <h2 className="section-label">Ready items</h2>
-          <div className="item-list">
-            {summary.ready.map((item) => (
-              <ItemRow
-                key={item.id}
-                item={item}
-                onTap={() => setViewingItem(item)}
-                onMarkBought={() => updateItem(item.id, { status: 'bought' })}
-              />
-            ))}
-          </div>
-        </section>
-      )}
 
       <Sheet open={editOpen} onClose={() => setEditOpen(false)} title="Monthly budget">
         <div className="field">

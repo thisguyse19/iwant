@@ -1,0 +1,49 @@
+.fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--bg-base);
+  display: flex;
+  flex-direction: column;
+  max-width: 520px;
+  margin: 0 auto;
+  left: 0;
+  right: 0;
+}
+
+.fullscreen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(8px + var(--safe-top)) 16px 8px;
+  background: var(--bg-glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border-bottom: 0.5px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 17px;
+  color: var(--accent);
+  font-weight: 400;
+  padding: 4px 0;
+}
+
+.back-btn:active {
+  opacity: 0.6;
+}
+
+.fullscreen-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 16px calc(24px + var(--safe-bottom));
+}
+
+.basket-add-section {
+  margin-top: 24px;
+}
