@@ -28,11 +28,11 @@
   /* iOS 26 floating tab bar — regular material tier, Apple HIG sizing */
   --tab-bar-h-inset: 20px;
   --tab-bar-float: 12px;
-  --tab-bar-pill-h: 58px;
-  --tab-bar-action-size: 58px;
+  --tab-bar-pill-h: 62px;
+  --tab-bar-action-size: 62px;
   --tab-bar-gap: 10px;
   --tab-bar-pad: 6px;
-  --tab-bar-radius: 29px;
+  --tab-bar-radius: 31px;
   --tab-bar-clearance: calc(var(--tab-bar-float) + var(--tab-bar-pill-h) + 24px);
   --screen-bottom-inset: calc(var(--tab-bar-clearance) + var(--safe-bottom));
   --tab-height: var(--tab-bar-clearance);
