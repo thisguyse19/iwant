@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { Tab } from '../App'
+import { useLiquidGlass } from '../liquidGlass/LiquidGlassProvider'
+import { ADD_MENU_GLASS, setGlassConfig, TAB_ACTION_GLASS, TAB_PILL_GLASS } from '../liquidGlass/config'
 import './TabBar.css'
 
 interface TabBarProps {
@@ -17,27 +19,14 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'settings', label: 'Settings', icon: 'settings' },
 ]
 
-function GlassLayers({ compact = false }: { compact?: boolean }) {
-  return (
-    <>
-      <div className="tab-bar-frost" />
-      <div className="tab-bar-lens" />
-      <div className="tab-bar-tint" />
-      <div className="tab-bar-specular" />
-      <div className="tab-bar-caustic" />
-      {!compact && <div className="tab-bar-refraction" />}
-      <div className="tab-bar-rim" />
-      <div className="tab-bar-noise" />
-      <div className="tab-bar-edge-line" />
-    </>
-  )
-}
-
 export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps) {
   const navRef = useRef<HTMLElement>(null)
+  const actionRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const [indicator, setIndicator] = useState({ x: 0, width: 0 })
   const [menuOpen, setMenuOpen] = useState(false)
+  const { refresh } = useLiquidGlass()
 
   const activeIndex = TABS.findIndex((t) => t.id === active)
 
@@ -50,6 +39,16 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
       width: tab.offsetWidth,
     })
   }, [active, activeIndex])
+
+  useEffect(() => {
+    const nav = navRef.current
+    const action = actionRef.current
+    const menu = menuRef.current
+    if (nav) setGlassConfig(nav, TAB_PILL_GLASS)
+    if (action) setGlassConfig(action, TAB_ACTION_GLASS)
+    if (menu) setGlassConfig(menu, ADD_MENU_GLASS)
+    void refresh()
+  }, [menuOpen, refresh])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -74,114 +73,101 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
 
   return (
     <>
-      <div className="tab-bar-dock" role="presentation">
-        <div className="tab-bar-scroll-edge" aria-hidden="true" />
+      <div className="tab-bar-scroll-edge" aria-hidden="true" />
 
-        <div className="tab-bar-pill-shell">
-          <div className="tab-bar-halo" aria-hidden="true" />
-          <div className="tab-bar-bottom-glow" aria-hidden="true" />
-          <nav className="tab-bar-liquid liquid-glass-surface" ref={navRef} aria-label="Main navigation">
-            <div className="tab-bar-glass-layers" aria-hidden="true">
-              <GlassLayers />
-            </div>
-            <div
-              className="tab-indicator"
-              style={{
-                width: indicator.width,
-                transform: `translateX(${indicator.x}px)`,
-              }}
-              aria-hidden="true"
-            >
-              <div className="tab-indicator-glass" aria-hidden="true" />
-            </div>
-            {TABS.map((tab, index) => (
-              <button
-                key={tab.id}
-                ref={(el) => { tabRefs.current[index] = el }}
-                type="button"
-                className={`tab-liquid-item ${active === tab.id ? 'active' : ''}`}
-                onClick={() => onChange(tab.id)}
-                aria-current={active === tab.id ? 'page' : undefined}
-              >
-                <TabIcon name={tab.icon} active={active === tab.id} />
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </nav>
+      <nav
+        className="tab-bar-liquid liquid-glass-panel"
+        ref={navRef}
+        aria-label="Main navigation"
+      >
+        <div
+          className="tab-indicator"
+          style={{
+            width: indicator.width,
+            transform: `translateX(${indicator.x}px)`,
+          }}
+          aria-hidden="true"
+        >
+          <div className="tab-indicator-glass" aria-hidden="true" />
         </div>
-
-        <div className="tab-action-shell">
-          <div className="tab-bar-halo" aria-hidden="true" />
+        {TABS.map((tab, index) => (
           <button
+            key={tab.id}
+            ref={(el) => { tabRefs.current[index] = el }}
             type="button"
-            className={`tab-action-liquid liquid-glass-surface ${menuOpen ? 'open' : ''}`}
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Add"
-            aria-expanded={menuOpen}
-            aria-haspopup="menu"
+            className={`tab-liquid-item ${active === tab.id ? 'active' : ''}`}
+            onClick={() => onChange(tab.id)}
+            aria-current={active === tab.id ? 'page' : undefined}
           >
-            <div className="tab-action-glass-layers" aria-hidden="true">
-              <GlassLayers compact />
-            </div>
-            <svg
-              className="tab-action-icon"
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M12 5v14M5 12h14"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-            </svg>
+            <TabIcon name={tab.icon} active={active === tab.id} />
+            <span>{tab.label}</span>
           </button>
+        ))}
+      </nav>
 
-          {menuOpen && (
-            <div className="add-menu liquid-glass-surface" role="menu">
-              <div className="tab-bar-glass-layers" aria-hidden="true">
-                <GlassLayers compact />
-              </div>
-              <button type="button" className="add-menu-item" role="menuitem" onClick={handleAddItem}>
-                <span className="add-menu-icon" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M12 5v14M5 12h14"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </span>
-                <span className="add-menu-text">
-                  <span className="add-menu-title">Add item</span>
-                  <span className="add-menu-sub">Something you want</span>
-                </span>
-              </button>
-              <button type="button" className="add-menu-item" role="menuitem" onClick={handleNewBasket}>
-                <span className="add-menu-icon" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M6 6h15l-1.5 9h-12L6 6ZM6 6L5 3H2M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
-                      stroke="currentColor"
-                      strokeWidth="1.75"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-                <span className="add-menu-text">
-                  <span className="add-menu-title">New basket</span>
-                  <span className="add-menu-sub">Group items together</span>
-                </span>
-              </button>
-            </div>
-          )}
+      <button
+        type="button"
+        ref={actionRef}
+        className={`tab-action-liquid liquid-glass-panel ${menuOpen ? 'open' : ''}`}
+        onClick={() => setMenuOpen((v) => !v)}
+        aria-label="Add"
+        aria-expanded={menuOpen}
+        aria-haspopup="menu"
+      >
+        <svg
+          className="tab-action-icon"
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M12 5v14M5 12h14"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+        </svg>
+      </button>
+
+      {menuOpen && (
+        <div className="add-menu liquid-glass-panel" ref={menuRef} role="menu">
+          <button type="button" className="add-menu-item" role="menuitem" onClick={handleAddItem}>
+            <span className="add-menu-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 5v14M5 12h14"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+            <span className="add-menu-text">
+              <span className="add-menu-title">Add item</span>
+              <span className="add-menu-sub">Something you want</span>
+            </span>
+          </button>
+          <button type="button" className="add-menu-item" role="menuitem" onClick={handleNewBasket}>
+            <span className="add-menu-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M6 6h15l-1.5 9h-12L6 6ZM6 6L5 3H2M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+            <span className="add-menu-text">
+              <span className="add-menu-title">New basket</span>
+              <span className="add-menu-sub">Group items together</span>
+            </span>
+          </button>
         </div>
-      </div>
+      )}
 
       {menuOpen &&
         createPortal(

@@ -1,21 +1,5 @@
-/* Liquid Glass tab bar — Apple regular material, navigation layer only */
+/* Liquid Glass tab bar — WebGL refraction via @ybouane/liquidglass (direct app-shell children) */
 
-.tab-bar-dock {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 520px;
-  display: flex;
-  align-items: flex-end;
-  gap: var(--tab-bar-gap);
-  padding: 0 var(--tab-bar-h-inset) calc(var(--tab-bar-float) + var(--safe-bottom));
-  z-index: 50;
-  pointer-events: none;
-}
-
-/* Scroll-edge legibility veil — environmental tint, not bright wash */
 .tab-bar-scroll-edge {
   position: absolute;
   left: 0;
@@ -28,41 +12,15 @@
   -webkit-backdrop-filter: blur(24px) saturate(165%);
   mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.18) 34%, black 100%);
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.18) 34%, black 100%);
-  z-index: -1;
+  z-index: 40;
 }
 
-.tab-bar-pill-shell,
-.tab-action-shell {
-  position: relative;
-  pointer-events: auto;
-}
-
-.tab-bar-pill-shell {
-  flex: 1;
-  min-width: 0;
-}
-
-.tab-bar-halo {
+.liquid-glass-panel {
   position: absolute;
-  inset: -3px;
-  border-radius: calc(var(--tab-bar-radius) + 3px);
-  box-shadow: var(--liquid-glass-halo);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.tab-bar-liquid,
-.tab-action-liquid,
-.add-menu {
-  position: relative;
-  z-index: 1;
+  z-index: 50;
   isolation: isolate;
-  overflow: hidden;
+  overflow: visible;
   transform: translateZ(0);
-  will-change: transform;
-}
-
-.liquid-glass-surface {
   background:
     linear-gradient(180deg, var(--liquid-glass-border-inner) 0%, transparent 18%),
     var(--liquid-glass-bg);
@@ -72,136 +30,33 @@
   box-shadow: var(--liquid-glass-shadow), var(--liquid-glass-depth);
 }
 
+/* WebGL shader owns the material when active */
+.app-shell.liquid-glass-active .liquid-glass-panel {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.liquid-glass-panel > canvas {
+  pointer-events: none;
+}
+
+.liquid-glass-panel > *:not(canvas) {
+  position: relative;
+  z-index: 1;
+}
+
 .tab-bar-liquid {
   display: flex;
   align-items: stretch;
   min-height: var(--tab-bar-pill-h);
   padding: var(--tab-bar-pad);
   border-radius: var(--tab-bar-radius);
-}
-
-.tab-bar-liquid.liquid-glass-surface::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  backdrop-filter: var(--liquid-glass-blur-secondary);
-  -webkit-backdrop-filter: var(--liquid-glass-blur-secondary);
-  opacity: 0.35;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.tab-bar-glass-layers,
-.tab-action-glass-layers {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 1;
-}
-
-.tab-bar-frost {
-  position: absolute;
-  inset: 0;
-  background: var(--liquid-glass-frost);
-  opacity: 0.92;
-}
-
-.tab-bar-lens {
-  position: absolute;
-  inset: 0;
-  background: var(--liquid-glass-lens);
-  opacity: 0.75;
-}
-
-.tab-bar-tint {
-  position: absolute;
-  inset: 0;
-  background: var(--liquid-glass-tint);
-  mix-blend-mode: multiply;
-  opacity: 0.85;
-}
-
-.tab-bar-specular {
-  position: absolute;
-  inset: 0;
-  background: var(--liquid-glass-specular);
-  opacity: 0.55;
-}
-
-.tab-bar-caustic {
-  position: absolute;
-  inset: 0;
-  background: var(--liquid-glass-caustic);
-  opacity: 0.45;
-  mix-blend-mode: soft-light;
-}
-
-.tab-bar-refraction {
-  position: absolute;
-  inset: 0;
-  background: var(--liquid-glass-refraction);
-  opacity: 0.65;
-  mix-blend-mode: overlay;
-}
-
-.tab-bar-rim {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--liquid-glass-rim);
-  opacity: 0.5;
-  mix-blend-mode: overlay;
-}
-
-.tab-bar-noise {
-  position: absolute;
-  inset: 0;
-  opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 96px 96px;
-}
-
-.tab-bar-edge-line {
-  position: absolute;
-  top: 0.5px;
-  left: 12%;
-  right: 12%;
-  height: 0.5px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.48) 22%,
-    rgba(255, 255, 255, 0.62) 50%,
-    rgba(255, 255, 255, 0.48) 78%,
-    transparent
-  );
-  opacity: 0.55;
-}
-
-.tab-bar-bottom-glow {
-  position: absolute;
-  left: 18%;
-  right: 18%;
-  bottom: -6px;
-  height: 10px;
-  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.08) 0%, transparent 72%);
-  filter: blur(5px);
-  opacity: 0.45;
-  pointer-events: none;
-}
-
-@supports not (backdrop-filter: blur(1px)) {
-  .liquid-glass-surface {
-    background: var(--bg-glass);
-  }
-
-  .tab-bar-scroll-edge {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
+  bottom: calc(var(--tab-bar-float) + var(--safe-bottom));
+  left: var(--tab-bar-h-inset);
+  right: calc(var(--tab-bar-h-inset) + var(--tab-bar-action-size) + var(--tab-bar-gap));
 }
 
 .tab-indicator {
@@ -213,6 +68,7 @@
   z-index: 2;
   overflow: hidden;
   transition: transform 0.44s var(--spring), width 0.44s var(--spring);
+  pointer-events: none;
 }
 
 .tab-indicator-glass {
@@ -224,6 +80,12 @@
   -webkit-backdrop-filter: var(--liquid-glass-blur-indicator);
   border: 0.5px solid var(--liquid-glass-indicator-border);
   box-shadow: var(--liquid-glass-indicator-shadow);
+}
+
+.app-shell.liquid-glass-active .tab-indicator-glass {
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
 }
 
 .tab-indicator-glass::before {
@@ -288,10 +150,6 @@
   transform: scale(0.93);
 }
 
-.tab-action-shell {
-  flex-shrink: 0;
-}
-
 .tab-action-liquid {
   display: flex;
   align-items: center;
@@ -300,19 +158,16 @@
   height: var(--tab-bar-action-size);
   border-radius: calc(var(--tab-bar-action-size) / 2);
   color: var(--tab-active);
-  transition:
-    transform 0.34s var(--spring),
-    box-shadow 0.34s var(--spring);
+  bottom: calc(var(--tab-bar-float) + var(--safe-bottom));
+  right: var(--tab-bar-h-inset);
+  transition: transform 0.34s var(--spring);
 }
 
 .tab-action-liquid.open {
   transform: rotate(45deg);
-  box-shadow: var(--liquid-glass-indicator-shadow), var(--liquid-glass-depth), var(--liquid-glass-halo);
 }
 
 .tab-action-icon {
-  position: relative;
-  z-index: 2;
   transition: transform 0.34s var(--spring);
 }
 
@@ -325,18 +180,14 @@
 }
 
 .add-menu {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 12px);
   min-width: 220px;
   padding: 7px;
   border-radius: 22px;
-  z-index: 60;
+  right: var(--tab-bar-h-inset);
+  bottom: calc(var(--tab-bar-float) + var(--safe-bottom) + var(--tab-bar-action-size) + 12px);
 }
 
 .add-menu-item {
-  position: relative;
-  z-index: 2;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -391,18 +242,20 @@
   cursor: default;
 }
 
-@media (prefers-color-scheme: dark) {
-  .tab-bar-tint {
-    mix-blend-mode: soft-light;
+@supports not (backdrop-filter: blur(1px)) {
+  .liquid-glass-panel {
+    background: var(--bg-glass);
   }
 
-  .tab-bar-edge-line,
+  .tab-bar-scroll-edge {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
   .tab-indicator-glass::after {
     opacity: 0.35;
-  }
-
-  .tab-bar-bottom-glow {
-    opacity: 0.3;
   }
 }
 
@@ -423,24 +276,19 @@
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .liquid-glass-surface {
-    background: var(--bg-glass);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+  .liquid-glass-panel {
+    background:
+      linear-gradient(180deg, var(--liquid-glass-border-inner) 0%, transparent 18%),
+      var(--liquid-glass-bg);
+    backdrop-filter: var(--liquid-glass-blur);
+    -webkit-backdrop-filter: var(--liquid-glass-blur);
+    border: 0.5px solid var(--liquid-glass-border);
+    box-shadow: var(--liquid-glass-shadow), var(--liquid-glass-depth);
   }
 
   .tab-bar-scroll-edge {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     opacity: 0.9;
-  }
-
-  .tab-bar-frost,
-  .tab-bar-lens,
-  .tab-bar-caustic,
-  .tab-bar-refraction,
-  .tab-bar-noise,
-  .tab-bar-bottom-glow {
-    display: none;
   }
 }
