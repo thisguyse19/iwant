@@ -93,9 +93,7 @@ function heroViewData(
     if (view === 'freeplay') {
       return {
         amount: Math.abs(summary.freeplay),
-        label: summary.freeplayOver
-          ? `${formatPrice(Math.abs(summary.freeplay), currency)} over freeplay`
-          : `${formatPrice(summary.freeplay, currency)} freeplay`,
+        label: summary.freeplayOver ? 'over freeplay' : 'freeplay',
         over: summary.freeplayOver,
       }
     }
@@ -113,40 +111,31 @@ function heroViewData(
     case 'actual':
       return {
         amount: Math.abs(summary.actualRemaining),
-        label: summary.overBudgetActual
-          ? `${formatPrice(Math.abs(summary.actualRemaining), currency)} over`
-          : `${formatPrice(summary.actualRemaining, currency)} left`,
+        label: summary.overBudgetActual ? 'over budget' : 'remaining',
         over: summary.overBudgetActual,
       }
     case 'projected':
       return {
         amount: Math.abs(summary.projectedRemaining),
-        label: summary.overBudget
-          ? `${formatPrice(Math.abs(summary.projectedRemaining), currency)} over`
-          : `${formatPrice(summary.projectedRemaining, currency)} left`,
+        label: summary.overBudget ? 'over budget' : 'remaining',
         over: summary.overBudget,
       }
     case 'freeplay':
       return {
         amount: Math.abs(summary.freeplay),
-        label: summary.freeplayOver
-          ? `${formatPrice(Math.abs(summary.freeplay), currency)} over freeplay`
-          : `${formatPrice(summary.freeplay, currency)} freeplay`,
+        label: summary.freeplayOver ? 'over freeplay' : 'freeplay',
         over: summary.freeplayOver,
       }
     case 'spent':
       return {
         amount: summary.spent + summary.recurringCommittedActual,
-        label: [
-          `${summary.spentCount} from list`,
-          summary.adhocExpenses.length > 0 ? `${summary.adhocExpenses.length} ad hoc` : null,
-        ].filter(Boolean).join(', '),
+        label: 'spent this period',
         over: false,
       }
     case 'budget':
       return {
         amount: summary.budget,
-        label: `${formatPrice(summary.spent + summary.recurringCommittedActual, currency)} used`,
+        label: 'period cap',
         over: false,
       }
   }
@@ -554,8 +543,6 @@ export function BudgetScreen() {
         <section className={`budget-hero-card ${budgetPulse ? 'budget-hero-pulse' : ''}`} aria-label="Budget summary">
           <div className="budget-hero-top">
             <div className="budget-hero-main">
-              <p className="budget-hero-period">{summary.period.label}</p>
-
               <div className="budget-hero-view-tabs" role="tablist" aria-label="Budget view">
                 {HERO_VIEWS.map((v) => (
                   <button
@@ -583,18 +570,11 @@ export function BudgetScreen() {
                   : '—'}
               </p>
               <p className="budget-hero-label">{hero.label}</p>
-              {summary.period.isCurrent && heroView === 'freeplay' && summary.hasBudget && (
+              {summary.period.isCurrent && heroView === 'freeplay' && summary.hasBudget && summary.budgetedVariance !== 0 && (
                 <p className="budget-hero-reach muted">
-                  {formatPrice(summary.budget - summary.budgeted, summary.currency)} pool after{' '}
-                  {formatPrice(summary.budgeted, summary.currency)} budgeted
-                  {summary.budgetedVariance !== 0 && (
-                    <>
-                      {' · '}
-                      {summary.budgetedVariance > 0
-                        ? `${formatPrice(summary.budgetedVariance, summary.currency)} under on budgeted`
-                        : `${formatPrice(Math.abs(summary.budgetedVariance), summary.currency)} over on budgeted`}
-                    </>
-                  )}
+                  {summary.budgetedVariance > 0
+                    ? `${formatPrice(summary.budgetedVariance, summary.currency)} under on budgeted`
+                    : `${formatPrice(Math.abs(summary.budgetedVariance), summary.currency)} over on budgeted`}
                 </p>
               )}
               {summary.period.isCurrent && heroView === 'actual' && settings.fixedExpenseCounting === 'accrue' && summary.fixed > summary.fixedActual && (
@@ -648,86 +628,57 @@ export function BudgetScreen() {
             )}
           </div>
 
-          {summary.hasBudget && (
-            <div className="budget-progress" aria-hidden="true">
-              <div className="budget-progress-spent" style={{ width: `${wishlistAdhocPercent}%` }} />
-              <div
-                className="budget-progress-fixed"
-                style={{ width: `${recurringPercent}%`, left: `${wishlistAdhocPercent}%` }}
-              />
-              {summary.period.isCurrent && heroView === 'projected' && (
-                <div
-                  className="budget-progress-planned"
-                  style={{
-                    width: `${plannedPercent}%`,
-                    left: `${wishlistAdhocPercent + recurringPercent}%`,
-                  }}
-                />
-              )}
-            </div>
-          )}
-
           <div className="budget-stat-grid">
-            <div className="budget-stat-cell">
-              <span className="budget-stat-label">Budget</span>
-              <span className="budget-stat-value">
-                {summary.hasBudget ? formatPrice(summary.budget, summary.currency) : '—'}
-              </span>
-              {hasMonthOverride && (
-                <span className="budget-stat-note">This month only</span>
-              )}
-            </div>
-            <div className="budget-stat-cell">
-              <span className="budget-stat-label">Out of pocket</span>
-              <span className="budget-stat-value">{formatPrice(summary.spent, summary.currency)}</span>
-              <span className="budget-stat-note">
-                {summary.spentCount} from list
-                {summary.adhocExpenses.length > 0 ? `, ${summary.adhocExpenses.length} ad hoc` : ''}
-              </span>
-            </div>
-            {(summary.fixed > 0 || fixedTemplates.some((e) => normalizeFixedExpense(e).kind === 'fixed')) && (
+            {heroView !== 'budget' && summary.hasBudget && (
               <div className="budget-stat-cell">
-                <span className="budget-stat-label">Fixed bills</span>
-                <span className="budget-stat-value">{formatPrice(summary.fixed, summary.currency)}</span>
-                <span className="budget-stat-note">
-                  {summary.period.isCurrent && settings.fixedExpenseCounting === 'accrue'
-                    ? `${formatPrice(summary.fixedActual, summary.currency)} so far`
-                    : `${summary.fixedCount} due`}
+                <span className="budget-stat-label">Cap</span>
+                <span className="budget-stat-value">
+                  {formatPrice(summary.budget, summary.currency)}
                 </span>
+                {hasMonthOverride && (
+                  <span className="budget-stat-note">This month</span>
+                )}
               </div>
             )}
-            {(summary.budgeted > 0 || fixedTemplates.some((e) => normalizeFixedExpense(e).kind === 'budgeted')) && (
+            {heroView !== 'spent' && (
+              <div className="budget-stat-cell">
+                <span className="budget-stat-label">Pocket</span>
+                <span className="budget-stat-value">{formatPrice(summary.spent, summary.currency)}</span>
+                {summary.spentCount > 0 && (
+                  <span className="budget-stat-note">{summary.spentCount} purchases</span>
+                )}
+              </div>
+            )}
+            {(summary.fixed > 0 || summary.budgeted > 0) && heroView !== 'actual' && heroView !== 'projected' && (
+              <div className="budget-stat-cell">
+                <span className="budget-stat-label">Recurring</span>
+                <span className="budget-stat-value">
+                  {formatPrice(recurringForProgress, summary.currency)}
+                </span>
+                {summary.period.isCurrent && (
+                  <span className="budget-stat-note">incl. pocket</span>
+                )}
+              </div>
+            )}
+            {summary.budgeted > 0 && heroView !== 'freeplay' && (
               <div className="budget-stat-cell">
                 <span className="budget-stat-label">Budgeted</span>
                 <span className="budget-stat-value">{formatPrice(summary.budgetedActual, summary.currency)}</span>
                 <span className="budget-stat-note">of {formatPrice(summary.budgeted, summary.currency)}</span>
               </div>
             )}
-            {summary.hasBudget && summary.period.isCurrent && (
+            {summary.period.isCurrent && heroView === 'projected' && (
               <div className="budget-stat-cell">
-                <span className="budget-stat-label">Freeplay</span>
-                <span
-                  className="budget-stat-value"
-                  style={{ color: summary.freeplayOver ? 'var(--destructive)' : undefined }}
-                >
-                  {formatPrice(summary.freeplay, summary.currency)}
-                </span>
-                <span className="budget-stat-note">aside from budgeted</span>
+                <span className="budget-stat-label">On list</span>
+                <span className="budget-stat-value">{formatPrice(summary.planned, summary.currency)}</span>
+                <span className="budget-stat-note">{summary.plannedCount} planned</span>
               </div>
             )}
             {summary.period.isCurrent && (
-              <>
-                <div className="budget-stat-cell">
-                  <span className="budget-stat-label">On list</span>
-                  <span className="budget-stat-value">{formatPrice(summary.planned, summary.currency)}</span>
-                  <span className="budget-stat-note">{summary.plannedCount} planned</span>
-                </div>
-                <div className="budget-stat-cell">
-                  <span className="budget-stat-label">Days left</span>
-                  <span className="budget-stat-value">{summary.period.daysRemaining}</span>
-                  <span className="budget-stat-note">in period</span>
-                </div>
-              </>
+              <div className="budget-stat-cell">
+                <span className="budget-stat-label">Days left</span>
+                <span className="budget-stat-value">{summary.period.daysRemaining}</span>
+              </div>
             )}
           </div>
 
@@ -921,15 +872,6 @@ export function BudgetScreen() {
                 )
               })}
             </div>
-          )}
-          {summary.recurringCommitted > 0 && (
-            <p className="budget-fixed-period-note">
-              {formatPrice(summary.recurringCommitted, summary.currency)} recurring this period
-              {summary.budgetedActual > 0
-                ? `, ${formatPrice(summary.budgetedActual, summary.currency)} logged against budgets`
-                : ''}
-              .
-            </p>
           )}
         </section>
 

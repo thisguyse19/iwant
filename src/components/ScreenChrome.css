@@ -20,6 +20,7 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
   padding: 0 16px var(--screen-bottom-inset);
   scroll-padding-bottom: var(--screen-bottom-inset);
@@ -37,6 +38,7 @@
   padding: 0 16px;
   padding-top: var(--safe-top);
   pointer-events: none;
+  transform: translateZ(0);
 }
 
 .screen-sticky-chrome[data-revealed] {
@@ -233,6 +235,7 @@
   z-index: 24;
   margin: 0 -16px 12px;
   padding: 0;
+  transform: translateZ(0);
 }
 
 .screen-toolbar-blur {
