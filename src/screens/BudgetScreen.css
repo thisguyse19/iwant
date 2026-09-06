@@ -1,10 +1,34 @@
-/* Budget screen component styles */
+/* Budget screen: floating summary above tab bar */
+.screen-budget {
+  padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 196px);
+}
+
+.budget-scroll {
+  flex: 1;
+}
+
+.budget-dock {
+  position: fixed;
+  bottom: calc(var(--tab-height) + var(--safe-bottom) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 520px;
+  padding: 0 16px;
+  z-index: 55;
+  pointer-events: none;
+}
+
+.budget-dock .budget-hero {
+  pointer-events: auto;
+  box-shadow: var(--shadow-md);
+}
+
 .budget-hero {
   padding: 24px 20px;
   background: var(--bg-card);
   border-radius: var(--radius-lg);
   border: 0.5px solid var(--border-subtle);
-  margin-bottom: 16px;
 }
 
 .budget-edit-btn {
@@ -17,4 +41,8 @@
 
 .budget-section {
   margin-top: 20px;
+}
+
+.budget-section .item-list {
+  margin-top: 0;
 }

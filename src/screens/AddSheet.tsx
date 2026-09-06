@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
 import { SearchAutocomplete } from '../components/SearchAutocomplete'
@@ -18,6 +18,7 @@ export function AddSheet() {
   const [priority, setPriority] = useState<Priority>('medium')
   const [showMore, setShowMore] = useState(false)
   const [saving, setSaving] = useState(false)
+  const searchAnchorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (addOpen && addBasketId) setBasketId(addBasketId)
@@ -86,7 +87,7 @@ export function AddSheet() {
     <Sheet open={addOpen} onClose={handleClose} title="Add to list" autoFocus>
       <div className="field field-search">
         <label htmlFor="add-title">What is it?</label>
-        <div className="field-with-action">
+        <div className="field-with-action" ref={searchAnchorRef}>
           <input
             id="add-title"
             type="text"
@@ -103,6 +104,7 @@ export function AddSheet() {
         <SearchAutocomplete
           query={title}
           visible={addOpen}
+          anchorRef={searchAnchorRef}
           onSelect={handleSelectSuggestion}
         />
       </div>

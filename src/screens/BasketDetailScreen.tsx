@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useApp, useBasketItems, useListTotal } from '../store'
 import { ItemRow } from '../components/ItemRow'
 import { formatPrice } from '../utils'
@@ -16,6 +17,11 @@ export function BasketDetailScreen() {
     removeBasket,
     items,
   } = useApp()
+  const [closing, setClosing] = useState(false)
+
+  useEffect(() => {
+    setClosing(false)
+  }, [viewingBasket?.id])
 
   if (!viewingBasket) return null
 
@@ -26,7 +32,10 @@ export function BasketDetailScreen() {
     (i) => !i.basketId && (i.status === 'queued' || i.status === 'ready'),
   )
 
-  const close = () => setViewingBasket(null)
+  const close = () => {
+    setClosing(true)
+    window.setTimeout(() => setViewingBasket(null), 280)
+  }
 
   const addExisting = async (itemId: string) => {
     vibrate()
@@ -46,31 +55,33 @@ export function BasketDetailScreen() {
   }
 
   return (
-    <div className="fullscreen">
-      <header className="fullscreen-header">
-        <button type="button" className="back-btn" onClick={close} aria-label="Back">
-          <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden="true">
-            <path d="M10 2L2 10l8 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Baskets
-        </button>
-        <button type="button" className="sheet-header-btn" onClick={() => setAddOpen(true, viewingBasket.id)}>
-          Add
-        </button>
-      </header>
+    <div className={`push-screen ${closing ? 'push-screen-closing' : ''}`}>
+      <div className="screen push-screen-body">
+        <header className="push-screen-nav">
+          <button type="button" className="nav-back-btn" onClick={close} aria-label="Back to baskets">
+            <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden="true">
+              <path d="M10 2L2 10l8 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Baskets
+          </button>
+          <button type="button" className="nav-action-btn" onClick={() => setAddOpen(true, viewingBasket.id)}>
+            Add
+          </button>
+        </header>
 
-      <div className="fullscreen-body">
         <h1 className="screen-title">{viewingBasket.name}</h1>
 
-        <div className="basket-detail-total">
-          <span className="basket-detail-total-label">Basket total</span>
-          <span className="basket-detail-total-amount">
+        <div className="total-bar">
+          <span className="total-bar-label">Basket total</span>
+          <span className="total-bar-amount">
             {total.pricedCount > 0 ? formatPrice(total.total, total.currency) : '—'}
           </span>
         </div>
 
         {activeItems.length === 0 ? (
-          <p className="empty-state">No items in this basket yet.</p>
+          <div className="empty-state">
+            <p>No items in this basket yet.</p>
+          </div>
         ) : (
           <div className="item-list">
             {activeItems.map((item) => (

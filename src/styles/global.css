@@ -264,6 +264,27 @@ a {
   margin-bottom: 10px;
 }
 
+.total-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 0.5px solid var(--border-subtle);
+}
+
+.total-bar-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.total-bar-amount {
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .budget-stat-row {
   display: flex;
   justify-content: space-between;
@@ -332,14 +353,14 @@ a {
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
   z-index: 100;
-  animation: fadeIn 0.25s var(--spring);
+  opacity: 0;
 }
 
 .sheet {
   position: fixed;
   left: 50%;
   bottom: 0;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(100%);
   width: 100%;
   max-width: 520px;
   background: var(--bg-card);
@@ -349,7 +370,6 @@ a {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: slideUp 0.35s var(--spring);
   will-change: transform;
 }
 
@@ -610,13 +630,9 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sheet-backdrop,
-  .sheet {
+  .push-screen,
+  .push-screen-closing {
     animation: none;
-  }
-
-  .sheet {
-    transition: none;
   }
 
   .item-row:active,
@@ -629,19 +645,19 @@ a {
 
 /* Search autocomplete */
 .search-suggestions {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
   list-style: none;
   background: var(--bg-card);
   border-radius: var(--radius-md);
   border: 0.5px solid var(--border-subtle);
   overflow: hidden;
   box-shadow: var(--shadow-md);
-  z-index: 20;
   max-height: 240px;
   overflow-y: auto;
+}
+
+.search-suggestions-portal {
+  position: fixed;
+  z-index: 150;
 }
 
 .search-suggestion {
@@ -660,7 +676,7 @@ a {
 }
 
 .search-suggestion:active {
-  background: var(--bg-card);
+  background: var(--bg-elevated);
 }
 
 .search-suggestion-loading {

@@ -36,29 +36,12 @@ export function BudgetScreen() {
       : `${formatPrice(Math.abs(summary.remainder), settings.currency)} over`
 
   return (
-    <div className="screen">
+    <div className="screen screen-budget">
       <header className="screen-header">
         <h1 className="screen-title">Budget</h1>
       </header>
 
-      <div className="budget-content">
-        <div className="budget-hero">
-          <div className="budget-amount" style={{ color: summary.remainder < 0 ? 'var(--destructive)' : undefined }}>
-            {summary.hasBudget ? formatPrice(Math.abs(summary.remainder), settings.currency) : '—'}
-          </div>
-          <div className="budget-label">{remainderLabel}</div>
-
-          {summary.hasBudget && (
-            <div className="budget-bar" aria-hidden="true">
-              <div className="budget-bar-fill" style={{ width: `${barPercent}%` }} />
-            </div>
-          )}
-
-          <button type="button" className="text-btn budget-edit-btn" onClick={openEdit}>
-            {summary.hasBudget ? 'Edit budget' : 'Set budget'}
-          </button>
-        </div>
-
+      <div className="budget-scroll">
         {summary.hasBudget && (
           <div className="budget-stats">
             <div className="budget-stat-row">
@@ -104,6 +87,25 @@ export function BudgetScreen() {
             </div>
           </section>
         )}
+      </div>
+
+      <div className="budget-dock" aria-label="Budget summary">
+        <div className="budget-hero">
+          <div className="budget-amount" style={{ color: summary.remainder < 0 ? 'var(--destructive)' : undefined }}>
+            {summary.hasBudget ? formatPrice(Math.abs(summary.remainder), settings.currency) : '—'}
+          </div>
+          <div className="budget-label">{remainderLabel}</div>
+
+          {summary.hasBudget && (
+            <div className="budget-bar" aria-hidden="true">
+              <div className="budget-bar-fill" style={{ width: `${barPercent}%` }} />
+            </div>
+          )}
+
+          <button type="button" className="text-btn budget-edit-btn" onClick={openEdit}>
+            {summary.hasBudget ? 'Edit budget' : 'Set budget'}
+          </button>
+        </div>
       </div>
 
       <Sheet open={editOpen} onClose={() => setEditOpen(false)} title="Monthly budget">

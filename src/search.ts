@@ -1,4 +1,5 @@
 import type { SearchSuggestion, WishlistItem } from './types'
+import { getCategory } from './types'
 
 export function faviconFromUrl(url: string): string {
   try {
@@ -16,14 +17,18 @@ function faviconFromBrand(title: string): string | undefined {
 }
 
 function localSuggestions(query: string, items: WishlistItem[]): SearchSuggestion[] {
-  const q = query.toLowerCase()
+  const q = query.toLowerCase().trim()
+  if (!q) return []
+
   const seen = new Set<string>()
   const results: SearchSuggestion[] = []
 
   for (const item of items) {
+    const category = getCategory(item.category)
     const titleMatch = item.title.toLowerCase().includes(q)
     const tagMatch = item.tag?.toLowerCase().includes(q)
-    if (!titleMatch && !tagMatch) continue
+    const categoryMatch = category?.label.toLowerCase().includes(q)
+    if (!titleMatch && !tagMatch && !categoryMatch) continue
 
     const key = item.title.toLowerCase()
     if (seen.has(key)) continue
@@ -36,17 +41,21 @@ function localSuggestions(query: string, items: WishlistItem[]): SearchSuggestio
       link: item.link,
       source: 'local',
     })
-    if (results.length >= 3) break
+    if (results.length >= 4) break
   }
 
   return results
 }
 
-function jsonpFetch<T>(url: string, timeoutMs = 4000): Promise<T> {
+function jsonpFetch<T>(url: string, timeoutMs = 4500): Promise<T> {
   return new Promise((resolve, reject) => {
-    const cb = `iwant_cb_${Date.now()}`
+    const cb = `iwant_cb_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
     const script = document.createElement('script')
+    let settled = false
+
     const timer = setTimeout(() => {
+      if (settled) return
+      settled = true
       cleanup()
       reject(new Error('timeout'))
     }, timeoutMs)
@@ -58,13 +67,18 @@ function jsonpFetch<T>(url: string, timeoutMs = 4000): Promise<T> {
     }
 
     ;(window as unknown as Record<string, unknown>)[cb] = (data: T) => {
+      if (settled) return
+      settled = true
       cleanup()
       resolve(data)
     }
 
     const separator = url.includes('?') ? '&' : '?'
     script.src = `${url}${separator}callback=${cb}`
+    script.async = true
     script.onerror = () => {
+      if (settled) return
+      settled = true
       cleanup()
       reject(new Error('jsonp failed'))
     }
@@ -72,15 +86,29 @@ function jsonpFetch<T>(url: string, timeoutMs = 4000): Promise<T> {
   })
 }
 
+function parseGoogleSuggest(data: unknown): string[] {
+  if (!Array.isArray(data) || !Array.isArray(data[1])) return []
+  return data[1].filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
+}
+
 async function fetchGooglePhrases(query: string): Promise<string[]> {
-  try {
-    const data = await jsonpFetch<[string, string[]]>(
-      `https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(query)}`,
-    )
-    return Array.isArray(data[1]) ? data[1] : []
-  } catch {
-    return []
+  const encoded = encodeURIComponent(query)
+  const endpoints = [
+    `https://clients1.google.com/complete/search?client=firefox&q=${encoded}`,
+    `https://suggestqueries.google.com/complete/search?client=firefox&q=${encoded}`,
+  ]
+
+  for (const url of endpoints) {
+    try {
+      const data = await jsonpFetch<unknown>(url)
+      const phrases = parseGoogleSuggest(data)
+      if (phrases.length > 0) return phrases
+    } catch {
+      // try next endpoint
+    }
   }
+
+  return []
 }
 
 export async function searchSuggestions(
@@ -88,30 +116,32 @@ export async function searchSuggestions(
   items: WishlistItem[],
 ): Promise<SearchSuggestion[]> {
   const q = query.trim()
-  if (q.length < 2) return []
+  if (q.length < 1) return []
 
   const local = localSuggestions(q, items)
   const seen = new Set(local.map((s) => s.title.toLowerCase()))
   seen.add(q.toLowerCase())
 
   let web: SearchSuggestion[] = []
-  try {
-    const phrases = (await fetchGooglePhrases(q))
-      .filter((p) => !seen.has(p.toLowerCase()))
-      .slice(0, 5 - local.length)
+  if (q.length >= 2) {
+    try {
+      const phrases = (await fetchGooglePhrases(q))
+        .filter((p) => !seen.has(p.toLowerCase()))
+        .slice(0, 6 - local.length)
 
-    web = phrases.map((phrase) => {
-      seen.add(phrase.toLowerCase())
-      return {
-        title: phrase,
-        source: 'web' as const,
-        imageUrl: faviconFromBrand(phrase),
-        link: `https://www.google.com/search?q=${encodeURIComponent(phrase)}`,
-      }
-    })
-  } catch {
-    // offline
+      web = phrases.map((phrase) => {
+        seen.add(phrase.toLowerCase())
+        return {
+          title: phrase,
+          source: 'web' as const,
+          imageUrl: faviconFromBrand(phrase),
+          link: `https://www.google.com/search?q=${encodeURIComponent(phrase)}`,
+        }
+      })
+    } catch {
+      // offline or blocked
+    }
   }
 
-  return [...local, ...web].slice(0, 5)
+  return [...local, ...web].slice(0, 6)
 }

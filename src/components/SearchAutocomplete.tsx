@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type RefObject } from 'react'
+import { createPortal } from 'react-dom'
 import { searchSuggestions } from '../search'
 import { useApp } from '../store'
 import type { SearchSuggestion } from '../types'
@@ -7,18 +8,46 @@ interface SearchAutocompleteProps {
   query: string
   onSelect: (suggestion: SearchSuggestion) => void
   visible: boolean
+  anchorRef: RefObject<HTMLElement | null>
 }
 
-export function SearchAutocomplete({ query, onSelect, visible }: SearchAutocompleteProps) {
+export function SearchAutocomplete({ query, onSelect, visible, anchorRef }: SearchAutocompleteProps) {
   const { items } = useApp()
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [position, setPosition] = useState<{ top: number; left: number; width: number } | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const requestId = useRef(0)
 
   useEffect(() => {
-    if (!visible || query.trim().length < 2) {
+    if (!visible || !anchorRef.current) {
+      setPosition(null)
+      return
+    }
+
+    const updatePosition = () => {
+      const el = anchorRef.current
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      setPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+      })
+    }
+
+    updatePosition()
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition, true)
+    return () => {
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition, true)
+    }
+  }, [visible, anchorRef, query, suggestions.length, loading])
+
+  useEffect(() => {
+    if (!visible || query.trim().length < 1) {
       setSuggestions([])
       setLoading(false)
       setSearched(false)
@@ -36,18 +65,26 @@ export function SearchAutocomplete({ query, onSelect, visible }: SearchAutocompl
       setSuggestions(results)
       setLoading(false)
       setSearched(true)
-    }, 280)
+    }, 200)
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [query, visible, items])
 
-  if (!visible || query.trim().length < 2) return null
+  if (!visible || query.trim().length < 1 || !position) return null
   if (!loading && searched && suggestions.length === 0) return null
 
-  return (
-    <ul className="search-suggestions" role="listbox">
+  return createPortal(
+    <ul
+      className="search-suggestions search-suggestions-portal"
+      role="listbox"
+      style={{
+        top: position.top,
+        left: position.left,
+        width: position.width,
+      }}
+    >
       {loading && (
         <li className="search-suggestion search-suggestion-loading">Searching…</li>
       )}
@@ -74,6 +111,7 @@ export function SearchAutocomplete({ query, onSelect, visible }: SearchAutocompl
             </button>
           </li>
         ))}
-    </ul>
+    </ul>,
+    document.body,
   )
 }

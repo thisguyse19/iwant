@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 
 interface SheetProps {
   open: boolean
@@ -21,6 +21,7 @@ export function Sheet({
   const backdropRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef({ startY: 0, currentY: 0, dragging: false })
   const rafRef = useRef<number | null>(null)
+  const [mounted, setMounted] = useState(open)
 
   const applyOffset = useCallback((y: number, animate: boolean) => {
     const sheet = sheetRef.current
@@ -29,39 +30,60 @@ export function Sheet({
     sheet.style.transition = animate ? 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)' : 'none'
     sheet.style.transform = `translateX(-50%) translateY(${y}px)`
     if (backdrop) {
+      backdrop.style.transition = animate ? 'opacity 0.28s cubic-bezier(0.32, 0.72, 0, 1)' : 'none'
       backdrop.style.opacity = String(Math.max(0, 0.4 - y / 600))
     }
   }, [])
 
-  useEffect(() => {
-    if (!open) return
-    dragRef.current = { startY: 0, currentY: 0, dragging: false }
-    requestAnimationFrame(() => applyOffset(0, false))
-    if (!autoFocus) return
-    const firstInput = sheetRef.current?.querySelector<HTMLElement>('input, textarea')
-    requestAnimationFrame(() => firstInput?.focus())
-  }, [open, autoFocus, applyOffset])
+  const dismiss = useCallback(() => {
+    onClose()
+  }, [onClose])
 
   useEffect(() => {
-    if (!open) return
+    if (open) {
+      setMounted(true)
+      dragRef.current = { startY: 0, currentY: 0, dragging: false }
+      requestAnimationFrame(() => {
+        applyOffset(window.innerHeight, false)
+        if (backdropRef.current) backdropRef.current.style.opacity = '0'
+        requestAnimationFrame(() => applyOffset(0, true))
+      })
+      return
+    }
+
+    if (!mounted) return
+
+    applyOffset(window.innerHeight, true)
+    if (backdropRef.current) backdropRef.current.style.opacity = '0'
+    const timer = window.setTimeout(() => setMounted(false), 280)
+    return () => window.clearTimeout(timer)
+  }, [open, mounted, applyOffset])
+
+  useEffect(() => {
+    if (!mounted || !autoFocus) return
+    const firstInput = sheetRef.current?.querySelector<HTMLElement>('input, textarea')
+    requestAnimationFrame(() => firstInput?.focus())
+  }, [mounted, autoFocus])
+
+  useEffect(() => {
+    if (!mounted) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') dismiss()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  }, [mounted, dismiss])
 
   const finishDrag = useCallback(
     (delta: number) => {
       dragRef.current.dragging = false
       if (delta > 120) {
-        applyOffset(window.innerHeight, true)
-        setTimeout(onClose, 220)
+        dismiss()
       } else {
         applyOffset(0, true)
       }
     },
-    [onClose, applyOffset],
+    [dismiss, applyOffset],
   )
 
   const onDragStart = (clientY: number) => {
@@ -81,14 +103,14 @@ export function Sheet({
     finishDrag(dragRef.current.currentY)
   }
 
-  if (!open) return null
+  if (!mounted) return null
 
   return (
     <>
       <div
         ref={backdropRef}
         className="sheet-backdrop"
-        onClick={onClose}
+        onClick={dismiss}
         aria-hidden="true"
       />
       <div
