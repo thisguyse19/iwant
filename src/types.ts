@@ -18,13 +18,13 @@ export interface CategoryDef {
 }
 
 export const CATEGORIES: CategoryDef[] = [
-  { id: 'tech', label: 'Tech', color: '#0071e3', bg: 'rgba(0, 113, 227, 0.14)' },
-  { id: 'essentials', label: 'Essentials', color: '#5856d6', bg: 'rgba(88, 86, 214, 0.14)' },
-  { id: 'clothing', label: 'Clothing', color: '#af52de', bg: 'rgba(175, 82, 222, 0.14)' },
-  { id: 'home', label: 'Home', color: '#ff9500', bg: 'rgba(255, 149, 0, 0.14)' },
-  { id: 'health', label: 'Health', color: '#34c759', bg: 'rgba(52, 199, 89, 0.14)' },
-  { id: 'food', label: 'Food', color: '#ff2d55', bg: 'rgba(255, 45, 85, 0.14)' },
-  { id: 'other', label: 'Other', color: '#8e8e93', bg: 'rgba(142, 142, 147, 0.14)' },
+  { id: 'tech', label: 'Tech', color: '#3d5a80', bg: 'rgba(61, 90, 128, 0.12)' },
+  { id: 'essentials', label: 'Essentials', color: '#5c6b73', bg: 'rgba(92, 107, 115, 0.12)' },
+  { id: 'clothing', label: 'Clothing', color: '#8b6f6f', bg: 'rgba(139, 111, 111, 0.12)' },
+  { id: 'home', label: 'Home', color: '#a67c52', bg: 'rgba(166, 124, 82, 0.12)' },
+  { id: 'health', label: 'Health', color: '#5a7a5e', bg: 'rgba(90, 122, 94, 0.12)' },
+  { id: 'food', label: 'Food', color: '#9a6b4a', bg: 'rgba(154, 107, 74, 0.12)' },
+  { id: 'other', label: 'Other', color: '#7a7570', bg: 'rgba(122, 117, 112, 0.12)' },
 ]
 
 export function getCategory(id?: string): CategoryDef | undefined {

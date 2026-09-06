@@ -35,14 +35,8 @@
   position: absolute;
   left: 0;
   right: 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--accent) 35%, transparent) 15%,
-    color-mix(in srgb, var(--accent) 35%, transparent) 85%,
-    transparent
-  );
+  height: 0;
+  border-top: 1px dashed color-mix(in srgb, var(--accent) 40%, transparent);
   pointer-events: none;
   z-index: 1;
 }
@@ -91,11 +85,11 @@
   border-radius: 4px 4px 2px 2px;
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--accent) 88%, white) 0%,
-    var(--accent) 100%
+    color-mix(in srgb, var(--accent) 72%, white) 0%,
+    color-mix(in srgb, var(--accent) 80%, transparent) 100%
   );
   transition: height 0.45s var(--spring);
-  opacity: 0.92;
+  opacity: 0.88;
 }
 
 .budget-chart-bar.today {
@@ -156,6 +150,7 @@
 }
 
 .budget-chart-callout-amount {
+  font-family: var(--font-display);
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.02em;

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type TransitionEvent } from 'react'
 import { getCategory, PRIORITY_PILL, type WishlistItem } from '../types'
-import { formatPriceOptional, formatBoughtDate } from '../utils'
+import { formatPriceOptional, formatBoughtDate, formatListAge } from '../utils'
 import './CategoryPicker.css'
 
 interface ItemRowProps {
@@ -268,6 +268,9 @@ export function ItemRow({
             <div className="item-title">{item.title}</div>
             {showBoughtDate && item.status === 'bought' && item.boughtAt != null && (
               <div className="item-bought-date">{formatBoughtDate(item.boughtAt)}</div>
+            )}
+            {isActive && !showBoughtDate && (
+              <div className="item-age">{formatListAge(item.createdAt)}</div>
             )}
             {(category || priorityPill) && (
               <div className="item-pills">

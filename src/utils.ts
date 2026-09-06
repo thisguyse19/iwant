@@ -65,6 +65,13 @@ export function formatChartDayLabel(periodStartMs: number, day: number): string 
   return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
+export function formatListAge(timestamp: number): string {
+  const days = daysSince(timestamp)
+  if (days === 0) return 'Added today'
+  if (days === 1) return '1 day on list'
+  return `${days} days on list`
+}
+
 export function detectClipboardContent(text: string): {
   title?: string
   link?: string
