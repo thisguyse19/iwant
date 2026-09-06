@@ -1,8 +1,7 @@
-import { useRef, useState, useEffect, type RefObject } from 'react'
+import { useState } from 'react'
 import { TabBar } from './components/TabBar'
 import { AppProvider } from './store'
 import { ExitAnimationProvider } from './exitAnimation'
-import { LiquidGlassProvider, useLiquidGlass } from './liquidGlass/LiquidGlassProvider'
 import { WishlistScreen } from './screens/WishlistScreen'
 import { BasketsScreen } from './screens/BasketsScreen'
 import { BudgetScreen } from './screens/BudgetScreen'
@@ -17,9 +16,8 @@ import './styles/global.css'
 
 export type Tab = 'wishlist' | 'baskets' | 'budget' | 'settings'
 
-function AppMain({ shellRef }: { shellRef: RefObject<HTMLDivElement | null> }) {
+function AppMain() {
   const [tab, setTab] = useState<Tab>('wishlist')
-  const { refresh } = useLiquidGlass()
   const { setAddOpen, loading, setViewingBasket, setBasketCreatePending, clearSelection } = useApp()
 
   const {
@@ -27,13 +25,9 @@ function AppMain({ shellRef }: { shellRef: RefObject<HTMLDivElement | null> }) {
     updateServiceWorker,
   } = useRegisterSW()
 
-  useEffect(() => {
-    if (!loading) void refresh()
-  }, [loading, refresh])
-
   if (loading) {
     return (
-      <div className="app-shell" ref={shellRef}>
+      <div className="app-shell">
         <div className="screen">
           <div className="empty-state">Loading…</div>
         </div>
@@ -48,7 +42,7 @@ function AppMain({ shellRef }: { shellRef: RefObject<HTMLDivElement | null> }) {
   }
 
   return (
-    <div className="app-shell" ref={shellRef}>
+    <div className="app-shell">
       {tab === 'wishlist' && <WishlistScreen />}
       {tab === 'baskets' && <BasketsScreen />}
       {tab === 'budget' && <BudgetScreen />}
@@ -82,21 +76,11 @@ function AppMain({ shellRef }: { shellRef: RefObject<HTMLDivElement | null> }) {
   )
 }
 
-function AppContent() {
-  const shellRef = useRef<HTMLDivElement>(null)
-
-  return (
-    <LiquidGlassProvider shellRef={shellRef}>
-      <AppMain shellRef={shellRef} />
-    </LiquidGlassProvider>
-  )
-}
-
 export default function App() {
   return (
     <AppProvider>
       <ExitAnimationProvider>
-        <AppContent />
+        <AppMain />
       </ExitAnimationProvider>
     </AppProvider>
   )
