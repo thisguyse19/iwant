@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type TransitionEvent } from 'react'
 import { getCategory, PRIORITY_PILL, type WishlistItem } from '../types'
 import { useApp } from '../store'
-import { formatPriceOptional, formatBoughtDate, formatListAge } from '../utils'
+import { formatPriceOptional, formatBoughtDate, formatListAge, vibrateTap } from '../utils'
 import './CategoryPicker.css'
 
 interface ItemRowProps {
@@ -133,6 +133,7 @@ export function ItemRow({
   }
 
   const handleTap = () => {
+    vibrateTap()
     if (selectable) {
       onToggleSelect?.()
       return
@@ -243,7 +244,7 @@ export function ItemRow({
         onPointerUp={endGesture}
         onPointerCancel={endGesture}
       >
-        <button type="button" className="item-row-main" onClick={handleTap}>
+        <button type="button" className="item-row-main haptic-skip" onClick={handleTap}>
           {selectable && (
             <span
               className={`item-select-check ${selected ? 'checked' : ''}`}

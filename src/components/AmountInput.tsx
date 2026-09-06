@@ -144,7 +144,7 @@ export function AmountInput({
     <div className={`amount-input ${compact ? 'compact' : ''}`}>
       {label && <span className="amount-input-label">{label}</span>}
       <div
-        className="amount-input-wheel"
+        className="amount-input-wheel haptic-skip"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
