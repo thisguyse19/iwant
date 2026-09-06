@@ -118,7 +118,9 @@ function attachIOSSwitchOverlay(host: HTMLElement) {
   if (shouldSkip(host)) return
 
   const style = window.getComputedStyle(host)
-  if (style.position === 'static') host.style.position = 'relative'
+  if (style.position === 'static') {
+    host.style.position = 'relative'
+  }
 
   const overlay = document.createElement('input')
   overlay.type = 'checkbox'

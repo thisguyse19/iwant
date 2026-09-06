@@ -1,7 +1,4 @@
-.haptic-overlay-host {
-  position: relative;
-}
-
+/* Host position is set inline only when computed position is static. */
 .haptic-switch-overlay {
   position: absolute;
   inset: 0;
