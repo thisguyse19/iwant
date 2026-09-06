@@ -931,10 +931,25 @@ a {
   margin-bottom: 16px;
 }
 
-/* Pride theme: blue accent with subtle rainbow touches only */
+/* Pride — flag colours across the UI, rainbow only on thin accents */
+:root[data-accent='pride'] a:not(.primary-btn):not(.secondary-btn),
+:root[data-accent='pride'] .text-btn,
+:root[data-accent='pride'] .paste-btn,
+:root[data-accent='pride'] .sheet-header-btn,
+:root[data-accent='pride'] .open-page-link,
+:root[data-accent='pride'] .budget-edit-link,
+:root[data-accent='pride'] .budget-fixed-add {
+  color: var(--pride-blue);
+}
+
 :root[data-accent='pride'] .primary-btn {
   position: relative;
   overflow: hidden;
+  background: var(--pride-violet);
+}
+
+:root[data-accent='pride'] .primary-btn:active:not(:disabled) {
+  background: var(--accent-pressed);
 }
 
 :root[data-accent='pride'] .primary-btn::after {
@@ -946,19 +961,53 @@ a {
   height: 2px;
   border-radius: 1px;
   background: var(--pride-gradient);
-  opacity: 0.85;
+  opacity: 0.9;
   pointer-events: none;
 }
 
+:root[data-accent='pride'] .settings-chip.active {
+  position: relative;
+  color: var(--pride-violet);
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box,
+    var(--pride-gradient) border-box;
+}
+
+:root[data-accent='pride'] .settings-segmented-btn.active {
+  color: var(--pride-violet);
+  border-color: var(--pride-orange);
+  background: color-mix(in srgb, var(--pride-orange) 10%, var(--bg-base));
+}
+
+:root[data-accent='pride'] .segmented-btn.active {
+  color: var(--pride-violet);
+  box-shadow: inset 0 -2px 0 var(--pride-gradient);
+}
+
+:root[data-accent='pride'] .tab-liquid-item.active {
+  color: var(--pride-violet);
+}
+
 :root[data-accent='pride'] .tab-indicator-glass {
-  background: color-mix(in srgb, var(--pride-blue) 88%, white);
-  border-color: color-mix(in srgb, var(--pride-blue) 35%, transparent);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    0 0 0 0.5px color-mix(in srgb, var(--pride-violet) 25%, transparent);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--pride-red) 28%, transparent),
+      color-mix(in srgb, var(--pride-yellow) 22%, transparent),
+      color-mix(in srgb, var(--pride-green) 24%, transparent),
+      color-mix(in srgb, var(--pride-blue) 28%, transparent),
+      color-mix(in srgb, var(--pride-violet) 30%, transparent)
+    ),
+    var(--liquid-glass-indicator);
+  border-color: color-mix(in srgb, var(--pride-violet) 30%, transparent);
 }
 
 :root[data-accent='pride'] .budget-ring-spent {
-  stroke: var(--pride-blue);
+  stroke: var(--pride-violet);
+}
+
+:root[data-accent='pride'] .budget-ring-planned {
+  stroke: var(--pride-green);
 }
 

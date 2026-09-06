@@ -726,13 +726,16 @@
 }
 
 :root[data-accent='pride'] .budget-month-chip.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  color: var(--pride-violet);
+  font-weight: 600;
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box,
+    var(--pride-gradient) border-box;
 }
 
 :root[data-accent='pride'] .budget-hero-view-tab.active {
-  color: var(--text-primary);
+  color: var(--pride-violet);
 }
 
 :root[data-accent='pride'] .budget-hero-view-tab.active::after {
@@ -750,19 +753,28 @@
   position: relative;
 }
 
-:root[data-accent='pride'] .budget-progress-spent {
-  background: var(--accent);
-}
-
-:root[data-accent='pride'] .budget-edit-link,
-:root[data-accent='pride'] .budget-fixed-add {
-  color: var(--accent);
-  background: none;
-  -webkit-background-clip: unset;
-  background-clip: unset;
+:root[data-accent='pride'] .budget-progress-spent,
+:root[data-accent='pride'] .budget-log-progress-fill {
+  background: var(--pride-gradient);
 }
 
 :root[data-accent='pride'] .budget-interval-btn.active {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, var(--bg-elevated));
+  color: var(--pride-green);
+  border-color: var(--pride-green);
+  background: color-mix(in srgb, var(--pride-green) 10%, var(--bg-elevated));
+}
+
+:root[data-accent='pride'] .budget-kind-budgeted {
+  color: var(--pride-orange);
+  background: color-mix(in srgb, var(--pride-orange) 12%, var(--bg-base));
+  border-color: color-mix(in srgb, var(--pride-orange) 30%, var(--border-subtle));
+}
+
+:root[data-accent='pride'] .budget-log-btn {
+  background: var(--pride-violet);
+}
+
+:root[data-accent='pride'] .amount-input-step,
+:root[data-accent='pride'] .amount-input-quick-btn {
+  color: var(--pride-violet);
 }

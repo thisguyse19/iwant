@@ -248,16 +248,16 @@
     var(--pride-blue) 80%,
     var(--pride-violet) 100%
   );
-  --accent: #004dff;
-  --accent-pressed: #0039b8;
-  --accent-soft: rgba(0, 77, 255, 0.12);
+  --accent: var(--pride-violet);
+  --accent-pressed: #5c0669;
+  --accent-soft: rgba(117, 7, 135, 0.12);
   --ready-stripe: var(--pride-violet);
   --interval-day: var(--pride-red);
   --interval-week: var(--pride-orange);
   --interval-month: var(--pride-blue);
   --interval-year: var(--pride-violet);
-  --liquid-glass-tint: rgba(0, 77, 255, 0.05);
-  --tab-active: var(--pride-blue);
+  --liquid-glass-tint: rgba(117, 7, 135, 0.05);
+  --tab-active: var(--pride-violet);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -282,9 +282,9 @@
     --pride-green: #2db84d;
     --pride-blue: #4d8fff;
     --pride-violet: #b366d4;
-    --accent: #4d8fff;
-    --accent-pressed: #6ba3ff;
-    --accent-soft: rgba(77, 143, 255, 0.16);
-    --tab-active: var(--pride-blue);
+    --accent: var(--pride-violet);
+    --accent-pressed: #c47fe0;
+    --accent-soft: rgba(179, 102, 212, 0.16);
+    --tab-active: var(--pride-violet);
   }
 }
