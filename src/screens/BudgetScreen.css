@@ -202,6 +202,15 @@
   transition: width 0.45s var(--spring);
 }
 
+.budget-progress-fixed {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: color-mix(in srgb, var(--accent) 50%, var(--text-tertiary));
+  opacity: 0.75;
+  transition: width 0.45s var(--spring), left 0.45s var(--spring);
+}
+
 .budget-progress-planned {
   position: absolute;
   top: 0;
@@ -331,4 +340,86 @@
   color: var(--text-tertiary);
   margin-top: 6px;
   line-height: 1.4;
+}
+
+.budget-fixed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.budget-fixed-add {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  padding: 4px 2px;
+}
+
+.budget-fixed-add:active {
+  opacity: 0.6;
+}
+
+.budget-fixed-list {
+  background: var(--bg-list);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-list);
+  overflow: hidden;
+}
+
+.budget-fixed-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 0.5px solid var(--border-subtle);
+  transition: background 0.15s;
+}
+
+.budget-fixed-row:last-child {
+  border-bottom: none;
+}
+
+.budget-fixed-row:active {
+  background: var(--bg-base);
+}
+
+.budget-fixed-name {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.budget-fixed-meta {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.budget-fixed-amount {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.budget-fixed-empty {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  padding: 4px 2px 8px;
+}
+
+.budget-fixed-period-note {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+.budget-destructive-btn {
+  color: var(--destructive);
 }

@@ -72,6 +72,10 @@ export function formatListAge(timestamp: number): string {
   return `${days} days on list`
 }
 
+export function formatFixedDueDay(day: number): string {
+  return `Due day ${day}`
+}
+
 export function detectClipboardContent(text: string): {
   title?: string
   link?: string

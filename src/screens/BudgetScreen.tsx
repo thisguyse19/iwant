@@ -7,11 +7,19 @@ import { ItemRow } from '../components/ItemRow'
 import { BudgetChart } from '../components/BudgetChart'
 import { Sheet } from '../components/Sheet'
 import { ScreenChrome } from '../components/ScreenChrome'
-import { formatPrice, vibrateTap } from '../utils'
+import type { FixedExpense } from '../types'
+import { formatFixedDueDay, formatPrice, vibrateTap } from '../utils'
 import '../components/ItemRow.css'
 import './BudgetScreen.css'
 
 type BudgetScope = 'month' | 'default'
+
+interface FixedExpenseDraft {
+  id?: string
+  name: string
+  amount: string
+  dayOfMonth: string
+}
 
 export function BudgetScreen() {
   const { settings, updateSettings, setViewingItem, requestMarkBought, removeItem } = useApp()
@@ -24,6 +32,16 @@ export function BudgetScreen() {
   const [budgetScope, setBudgetScope] = useState<BudgetScope>('month')
   const [resetDayInput, setResetDayInput] = useState('1')
   const [heldChartDay, setHeldChartDay] = useState<number | null>(null)
+  const [fixedSheetOpen, setFixedSheetOpen] = useState(false)
+  const [fixedDraft, setFixedDraft] = useState<FixedExpenseDraft | null>(null)
+
+  const fixedTemplates = useMemo(
+    () =>
+      [...(settings.fixedExpenses ?? [])].sort(
+        (a, b) => a.sortOrder - b.sortOrder || a.createdAt - b.createdAt,
+      ),
+    [settings.fixedExpenses],
+  )
 
   const monthOptions = useMemo(() => getRecentMonths(8), [])
   const canGoForward = compareMonths(selectedMonth, getCurrentMonth()) < 0
@@ -71,15 +89,73 @@ export function BudgetScreen() {
     await updateSettings({ monthBudgets: next })
   }
 
+  const openFixedAdd = () => {
+    setFixedDraft({ name: '', amount: '', dayOfMonth: '1' })
+    setFixedSheetOpen(true)
+  }
+
+  const openFixedEdit = (expense: FixedExpense) => {
+    setFixedDraft({
+      id: expense.id,
+      name: expense.name,
+      amount: String(expense.amount),
+      dayOfMonth: String(expense.dayOfMonth),
+    })
+    setFixedSheetOpen(true)
+  }
+
+  const closeFixedSheet = () => {
+    setFixedSheetOpen(false)
+    setFixedDraft(null)
+  }
+
+  const saveFixedExpense = async () => {
+    if (!fixedDraft) return
+    const name = fixedDraft.name.trim()
+    const amount = parseFloat(fixedDraft.amount)
+    const dayOfMonth = Math.min(28, Math.max(1, parseInt(fixedDraft.dayOfMonth, 10) || 1))
+    if (!name || isNaN(amount) || amount < 0) return
+
+    const existing = settings.fixedExpenses ?? []
+    if (fixedDraft.id) {
+      const next = existing.map((e) =>
+        e.id === fixedDraft.id ? { ...e, name, amount, dayOfMonth } : e,
+      )
+      await updateSettings({ fixedExpenses: next })
+    } else {
+      const expense: FixedExpense = {
+        id: crypto.randomUUID(),
+        name,
+        amount,
+        dayOfMonth,
+        sortOrder: existing.length,
+        createdAt: Date.now(),
+      }
+      await updateSettings({ fixedExpenses: [...existing, expense] })
+    }
+    closeFixedSheet()
+  }
+
+  const removeFixedExpense = async () => {
+    if (!fixedDraft?.id) return
+    const next = (settings.fixedExpenses ?? []).filter((e) => e.id !== fixedDraft.id)
+    await updateSettings({ fixedExpenses: next })
+    closeFixedSheet()
+  }
+
   const spentPercent = summary.hasBudget
     ? Math.min(100, (summary.spent / summary.budget) * 100)
     : 0
+  const fixedPercent = summary.hasBudget
+    ? Math.min(100 - spentPercent, (summary.fixed / summary.budget) * 100)
+    : 0
   const plannedPercent = summary.hasBudget && summary.period.isCurrent
-    ? Math.min(100 - spentPercent, (summary.planned / summary.budget) * 100)
+    ? Math.min(100 - spentPercent - fixedPercent, (summary.planned / summary.budget) * 100)
     : 0
 
   const ringCircumference = 2 * Math.PI * 15.5
-  const spentDash = (spentPercent / 100) * ringCircumference
+  const committedPercent = spentPercent + fixedPercent
+  const spentDash = (committedPercent / 100) * ringCircumference
   const plannedDash = (plannedPercent / 100) * ringCircumference
 
   const heroAmount = summary.hasBudget
@@ -224,7 +300,7 @@ export function BudgetScreen() {
                     }}
                   />
                 </svg>
-                <span className="budget-ring-label">{Math.round(spentPercent + plannedPercent)}%</span>
+                <span className="budget-ring-label">{Math.round(committedPercent + plannedPercent)}%</span>
               </div>
             )}
           </div>
@@ -232,10 +308,17 @@ export function BudgetScreen() {
           {summary.hasBudget && (
             <div className="budget-progress" aria-hidden="true">
               <div className="budget-progress-spent" style={{ width: `${spentPercent}%` }} />
+              <div
+                className="budget-progress-fixed"
+                style={{ width: `${fixedPercent}%`, left: `${spentPercent}%` }}
+              />
               {summary.period.isCurrent && (
                 <div
                   className="budget-progress-planned"
-                  style={{ width: `${plannedPercent}%`, left: `${spentPercent}%` }}
+                  style={{
+                    width: `${plannedPercent}%`,
+                    left: `${spentPercent + fixedPercent}%`,
+                  }}
                 />
               )}
             </div>
@@ -256,6 +339,15 @@ export function BudgetScreen() {
               <span className="budget-stat-value">{formatPrice(summary.spent, summary.currency)}</span>
               <span className="budget-stat-note">{summary.spentCount} bought</span>
             </div>
+            {(summary.fixed > 0 || fixedTemplates.length > 0) && (
+              <div className="budget-stat-cell">
+                <span className="budget-stat-label">Fixed</span>
+                <span className="budget-stat-value">{formatPrice(summary.fixed, summary.currency)}</span>
+                <span className="budget-stat-note">
+                  {summary.fixedCount} due this period
+                </span>
+              </div>
+            )}
             {summary.period.isCurrent && (
               <>
                 <div className="budget-stat-cell">
@@ -289,6 +381,44 @@ export function BudgetScreen() {
           isCurrentPeriod={summary.period.isCurrent}
           onDayHold={setHeldChartDay}
         />
+
+        <section className="budget-section">
+          <div className="budget-fixed-header">
+            <h2 className="section-label">Fixed expenses</h2>
+            <button type="button" className="budget-fixed-add" onClick={openFixedAdd}>
+              Add
+            </button>
+          </div>
+          {fixedTemplates.length === 0 ? (
+            <p className="budget-fixed-empty">
+              Rent, subscriptions, bills — anything that leaves every month whether you buy from your list or not.
+            </p>
+          ) : (
+            <div className="budget-fixed-list">
+              {fixedTemplates.map((expense) => (
+                <button
+                  key={expense.id}
+                  type="button"
+                  className="budget-fixed-row"
+                  onClick={() => openFixedEdit(expense)}
+                >
+                  <div>
+                    <div className="budget-fixed-name">{expense.name}</div>
+                    <div className="budget-fixed-meta">{formatFixedDueDay(expense.dayOfMonth)}</div>
+                  </div>
+                  <span className="budget-fixed-amount">
+                    {formatPrice(expense.amount, summary.currency)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+          {summary.fixed > 0 && (
+            <p className="budget-fixed-period-note">
+              {formatPrice(summary.fixed, summary.currency)} counted against this period.
+            </p>
+          )}
+        </section>
 
         {visibleBoughtItems.length > 0 && (
           <section className="budget-section">
@@ -407,6 +537,67 @@ export function BudgetScreen() {
           <button type="button" className="secondary-btn" onClick={clearMonthOverride}>
             Use default budget for this month
           </button>
+        )}
+      </Sheet>
+
+      <Sheet
+        open={fixedSheetOpen}
+        onClose={closeFixedSheet}
+        title={fixedDraft?.id ? 'Edit fixed expense' : 'Add fixed expense'}
+      >
+        {fixedDraft && (
+          <>
+            <div className="field">
+              <label htmlFor="fixed-name">Name</label>
+              <input
+                id="fixed-name"
+                type="text"
+                placeholder="Rent, phone bill…"
+                value={fixedDraft.name}
+                onChange={(e) => setFixedDraft({ ...fixedDraft, name: e.target.value })}
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="fixed-amount">Amount ({settings.currency})</label>
+              <input
+                id="fixed-amount"
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="any"
+                placeholder="0"
+                value={fixedDraft.amount}
+                onChange={(e) => setFixedDraft({ ...fixedDraft, amount: e.target.value })}
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="fixed-day">Due on day</label>
+              <input
+                id="fixed-day"
+                type="number"
+                inputMode="numeric"
+                min="1"
+                max="28"
+                value={fixedDraft.dayOfMonth}
+                onChange={(e) => setFixedDraft({ ...fixedDraft, dayOfMonth: e.target.value })}
+              />
+              <p className="budget-field-hint">
+                Counts once per calendar month when that day falls in your budget period.
+              </p>
+            </div>
+
+            <button type="button" className="primary-btn" onClick={saveFixedExpense}>
+              Save
+            </button>
+
+            {fixedDraft.id && (
+              <button type="button" className="secondary-btn budget-destructive-btn" onClick={removeFixedExpense}>
+                Remove
+              </button>
+            )}
+          </>
         )}
       </Sheet>
     </>
