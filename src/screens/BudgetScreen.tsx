@@ -363,6 +363,7 @@ export function BudgetScreen() {
     if (Math.abs(amount - defaultAmount) < 0.001) {
       await updateSettings({ recurringActuals: withoutUnit })
       vibrateTap()
+      closeLogSheet()
       return
     }
 
@@ -376,6 +377,7 @@ export function BudgetScreen() {
     }
     await updateSettings({ recurringActuals: [...withoutUnit, entry] })
     vibrateTap()
+    closeLogSheet()
   }
 
   const resetLogUnit = async (unitKey: string) => {
