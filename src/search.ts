@@ -16,7 +16,7 @@ function faviconFromBrand(title: string): string | undefined {
   return `https://www.google.com/s2/favicons?domain=${brand}.com&sz=64`
 }
 
-function toProductTitle(text: string): string {
+export function toProductTitle(text: string): string {
   const minor = new Set(['a', 'an', 'the', 'and', 'or', 'for', 'to', 'in', 'on', 'at', 'by', 'of', 'with'])
   const words = text.trim().split(/\s+/)
   return words
@@ -29,7 +29,7 @@ function toProductTitle(text: string): string {
     .join(' ')
 }
 
-function localSuggestions(query: string, items: WishlistItem[]): SearchSuggestion[] {
+export function getLocalSuggestions(query: string, items: WishlistItem[]): SearchSuggestion[] {
   const q = query.toLowerCase().trim()
   if (!q) return []
 
@@ -60,7 +60,7 @@ function localSuggestions(query: string, items: WishlistItem[]): SearchSuggestio
   return results
 }
 
-function jsonpFetch<T>(url: string, timeoutMs = 4500): Promise<T> {
+function jsonpFetch<T>(url: string, timeoutMs = 6000): Promise<T> {
   return new Promise((resolve, reject) => {
     const cb = `iwant_cb_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
     const script = document.createElement('script')
@@ -104,8 +104,17 @@ function parseGoogleSuggest(data: unknown): string[] {
   return data[1].filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
 }
 
-async function fetchGooglePhrases(query: string): Promise<string[]> {
-  const encoded = encodeURIComponent(query)
+export async function fetchWebSuggestions(
+  query: string,
+  existing: SearchSuggestion[],
+): Promise<SearchSuggestion[]> {
+  const q = query.trim()
+  if (q.length < 2) return []
+
+  const seen = new Set(existing.map((s) => s.title.toLowerCase()))
+  seen.add(q.toLowerCase())
+
+  const encoded = encodeURIComponent(q)
   const endpoints = [
     `https://clients1.google.com/complete/search?client=firefox&q=${encoded}`,
     `https://suggestqueries.google.com/complete/search?client=firefox&q=${encoded}`,
@@ -115,13 +124,36 @@ async function fetchGooglePhrases(query: string): Promise<string[]> {
     try {
       const data = await jsonpFetch<unknown>(url)
       const phrases = parseGoogleSuggest(data)
-      if (phrases.length > 0) return phrases
+        .filter((p) => !seen.has(p.toLowerCase()))
+        .slice(0, 6 - existing.length)
+
+      if (phrases.length > 0) {
+        return phrases.map((phrase) => {
+          seen.add(phrase.toLowerCase())
+          const title = toProductTitle(phrase)
+          return {
+            title,
+            source: 'web' as const,
+            imageUrl: faviconFromBrand(title),
+            link: `https://www.google.com/search?q=${encodeURIComponent(phrase)}`,
+          }
+        })
+      }
     } catch {
       // try next endpoint
     }
   }
 
   return []
+}
+
+function fallbackSuggestion(query: string): SearchSuggestion {
+  const title = toProductTitle(query)
+  return {
+    title,
+    source: 'web',
+    link: `https://www.google.com/search?q=${encodeURIComponent(query.trim())}`,
+  }
 }
 
 export async function searchSuggestions(
@@ -131,31 +163,17 @@ export async function searchSuggestions(
   const q = query.trim()
   if (q.length < 1) return []
 
-  const local = localSuggestions(q, items)
-  const seen = new Set(local.map((s) => s.title.toLowerCase()))
-  seen.add(q.toLowerCase())
+  const local = getLocalSuggestions(q, items)
+  let results = [...local]
 
-  let web: SearchSuggestion[] = []
   if (q.length >= 2) {
-    try {
-      const phrases = (await fetchGooglePhrases(q))
-        .filter((p) => !seen.has(p.toLowerCase()))
-        .slice(0, 6 - local.length)
-
-      web = phrases.map((phrase) => {
-        seen.add(phrase.toLowerCase())
-        const title = toProductTitle(phrase)
-        return {
-          title,
-          source: 'web' as const,
-          imageUrl: faviconFromBrand(title),
-          link: `https://www.google.com/search?q=${encodeURIComponent(phrase)}`,
-        }
-      })
-    } catch {
-      // offline or blocked
-    }
+    const web = await fetchWebSuggestions(q, local)
+    results = [...local, ...web]
   }
 
-  return [...local, ...web].slice(0, 6)
+  if (results.length === 0) {
+    results = [fallbackSuggestion(q)]
+  }
+
+  return results.slice(0, 6)
 }

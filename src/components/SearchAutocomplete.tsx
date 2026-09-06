@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { searchSuggestions } from '../search'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { fetchWebSuggestions, getLocalSuggestions, toProductTitle } from '../search'
 import { useApp } from '../store'
 import type { SearchSuggestion } from '../types'
 
@@ -12,61 +12,87 @@ interface SearchAutocompleteProps {
 
 export function SearchAutocomplete({ query, onSelect, visible, focused }: SearchAutocompleteProps) {
   const { items } = useApp()
-  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
-  const [loading, setLoading] = useState(false)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [webSuggestions, setWebSuggestions] = useState<SearchSuggestion[]>([])
+  const [loadingWeb, setLoadingWeb] = useState(false)
   const requestId = useRef(0)
 
-  const show = visible && focused && query.trim().length >= 2
+  const trimmed = query.trim()
+  const localSuggestions = useMemo(
+    () => (trimmed.length >= 1 ? getLocalSuggestions(trimmed, items) : []),
+    [trimmed, items],
+  )
+
+  const suggestions = useMemo(() => {
+    const merged = [...localSuggestions, ...webSuggestions]
+    const seen = new Set<string>()
+    const unique: SearchSuggestion[] = []
+    for (const s of merged) {
+      const key = s.title.toLowerCase()
+      if (seen.has(key)) continue
+      seen.add(key)
+      unique.push(s)
+      if (unique.length >= 4) break
+    }
+    if (unique.length === 0 && trimmed.length >= 1 && !loadingWeb) {
+      unique.push({
+        title: toProductTitle(trimmed),
+        source: 'web',
+        link: `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`,
+      })
+    }
+    return unique
+  }, [localSuggestions, webSuggestions, trimmed, loadingWeb])
 
   useEffect(() => {
-    if (!show) {
-      setSuggestions([])
-      setLoading(false)
+    if (!visible || trimmed.length < 2) {
+      setWebSuggestions([])
+      setLoadingWeb(false)
       return
     }
 
-    if (timerRef.current) clearTimeout(timerRef.current)
     const id = ++requestId.current
-    setLoading(true)
+    setLoadingWeb(true)
+    const local = getLocalSuggestions(trimmed, items)
 
-    timerRef.current = setTimeout(async () => {
-      const results = await searchSuggestions(query, items)
-      if (id !== requestId.current) return
-      setSuggestions(results.slice(0, 4))
-      setLoading(false)
-    }, 350)
+    fetchWebSuggestions(trimmed, local)
+      .then((web) => {
+        if (id !== requestId.current) return
+        setWebSuggestions(web)
+        setLoadingWeb(false)
+      })
+      .catch(() => {
+        if (id !== requestId.current) return
+        setWebSuggestions([])
+        setLoadingWeb(false)
+      })
+  }, [trimmed, visible, items])
 
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-    }
-  }, [query, show, items])
+  const showPanel = visible && trimmed.length >= 1 && (focused || loadingWeb || suggestions.length > 0)
+  if (!showPanel) return null
 
-  if (!show) return null
-  if (!loading && suggestions.length === 0) return null
+  const showLoading = loadingWeb && trimmed.length >= 2 && webSuggestions.length === 0
 
   return (
     <ul className="search-suggestions search-suggestions-inline" role="listbox">
-      {loading && (
+      {suggestions.map((s) => (
+        <li key={`${s.source ?? 'web'}-${s.title}`}>
+          <button
+            type="button"
+            className="search-suggestion-inline"
+            role="option"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => onSelect(s)}
+          >
+            <span className="search-suggestion-inline-title">{s.title}</span>
+            {s.source === 'local' && (
+              <span className="search-suggestion-inline-tag">Yours</span>
+            )}
+          </button>
+        </li>
+      ))}
+      {showLoading && (
         <li className="search-suggestion-inline search-suggestion-loading">Searching…</li>
       )}
-      {!loading &&
-        suggestions.map((s) => (
-          <li key={`${s.source ?? 'web'}-${s.title}`}>
-            <button
-              type="button"
-              className="search-suggestion-inline"
-              role="option"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => onSelect(s)}
-            >
-              <span className="search-suggestion-inline-title">{s.title}</span>
-              {s.source === 'local' && (
-                <span className="search-suggestion-inline-tag">Yours</span>
-              )}
-            </button>
-          </li>
-        ))}
     </ul>
   )
 }

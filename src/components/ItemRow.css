@@ -17,6 +17,13 @@
   display: flex;
   align-items: stretch;
   justify-content: flex-end;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.item-row-swipe.open .item-row-actions {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .swipe-action {

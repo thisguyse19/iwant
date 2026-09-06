@@ -129,7 +129,7 @@ a {
   display: flex;
   flex-direction: column;
   gap: 0;
-  background: var(--bg-card);
+  background: var(--bg-list);
   border-radius: var(--radius-md);
   border: 0.5px solid var(--border-subtle);
   overflow: hidden;
@@ -148,7 +148,7 @@ a {
   align-items: center;
   gap: 0;
   padding: 0;
-  background: var(--bg-card);
+  background: var(--bg-list);
   border-radius: 0;
   border: none;
   transition: background 0.15s;
@@ -156,8 +156,12 @@ a {
   overflow: hidden;
 }
 
+.item-row-main {
+  background: var(--bg-list);
+}
+
 .item-row-main:active {
-  background: var(--bg-elevated);
+  background: var(--bg-base);
 }
 
 .item-thumb-placeholder {
