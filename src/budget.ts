@@ -1,4 +1,9 @@
 import type { AppSettings, FixedExpense, WishlistItem } from './types'
+import {
+  getFixedExpenseAccrued,
+  getFixedExpensePeriodTotal,
+  normalizeFixedExpense,
+} from './fixedExpenses'
 
 export interface MonthRef {
   year: number
@@ -36,10 +41,14 @@ export interface BudgetPeriodSummary {
   budget: number
   spent: number
   fixed: number
+  fixedActual: number
   fixedEntries: FixedExpenseEntry[]
   planned: number
   remaining: number
+  actualRemaining: number
+  projectedRemaining: number
   overBudget: boolean
+  overBudgetActual: boolean
   hasBudget: boolean
   spentCount: number
   fixedCount: number
@@ -146,7 +155,7 @@ function inPeriod(ts: number | undefined, period: BudgetPeriod): boolean {
   return ts >= period.startMs && ts < period.endMs
 }
 
-/** Fixed expenses due within a budget period (one occurrence per calendar month). */
+/** Fixed expenses due within a budget period (month/year intervals). */
 export function getFixedExpenseEntries(
   expenses: FixedExpense[],
   period: BudgetPeriod,
@@ -165,10 +174,18 @@ export function getFixedExpenseEntries(
   while (year < endYear || (year === endYear && month <= endMonth)) {
     const lastDay = new Date(year, month + 1, 0).getDate()
     for (const expense of expenses) {
-      const day = Math.min(expense.dayOfMonth, lastDay)
+      const e = normalizeFixedExpense(expense)
+      if (e.interval !== 'month' && e.interval !== 'year') continue
+
+      if (e.interval === 'year') {
+        const anchor = new Date(e.createdAt)
+        if (month !== anchor.getMonth()) continue
+      }
+
+      const day = Math.min(e.dayOfMonth, lastDay)
       const dueAt = new Date(year, month, day, 12, 0, 0, 0).getTime()
       if (dueAt >= period.startMs && dueAt < period.endMs) {
-        entries.push({ expense, dueAt })
+        entries.push({ expense: e, dueAt })
       }
     }
     month += 1
@@ -184,7 +201,7 @@ export function getFixedExpenseEntries(
 export function getDailySpending(
   items: WishlistItem[],
   period: BudgetPeriod,
-  fixedEntries: FixedExpenseEntry[] = [],
+  fixedExpenses: FixedExpense[] = [],
 ): DailySpend[] {
   const { startMs, endMs, daysInPeriod } = period
   const msPerDay = 86400000
@@ -210,16 +227,44 @@ export function getDailySpending(
     })
   }
 
-  for (const { expense, dueAt } of fixedEntries) {
-    const index = Math.min(daysInPeriod - 1, Math.floor((dueAt - startMs) / msPerDay))
-    buckets[index].amount += expense.amount
-    buckets[index].itemCount += 1
-    buckets[index].items.push({
-      id: expense.id,
-      title: expense.name,
-      price: expense.amount,
-      currency: '',
-    })
+  for (const expense of fixedExpenses) {
+    const e = normalizeFixedExpense(expense)
+    if (e.interval === 'day') {
+      for (let i = 0; i < daysInPeriod; i++) {
+        buckets[i].amount += e.amount
+        buckets[i].itemCount += 1
+        buckets[i].items.push({
+          id: e.id,
+          title: e.name,
+          price: e.amount,
+          currency: '',
+        })
+      }
+    } else if (e.interval === 'week') {
+      for (let i = 0; i < daysInPeriod; i += 7) {
+        buckets[i].amount += e.amount
+        buckets[i].itemCount += 1
+        buckets[i].items.push({
+          id: e.id,
+          title: e.name,
+          price: e.amount,
+          currency: '',
+        })
+      }
+    } else {
+      const entries = getFixedExpenseEntries([e], period)
+      for (const { expense: fixed, dueAt } of entries) {
+        const index = Math.min(daysInPeriod - 1, Math.floor((dueAt - startMs) / msPerDay))
+        buckets[index].amount += fixed.amount
+        buckets[index].itemCount += 1
+        buckets[index].items.push({
+          id: fixed.id,
+          title: fixed.name,
+          price: fixed.amount,
+          currency: '',
+        })
+      }
+    }
   }
 
   return buckets
@@ -233,6 +278,7 @@ export function summarizeBudgetPeriod(
   const period = getBudgetPeriod(month, settings.budgetResetDay)
   const budget = getBudgetForPeriod(settings, period.key)
   const currency = settings.currency
+  const counting = settings.fixedExpenseCounting ?? 'lump'
 
   const boughtInPeriod = items.filter(
     (i) => i.status === 'bought' && inPeriod(i.boughtAt, period) && i.price != null,
@@ -242,8 +288,15 @@ export function summarizeBudgetPeriod(
   const fixedExpenses = [...(settings.fixedExpenses ?? [])].sort(
     (a, b) => a.sortOrder - b.sortOrder || a.createdAt - b.createdAt,
   )
+
+  let fixed = 0
+  let fixedActual = 0
+  for (const expense of fixedExpenses) {
+    fixed += getFixedExpensePeriodTotal(expense, period)
+    fixedActual += getFixedExpenseAccrued(expense, period, counting)
+  }
+
   const fixedEntries = getFixedExpenseEntries(fixedExpenses, period)
-  const fixed = fixedEntries.reduce((sum, e) => sum + e.expense.amount, 0)
 
   const active = items.filter((i) => i.status === 'queued' || i.status === 'ready')
   const planned = period.isCurrent
@@ -251,14 +304,16 @@ export function summarizeBudgetPeriod(
     : 0
   const unpricedActive = period.isCurrent ? active.filter((i) => i.price == null).length : 0
 
-  const remaining = budget - spent - fixed - planned
-  const dailySpend = getDailySpending(items, period, fixedEntries)
+  const projectedRemaining = budget - spent - fixed - planned
+  const actualRemaining = budget - spent - fixedActual
+  const remaining = projectedRemaining
+  const dailySpend = getDailySpending(items, period, fixedExpenses)
   const maxDailySpend = Math.max(...dailySpend.map((d) => d.amount), 1)
 
   const affordable = period.isCurrent
     ? active
         .filter((i) => i.price != null)
-        .filter((i) => budget > 0 && (i.price ?? 0) <= remaining)
+        .filter((i) => budget > 0 && (i.price ?? 0) <= projectedRemaining)
     : []
 
   const boughtItems = [...items]
@@ -270,10 +325,14 @@ export function summarizeBudgetPeriod(
     budget,
     spent,
     fixed,
+    fixedActual,
     fixedEntries,
     planned,
     remaining,
-    overBudget: budget > 0 && remaining < 0,
+    actualRemaining,
+    projectedRemaining,
+    overBudget: budget > 0 && projectedRemaining < 0,
+    overBudgetActual: budget > 0 && actualRemaining < 0,
     hasBudget: budget > 0,
     spentCount: boughtInPeriod.length,
     fixedCount: fixedEntries.length,

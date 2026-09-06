@@ -290,6 +290,21 @@ a {
   margin-bottom: 10px;
 }
 
+.section-label-accent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-label-accent::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
 .total-bar {
   display: flex;
   align-items: center;
@@ -515,7 +530,8 @@ a {
   margin-bottom: 0;
 }
 
-.field label {
+.field label,
+.field .field-label {
   display: block;
   font-size: 13px;
   color: var(--text-secondary);

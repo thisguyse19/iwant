@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { TabBar } from './components/TabBar'
-import { AppProvider } from './store'
+import { AppProvider, useApp } from './store'
 import { ExitAnimationProvider } from './exitAnimation'
 import { WishlistScreen } from './screens/WishlistScreen'
 import { BasketsScreen } from './screens/BasketsScreen'
@@ -10,15 +10,20 @@ import { AddSheet } from './screens/AddSheet'
 import { ItemOverviewSheet } from './screens/ItemOverviewSheet'
 import { ItemEditSheet } from './screens/ItemEditSheet'
 import { BoughtDateSheet } from './screens/BoughtDateSheet'
-import { useApp } from './store'
 import { useRegisterSW } from 'virtual:pwa-register/react'
+import { setHapticEnabled } from './utils'
 import './styles/global.css'
 
 export type Tab = 'wishlist' | 'baskets' | 'budget' | 'settings'
 
 function AppMain() {
   const [tab, setTab] = useState<Tab>('wishlist')
-  const { setAddOpen, loading, setViewingBasket, setBasketCreatePending, clearSelection } = useApp()
+  const { setAddOpen, loading, setViewingBasket, setBasketCreatePending, clearSelection, settings } = useApp()
+
+  useEffect(() => {
+    document.documentElement.dataset.accent = settings.accentStyle ?? 'slate'
+    setHapticEnabled(settings.hapticFeedback !== false)
+  }, [settings.accentStyle, settings.hapticFeedback])
 
   const {
     needRefresh: [needRefresh],

@@ -1,14 +1,23 @@
 import { useMemo, useState } from 'react'
 import { compareMonths, getCurrentMonth, getRecentMonths, shiftMonth } from '../budget'
 import { budgetNoBudgetCopy, withinReachEmptyLine, withinReachLine } from '../copy'
+import {
+  FIXED_INTERVAL_LABELS,
+  FIXED_INTERVALS,
+  fixedIntervalAccent,
+  formatFixedExpenseMeta,
+  formatFixedRate,
+  getFixedExpensePeriodTotal,
+  normalizeFixedExpense,
+} from '../fixedExpenses'
 import { useExitAnimation, useBudgetPulse } from '../exitAnimation'
 import { useApp, useBudgetPeriod } from '../store'
 import { ItemRow } from '../components/ItemRow'
 import { BudgetChart } from '../components/BudgetChart'
 import { Sheet } from '../components/Sheet'
 import { ScreenChrome } from '../components/ScreenChrome'
-import type { FixedExpense } from '../types'
-import { formatFixedDueDay, formatPrice, vibrateTap } from '../utils'
+import type { BudgetHeroView, FixedExpense, FixedExpenseInterval } from '../types'
+import { formatPrice, vibrateTap } from '../utils'
 import '../components/ItemRow.css'
 import './BudgetScreen.css'
 
@@ -18,7 +27,77 @@ interface FixedExpenseDraft {
   id?: string
   name: string
   amount: string
+  interval: FixedExpenseInterval
   dayOfMonth: string
+}
+
+const HERO_VIEWS: Array<{ id: BudgetHeroView; label: string; short: string }> = [
+  { id: 'actual', label: 'Actual left', short: 'Actual' },
+  { id: 'projected', label: 'Projected left', short: 'Projected' },
+  { id: 'spent', label: 'Spent', short: 'Spent' },
+  { id: 'budget', label: 'Budget cap', short: 'Budget' },
+]
+
+function heroViewData(
+  view: BudgetHeroView,
+  summary: ReturnType<typeof useBudgetPeriod>,
+): { amount: number; label: string; over: boolean } {
+  const { currency, hasBudget, period } = summary
+
+  if (!hasBudget) {
+    if (view === 'spent' || !period.isCurrent) {
+      return { amount: summary.spent, label: `${summary.spentCount} purchases`, over: false }
+    }
+    return { amount: summary.spent, label: 'Set a budget to track spending', over: false }
+  }
+
+  if (!period.isCurrent) {
+    if (view === 'spent') {
+      return { amount: summary.spent, label: `${summary.spentCount} purchases`, over: false }
+    }
+    if (view === 'budget') {
+      return { amount: summary.budget, label: 'Budget for period', over: false }
+    }
+    const diff = summary.budget - summary.spent - summary.fixed
+    return {
+      amount: Math.abs(diff),
+      label: diff >= 0
+        ? `${formatPrice(diff, currency)} under budget`
+        : `${formatPrice(Math.abs(diff), currency)} over`,
+      over: diff < 0,
+    }
+  }
+
+  switch (view) {
+    case 'actual':
+      return {
+        amount: Math.abs(summary.actualRemaining),
+        label: summary.overBudgetActual
+          ? `${formatPrice(Math.abs(summary.actualRemaining), currency)} over`
+          : `${formatPrice(summary.actualRemaining, currency)} left`,
+        over: summary.overBudgetActual,
+      }
+    case 'projected':
+      return {
+        amount: Math.abs(summary.projectedRemaining),
+        label: summary.overBudget
+          ? `${formatPrice(Math.abs(summary.projectedRemaining), currency)} over`
+          : `${formatPrice(summary.projectedRemaining, currency)} left`,
+        over: summary.overBudget,
+      }
+    case 'spent':
+      return {
+        amount: summary.spent,
+        label: `${summary.spentCount} bought · ${formatPrice(summary.fixedActual, currency)} fixed so far`,
+        over: false,
+      }
+    case 'budget':
+      return {
+        amount: summary.budget,
+        label: `${formatPrice(summary.spent + summary.fixedActual, currency)} committed so far`,
+        over: false,
+      }
+  }
 }
 
 export function BudgetScreen() {
@@ -27,6 +106,7 @@ export function BudgetScreen() {
   const budgetPulse = useBudgetPulse()
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth)
   const summary = useBudgetPeriod(selectedMonth)
+  const heroView = settings.budgetHeroView ?? 'actual'
   const [editOpen, setEditOpen] = useState(false)
   const [budgetInput, setBudgetInput] = useState('')
   const [budgetScope, setBudgetScope] = useState<BudgetScope>('month')
@@ -90,16 +170,18 @@ export function BudgetScreen() {
   }
 
   const openFixedAdd = () => {
-    setFixedDraft({ name: '', amount: '', dayOfMonth: '1' })
+    setFixedDraft({ name: '', amount: '', interval: 'month', dayOfMonth: '1' })
     setFixedSheetOpen(true)
   }
 
   const openFixedEdit = (expense: FixedExpense) => {
+    const e = normalizeFixedExpense(expense)
     setFixedDraft({
-      id: expense.id,
-      name: expense.name,
-      amount: String(expense.amount),
-      dayOfMonth: String(expense.dayOfMonth),
+      id: e.id,
+      name: e.name,
+      amount: String(e.amount),
+      interval: e.interval,
+      dayOfMonth: String(e.dayOfMonth),
     })
     setFixedSheetOpen(true)
   }
@@ -119,7 +201,9 @@ export function BudgetScreen() {
     const existing = settings.fixedExpenses ?? []
     if (fixedDraft.id) {
       const next = existing.map((e) =>
-        e.id === fixedDraft.id ? { ...e, name, amount, dayOfMonth } : e,
+        e.id === fixedDraft.id
+          ? { ...e, name, amount, interval: fixedDraft.interval, dayOfMonth }
+          : e,
       )
       await updateSettings({ fixedExpenses: next })
     } else {
@@ -127,6 +211,7 @@ export function BudgetScreen() {
         id: crypto.randomUUID(),
         name,
         amount,
+        interval: fixedDraft.interval,
         dayOfMonth,
         sortOrder: existing.length,
         createdAt: Date.now(),
@@ -143,13 +228,15 @@ export function BudgetScreen() {
     closeFixedSheet()
   }
 
+  const fixedForProgress = heroView === 'actual' ? summary.fixedActual : summary.fixed
+
   const spentPercent = summary.hasBudget
     ? Math.min(100, (summary.spent / summary.budget) * 100)
     : 0
   const fixedPercent = summary.hasBudget
-    ? Math.min(100 - spentPercent, (summary.fixed / summary.budget) * 100)
+    ? Math.min(100 - spentPercent, (fixedForProgress / summary.budget) * 100)
     : 0
-  const plannedPercent = summary.hasBudget && summary.period.isCurrent
+  const plannedPercent = summary.hasBudget && summary.period.isCurrent && heroView === 'projected'
     ? Math.min(100 - spentPercent - fixedPercent, (summary.planned / summary.budget) * 100)
     : 0
 
@@ -158,21 +245,7 @@ export function BudgetScreen() {
   const spentDash = (committedPercent / 100) * ringCircumference
   const plannedDash = (plannedPercent / 100) * ringCircumference
 
-  const heroAmount = summary.hasBudget
-    ? summary.period.isCurrent
-      ? Math.abs(summary.remaining)
-      : summary.spent
-    : summary.spent
-
-  const heroLabel = !summary.hasBudget
-    ? summary.period.isCurrent ? 'Set a budget to track spending' : `${summary.spentCount} purchases`
-    : summary.period.isCurrent
-      ? summary.overBudget
-        ? `${formatPrice(Math.abs(summary.remaining), summary.currency)} over`
-        : `${formatPrice(summary.remaining, summary.currency)} left`
-      : summary.spent <= summary.budget
-        ? `${formatPrice(summary.budget - summary.spent, summary.currency)} under budget`
-        : `${formatPrice(summary.spent - summary.budget, summary.currency)} over`
+  const hero = heroViewData(heroView, summary)
 
   const monthToolbar = (
     <div className="budget-month-toolbar">
@@ -243,8 +316,11 @@ export function BudgetScreen() {
   const reachEmptyLine = withinReachEmptyLine(
     summary.hasBudget,
     summary.affordable.length,
-    summary.remaining,
+    summary.projectedRemaining,
   )
+
+  const showDueDay =
+    fixedDraft?.interval === 'month' || fixedDraft?.interval === 'year'
 
   return (
     <>
@@ -260,21 +336,45 @@ export function BudgetScreen() {
       >
         <section className={`budget-hero-card ${budgetPulse ? 'budget-hero-pulse' : ''}`} aria-label="Budget summary">
           <div className="budget-hero-top">
-            <div>
+            <div className="budget-hero-main">
               <p className="budget-hero-period">{summary.period.label}</p>
+
+              <div className="budget-hero-view-tabs" role="tablist" aria-label="Budget view">
+                {HERO_VIEWS.map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={heroView === v.id}
+                    className={`budget-hero-view-tab ${heroView === v.id ? 'active' : ''}`}
+                    onClick={() => {
+                      vibrateTap()
+                      void updateSettings({ budgetHeroView: v.id })
+                    }}
+                  >
+                    {v.short}
+                  </button>
+                ))}
+              </div>
+
               <p
                 className="budget-hero-amount"
-                style={{ color: summary.overBudget ? 'var(--destructive)' : undefined }}
+                style={{ color: hero.over ? 'var(--destructive)' : undefined }}
               >
-                {summary.hasBudget || summary.spent > 0
-                  ? formatPrice(heroAmount, summary.currency)
+                {summary.hasBudget || summary.spent > 0 || heroView === 'budget'
+                  ? formatPrice(hero.amount, summary.currency)
                   : '—'}
               </p>
-              <p className="budget-hero-label">{heroLabel}</p>
-              {summary.period.isCurrent && reachLine && (
+              <p className="budget-hero-label">{hero.label}</p>
+              {summary.period.isCurrent && heroView === 'actual' && settings.fixedExpenseCounting === 'accrue' && summary.fixed > summary.fixedActual && (
+                <p className="budget-hero-reach muted">
+                  {formatPrice(summary.fixed - summary.fixedActual, summary.currency)} fixed costs still to accrue
+                </p>
+              )}
+              {summary.period.isCurrent && reachLine && heroView === 'projected' && (
                 <p className="budget-hero-reach">{reachLine}</p>
               )}
-              {summary.period.isCurrent && reachEmptyLine && (
+              {summary.period.isCurrent && reachEmptyLine && heroView === 'projected' && (
                 <p className="budget-hero-reach muted">{reachEmptyLine}</p>
               )}
             </div>
@@ -312,7 +412,7 @@ export function BudgetScreen() {
                 className="budget-progress-fixed"
                 style={{ width: `${fixedPercent}%`, left: `${spentPercent}%` }}
               />
-              {summary.period.isCurrent && (
+              {summary.period.isCurrent && heroView === 'projected' && (
                 <div
                   className="budget-progress-planned"
                   style={{
@@ -325,7 +425,7 @@ export function BudgetScreen() {
           )}
 
           <div className="budget-stat-grid">
-            <div className="budget-stat-cell">
+            <div className="budget-stat-cell budget-stat-budget">
               <span className="budget-stat-label">Budget</span>
               <span className="budget-stat-value">
                 {summary.hasBudget ? formatPrice(summary.budget, summary.currency) : '—'}
@@ -334,28 +434,30 @@ export function BudgetScreen() {
                 <span className="budget-stat-note">This month only</span>
               )}
             </div>
-            <div className="budget-stat-cell">
+            <div className="budget-stat-cell budget-stat-spent">
               <span className="budget-stat-label">Spent</span>
               <span className="budget-stat-value">{formatPrice(summary.spent, summary.currency)}</span>
               <span className="budget-stat-note">{summary.spentCount} bought</span>
             </div>
             {(summary.fixed > 0 || fixedTemplates.length > 0) && (
-              <div className="budget-stat-cell">
+              <div className="budget-stat-cell budget-stat-fixed">
                 <span className="budget-stat-label">Fixed</span>
                 <span className="budget-stat-value">{formatPrice(summary.fixed, summary.currency)}</span>
                 <span className="budget-stat-note">
-                  {summary.fixedCount} due this period
+                  {summary.period.isCurrent && settings.fixedExpenseCounting === 'accrue'
+                    ? `${formatPrice(summary.fixedActual, summary.currency)} accrued`
+                    : `${summary.fixedCount || fixedTemplates.length} in period`}
                 </span>
               </div>
             )}
             {summary.period.isCurrent && (
               <>
-                <div className="budget-stat-cell">
+                <div className="budget-stat-cell budget-stat-planned">
                   <span className="budget-stat-label">On list</span>
                   <span className="budget-stat-value">{formatPrice(summary.planned, summary.currency)}</span>
                   <span className="budget-stat-note">{summary.plannedCount} planned</span>
                 </div>
-                <div className="budget-stat-cell">
+                <div className="budget-stat-cell budget-stat-days">
                   <span className="budget-stat-label">Days left</span>
                   <span className="budget-stat-value">{summary.period.daysRemaining}</span>
                   <span className="budget-stat-note">in period</span>
@@ -384,38 +486,52 @@ export function BudgetScreen() {
 
         <section className="budget-section">
           <div className="budget-fixed-header">
-            <h2 className="section-label">Fixed expenses</h2>
+            <h2 className="section-label section-label-accent">Fixed expenses</h2>
             <button type="button" className="budget-fixed-add" onClick={openFixedAdd}>
               Add
             </button>
           </div>
           {fixedTemplates.length === 0 ? (
             <p className="budget-fixed-empty">
-              Rent, subscriptions, bills — anything that leaves every month whether you buy from your list or not.
+              Rent, subscriptions, daily coffee — anything recurring, at any interval.
             </p>
           ) : (
             <div className="budget-fixed-list">
-              {fixedTemplates.map((expense) => (
-                <button
-                  key={expense.id}
-                  type="button"
-                  className="budget-fixed-row"
-                  onClick={() => openFixedEdit(expense)}
-                >
-                  <div>
-                    <div className="budget-fixed-name">{expense.name}</div>
-                    <div className="budget-fixed-meta">{formatFixedDueDay(expense.dayOfMonth)}</div>
-                  </div>
-                  <span className="budget-fixed-amount">
-                    {formatPrice(expense.amount, summary.currency)}
-                  </span>
-                </button>
-              ))}
+              {fixedTemplates.map((expense) => {
+                const e = normalizeFixedExpense(expense)
+                const periodTotal = getFixedExpensePeriodTotal(e, summary.period)
+                return (
+                  <button
+                    key={expense.id}
+                    type="button"
+                    className="budget-fixed-row"
+                    onClick={() => openFixedEdit(expense)}
+                  >
+                    <span
+                      className="budget-fixed-interval"
+                      style={{ background: fixedIntervalAccent(e.interval) }}
+                      aria-hidden="true"
+                    />
+                    <div className="budget-fixed-body">
+                      <div className="budget-fixed-name">{e.name}</div>
+                      <div className="budget-fixed-meta">
+                        {formatFixedExpenseMeta(e, periodTotal, summary.currency)}
+                      </div>
+                    </div>
+                    <div className="budget-fixed-amount-col">
+                      <span className="budget-fixed-amount">
+                        {formatPrice(periodTotal, summary.currency)}
+                      </span>
+                      <span className="budget-fixed-rate">{formatFixedRate(e, summary.currency)}</span>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           )}
           {summary.fixed > 0 && (
             <p className="budget-fixed-period-note">
-              {formatPrice(summary.fixed, summary.currency)} counted against this period.
+              {formatPrice(summary.fixed, summary.currency)} total fixed costs this period.
             </p>
           )}
         </section>
@@ -552,7 +668,7 @@ export function BudgetScreen() {
               <input
                 id="fixed-name"
                 type="text"
-                placeholder="Rent, phone bill…"
+                placeholder="Rent, phone bill, coffee…"
                 value={fixedDraft.name}
                 onChange={(e) => setFixedDraft({ ...fixedDraft, name: e.target.value })}
               />
@@ -573,20 +689,40 @@ export function BudgetScreen() {
             </div>
 
             <div className="field">
-              <label htmlFor="fixed-day">Due on day</label>
-              <input
-                id="fixed-day"
-                type="number"
-                inputMode="numeric"
-                min="1"
-                max="28"
-                value={fixedDraft.dayOfMonth}
-                onChange={(e) => setFixedDraft({ ...fixedDraft, dayOfMonth: e.target.value })}
-              />
-              <p className="budget-field-hint">
-                Counts once per calendar month when that day falls in your budget period.
-              </p>
+              <span className="field-label">Repeats</span>
+              <div className="budget-interval-grid">
+                {FIXED_INTERVALS.map((interval) => (
+                  <button
+                    key={interval}
+                    type="button"
+                    className={`budget-interval-btn ${fixedDraft.interval === interval ? 'active' : ''}`}
+                    onClick={() => setFixedDraft({ ...fixedDraft, interval })}
+                  >
+                    {FIXED_INTERVAL_LABELS[interval]}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {showDueDay && (
+              <div className="field">
+                <label htmlFor="fixed-day">Due on day</label>
+                <input
+                  id="fixed-day"
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  max="28"
+                  value={fixedDraft.dayOfMonth}
+                  onChange={(e) => setFixedDraft({ ...fixedDraft, dayOfMonth: e.target.value })}
+                />
+                <p className="budget-field-hint">
+                  {fixedDraft.interval === 'year'
+                    ? 'Annual charge on this day each year.'
+                    : 'Counts once per calendar month when that day falls in your budget period.'}
+                </p>
+              </div>
+            )}
 
             <button type="button" className="primary-btn" onClick={saveFixedExpense}>
               Save
