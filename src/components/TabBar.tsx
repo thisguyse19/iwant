@@ -48,7 +48,7 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
     if (action) setGlassConfig(action, TAB_ACTION_GLASS)
     if (menu) setGlassConfig(menu, ADD_MENU_GLASS)
     void refresh()
-  }, [menuOpen, refresh])
+  }, [menuOpen, active, refresh])
 
   useEffect(() => {
     if (!menuOpen) return

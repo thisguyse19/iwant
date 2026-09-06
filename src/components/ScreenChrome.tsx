@@ -58,10 +58,14 @@ export function ScreenChrome({
       if (toolbarEl) {
         const stickyTop = toolbarEl.getBoundingClientRect().top
         const anchorTop = chromeEl.getBoundingClientRect().bottom
-        if (stickyTop <= anchorTop + 1) {
+        const stuck = stickyTop <= anchorTop + 1
+        if (stuck) {
           toolbarEl.dataset.stuck = ''
+          scrollEl.dataset.unifiedChrome = ''
+          scrollEl.style.setProperty('--toolbar-chrome-height', `${toolbarEl.offsetHeight}px`)
         } else {
           delete toolbarEl.dataset.stuck
+          delete scrollEl.dataset.unifiedChrome
         }
       }
     }

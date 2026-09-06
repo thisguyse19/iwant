@@ -56,6 +56,16 @@
   -webkit-backdrop-filter: var(--liquid-glass-blur);
   border-bottom: 0.5px solid color-mix(in srgb, var(--border-subtle) calc(var(--nav-reveal) * 100%), transparent);
   pointer-events: none;
+  transition: bottom 0.18s var(--spring);
+}
+
+.screen-scroll[data-unified-chrome] .screen-sticky-blur {
+  border-bottom: none;
+  bottom: calc(-1 * var(--toolbar-chrome-height, 0px));
+}
+
+.screen-scroll[data-unified-chrome] .screen-sticky-edge {
+  opacity: 0;
 }
 
 .screen-sticky-edge {
@@ -194,6 +204,21 @@
 
 .screen-toolbar-sticky[data-stuck] .screen-toolbar-blur {
   opacity: 1;
+}
+
+.screen-scroll[data-unified-chrome] .screen-toolbar-sticky[data-stuck] .screen-toolbar-blur {
+  opacity: 0;
+}
+
+.screen-scroll[data-unified-chrome] .screen-toolbar-sticky[data-stuck]::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0.5px;
+  background: var(--border-subtle);
+  pointer-events: none;
 }
 
 .screen-toolbar-content {

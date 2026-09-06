@@ -19,8 +19,8 @@
   position: absolute;
   z-index: 50;
   isolation: isolate;
-  overflow: visible;
-  transform: translateZ(0);
+  overflow: hidden;
+  box-sizing: border-box;
   background:
     linear-gradient(180deg, var(--liquid-glass-border-inner) 0%, transparent 18%),
     var(--liquid-glass-bg);
@@ -28,9 +28,9 @@
   -webkit-backdrop-filter: var(--liquid-glass-blur);
   border: 0.5px solid var(--liquid-glass-border);
   box-shadow: var(--liquid-glass-shadow), var(--liquid-glass-depth);
+  pointer-events: auto;
 }
 
-/* WebGL shader owns the material when active */
 .app-shell.liquid-glass-active .liquid-glass-panel {
   background: transparent;
   backdrop-filter: none;
@@ -40,6 +40,10 @@
 }
 
 .liquid-glass-panel > canvas {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
   pointer-events: none;
 }
 
@@ -52,11 +56,12 @@
   display: flex;
   align-items: stretch;
   min-height: var(--tab-bar-pill-h);
+  min-width: 0;
+  width: calc(100% - (var(--tab-bar-h-inset) * 2) - var(--tab-bar-action-size) - var(--tab-bar-gap));
   padding: var(--tab-bar-pad);
   border-radius: var(--tab-bar-radius);
   bottom: calc(var(--tab-bar-float) + var(--safe-bottom));
   left: var(--tab-bar-h-inset);
-  right: calc(var(--tab-bar-h-inset) + var(--tab-bar-action-size) + var(--tab-bar-gap));
 }
 
 .tab-indicator {
@@ -83,9 +88,18 @@
 }
 
 .app-shell.liquid-glass-active .tab-indicator-glass {
-  background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  background: color-mix(in srgb, var(--accent) 18%, rgba(255, 255, 255, 0.42));
+  backdrop-filter: blur(14px) saturate(190%);
+  -webkit-backdrop-filter: blur(14px) saturate(190%);
+  border: 0.5px solid color-mix(in srgb, var(--accent) 32%, rgba(255, 255, 255, 0.35));
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.1),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.55);
+}
+
+.app-shell.liquid-glass-active .tab-indicator-glass::before,
+.app-shell.liquid-glass-active .tab-indicator-glass::after {
+  opacity: 0.35;
 }
 
 .tab-indicator-glass::before {
@@ -180,11 +194,13 @@
 }
 
 .add-menu {
+  position: absolute;
   min-width: 220px;
   padding: 7px;
   border-radius: 22px;
   right: var(--tab-bar-h-inset);
   bottom: calc(var(--tab-bar-float) + var(--safe-bottom) + var(--tab-bar-action-size) + 12px);
+  z-index: 60;
 }
 
 .add-menu-item {
@@ -254,6 +270,11 @@
 }
 
 @media (prefers-color-scheme: dark) {
+  .app-shell.liquid-glass-active .tab-indicator-glass {
+    background: color-mix(in srgb, var(--accent) 22%, rgba(72, 72, 74, 0.62));
+    border-color: color-mix(in srgb, var(--accent) 36%, rgba(255, 255, 255, 0.12));
+  }
+
   .tab-indicator-glass::after {
     opacity: 0.35;
   }
