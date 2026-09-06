@@ -1,6 +1,14 @@
 export type ItemStatus = 'queued' | 'ready' | 'bought' | 'dropped'
 export type Priority = 'high' | 'medium' | 'low'
 
+export interface Basket {
+  id: string
+  name: string
+  createdAt: number
+  updatedAt: number
+  sortOrder: number
+}
+
 export interface WishlistItem {
   id: string
   title: string
@@ -11,6 +19,7 @@ export interface WishlistItem {
   notes?: string
   link?: string
   imageUrl?: string
+  basketId?: string
   status: ItemStatus
   sortOrder: number
   createdAt: number

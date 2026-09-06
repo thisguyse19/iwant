@@ -68,7 +68,8 @@ a {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: calc(12px + var(--safe-top)) 16px calc(var(--tab-height) + var(--safe-bottom) + 24px);
+  padding: calc(12px + var(--safe-top)) 16px calc(var(--tab-height) + var(--safe-bottom) + 8px);
+  scroll-padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 8px);
 }
 
 .screen-header {
@@ -375,11 +376,11 @@ a {
   flex-direction: column;
   overflow: hidden;
   animation: slideUp 0.35s var(--spring);
-  transition: transform 0.2s var(--spring);
+  will-change: transform;
 }
 
 .sheet-closing {
-  transition: transform 0.2s var(--spring);
+  transition: transform 0.22s cubic-bezier(0.32, 0.72, 0, 1);
   transform: translateX(-50%) translateY(100%) !important;
 }
 
@@ -444,6 +445,11 @@ a {
 
 .field {
   margin-bottom: 16px;
+}
+
+.field-search {
+  position: relative;
+  z-index: 5;
 }
 
 .field label {
@@ -649,12 +655,19 @@ a {
 
 /* Search autocomplete */
 .search-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
   list-style: none;
-  margin-top: 8px;
-  background: var(--bg-elevated);
+  background: var(--bg-card);
   border-radius: var(--radius-md);
   border: 0.5px solid var(--border-subtle);
   overflow: hidden;
+  box-shadow: var(--shadow-md);
+  z-index: 20;
+  max-height: 240px;
+  overflow-y: auto;
 }
 
 .search-suggestion {

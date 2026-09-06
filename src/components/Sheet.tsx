@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, type ReactNode } from 'react'
 
 interface SheetProps {
   open: boolean
@@ -18,20 +18,29 @@ export function Sheet({
   autoFocus = false,
 }: SheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null)
+  const backdropRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef({ startY: 0, currentY: 0, dragging: false })
-  const [offsetY, setOffsetY] = useState(0)
-  const [closing, setClosing] = useState(false)
+  const rafRef = useRef<number | null>(null)
+
+  const applyOffset = useCallback((y: number, animate: boolean) => {
+    const sheet = sheetRef.current
+    const backdrop = backdropRef.current
+    if (!sheet) return
+    sheet.style.transition = animate ? 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)' : 'none'
+    sheet.style.transform = `translateX(-50%) translateY(${y}px)`
+    if (backdrop) {
+      backdrop.style.opacity = String(Math.max(0, 0.4 - y / 600))
+    }
+  }, [])
 
   useEffect(() => {
-    if (!open) {
-      setOffsetY(0)
-      setClosing(false)
-      return
-    }
+    if (!open) return
+    dragRef.current = { startY: 0, currentY: 0, dragging: false }
+    requestAnimationFrame(() => applyOffset(0, false))
     if (!autoFocus) return
     const firstInput = sheetRef.current?.querySelector<HTMLElement>('input, textarea')
     requestAnimationFrame(() => firstInput?.focus())
-  }, [open, autoFocus])
+  }, [open, autoFocus, applyOffset])
 
   useEffect(() => {
     if (!open) return
@@ -44,80 +53,69 @@ export function Sheet({
 
   const finishDrag = useCallback(
     (delta: number) => {
-      if (delta > 100) {
-        setClosing(true)
-        setTimeout(onClose, 200)
-      } else {
-        setOffsetY(0)
-      }
       dragRef.current.dragging = false
+      if (delta > 120) {
+        applyOffset(window.innerHeight, true)
+        setTimeout(onClose, 220)
+      } else {
+        applyOffset(0, true)
+      }
     },
-    [onClose],
+    [onClose, applyOffset],
   )
 
-  const onTouchStart = (e: React.TouchEvent) => {
-    dragRef.current = { startY: e.touches[0].clientY, currentY: 0, dragging: true }
+  const onDragStart = (clientY: number) => {
+    dragRef.current = { startY: clientY, currentY: 0, dragging: true }
   }
 
-  const onTouchMove = (e: React.TouchEvent) => {
+  const onDragMove = (clientY: number) => {
     if (!dragRef.current.dragging) return
-    const delta = Math.max(0, e.touches[0].clientY - dragRef.current.startY)
+    const delta = Math.max(0, clientY - dragRef.current.startY)
     dragRef.current.currentY = delta
-    setOffsetY(delta)
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    rafRef.current = requestAnimationFrame(() => applyOffset(delta, false))
   }
 
-  const onTouchEnd = () => {
-    if (!dragRef.current.dragging) return
-    finishDrag(dragRef.current.currentY)
-  }
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    if (e.pointerType === 'touch') return
-    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
-    dragRef.current = { startY: e.clientY, currentY: 0, dragging: true }
-  }
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragRef.current.dragging) return
-    const delta = Math.max(0, e.clientY - dragRef.current.startY)
-    dragRef.current.currentY = delta
-    setOffsetY(delta)
-  }
-
-  const onPointerUp = () => {
+  const onDragEnd = () => {
     if (!dragRef.current.dragging) return
     finishDrag(dragRef.current.currentY)
   }
 
   if (!open) return null
 
-  const backdropOpacity = Math.max(0, 0.4 - offsetY / 600)
-  const transform = `translateX(-50%) translateY(${offsetY}px)`
-
   return (
     <>
       <div
+        ref={backdropRef}
         className="sheet-backdrop"
         onClick={onClose}
         aria-hidden="true"
-        style={{ opacity: backdropOpacity }}
       />
       <div
-        className={`sheet ${closing ? 'sheet-closing' : ''}`}
+        className="sheet"
         ref={sheetRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="sheet-title"
-        style={{ transform }}
       >
         <div
           className="sheet-drag-zone"
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
+          onTouchStart={(e) => onDragStart(e.touches[0].clientY)}
+          onTouchMove={(e) => {
+            e.preventDefault()
+            onDragMove(e.touches[0].clientY)
+          }}
+          onTouchEnd={onDragEnd}
+          onPointerDown={(e) => {
+            if (e.pointerType === 'touch') return
+            e.currentTarget.setPointerCapture(e.pointerId)
+            onDragStart(e.clientY)
+          }}
+          onPointerMove={(e) => {
+            if (!dragRef.current.dragging || e.pointerType === 'touch') return
+            onDragMove(e.clientY)
+          }}
+          onPointerUp={onDragEnd}
         >
           <div className="sheet-handle" aria-hidden="true" />
           <div className="sheet-header">

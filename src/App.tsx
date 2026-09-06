@@ -2,16 +2,18 @@ import { useState } from 'react'
 import { TabBar } from './components/TabBar'
 import { AppProvider } from './store'
 import { WishlistScreen } from './screens/WishlistScreen'
+import { BasketsScreen } from './screens/BasketsScreen'
 import { BudgetScreen } from './screens/BudgetScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { AddSheet } from './screens/AddSheet'
 import { ItemOverviewSheet } from './screens/ItemOverviewSheet'
 import { ItemEditSheet } from './screens/ItemEditSheet'
+import { BasketDetailSheet } from './screens/BasketDetailSheet'
 import { useApp } from './store'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import './styles/global.css'
 
-export type Tab = 'wishlist' | 'budget' | 'settings'
+export type Tab = 'wishlist' | 'baskets' | 'budget' | 'settings'
 
 function AppContent() {
   const [tab, setTab] = useState<Tab>('wishlist')
@@ -35,6 +37,7 @@ function AppContent() {
   return (
     <div className="app-shell">
       {tab === 'wishlist' && <WishlistScreen />}
+      {tab === 'baskets' && <BasketsScreen />}
       {tab === 'budget' && <BudgetScreen />}
       {tab === 'settings' && <SettingsScreen />}
 
@@ -47,6 +50,7 @@ function AppContent() {
       <AddSheet />
       <ItemOverviewSheet />
       <ItemEditSheet />
+      <BasketDetailSheet />
 
       {needRefresh && (
         <div className="update-banner">

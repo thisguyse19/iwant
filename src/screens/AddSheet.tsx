@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
 import { SearchAutocomplete } from '../components/SearchAutocomplete'
@@ -7,15 +7,20 @@ import { detectClipboardContent, vibrate } from '../utils'
 import { faviconFromUrl } from '../search'
 
 export function AddSheet() {
-  const { addOpen, setAddOpen, addItem, items } = useApp()
+  const { addOpen, addBasketId, setAddOpen, addItem, items, baskets } = useApp()
   const [title, setTitle] = useState('')
   const [price, setPrice] = useState('')
   const [tag, setTag] = useState('')
   const [link, setLink] = useState('')
   const [imageUrl, setImageUrl] = useState<string>()
+  const [basketId, setBasketId] = useState<string>('')
   const [priority, setPriority] = useState<Priority>('medium')
   const [showMore, setShowMore] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (addOpen && addBasketId) setBasketId(addBasketId)
+  }, [addOpen, addBasketId])
 
   const reset = () => {
     setTitle('')
@@ -23,6 +28,7 @@ export function AddSheet() {
     setTag('')
     setLink('')
     setImageUrl(undefined)
+    setBasketId('')
     setPriority('medium')
     setShowMore(false)
     setSaving(false)
@@ -69,6 +75,7 @@ export function AddSheet() {
       tag: tag.trim() || undefined,
       link: link.trim() || undefined,
       imageUrl,
+      basketId: basketId || undefined,
       priority,
     })
     handleClose()
@@ -76,7 +83,7 @@ export function AddSheet() {
 
   return (
     <Sheet open={addOpen} onClose={handleClose} title="Add to list" autoFocus>
-      <div className="field">
+      <div className="field field-search">
         <label htmlFor="add-title">What is it?</label>
         <div className="field-with-action">
           <input
@@ -131,6 +138,22 @@ export function AddSheet() {
           />
         </div>
       </div>
+
+      {baskets.length > 0 && (
+        <div className="field">
+          <label htmlFor="add-basket">Basket</label>
+          <select
+            id="add-basket"
+            value={basketId}
+            onChange={(e) => setBasketId(e.target.value)}
+          >
+            <option value="">None</option>
+            {baskets.map((b) => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {!showMore && (
         <button type="button" className="text-btn" onClick={() => setShowMore(true)}>

@@ -4,12 +4,13 @@ import { Sheet } from '../components/Sheet'
 import type { Priority } from '../types'
 
 export function ItemEditSheet() {
-  const { editingItem, setEditingItem, updateItem } = useApp()
+  const { editingItem, setEditingItem, updateItem, baskets } = useApp()
   const [title, setTitle] = useState('')
   const [price, setPrice] = useState('')
   const [tag, setTag] = useState('')
   const [notes, setNotes] = useState('')
   const [link, setLink] = useState('')
+  const [basketId, setBasketId] = useState('')
   const [priority, setPriority] = useState<Priority>('medium')
 
   useEffect(() => {
@@ -19,6 +20,7 @@ export function ItemEditSheet() {
     setTag(editingItem.tag ?? '')
     setNotes(editingItem.notes ?? '')
     setLink(editingItem.link ?? '')
+    setBasketId(editingItem.basketId ?? '')
     setPriority(editingItem.priority)
   }, [editingItem])
 
@@ -33,6 +35,7 @@ export function ItemEditSheet() {
       tag: tag.trim() || undefined,
       notes: notes.trim() || undefined,
       link: link.trim() || undefined,
+      basketId: basketId || undefined,
       priority,
     })
     close()
@@ -91,6 +94,18 @@ export function ItemEditSheet() {
         <label htmlFor="edit-link">Link</label>
         <input id="edit-link" type="url" value={link} onChange={(e) => setLink(e.target.value)} />
       </div>
+
+      {baskets.length > 0 && (
+        <div className="field">
+          <label htmlFor="edit-basket">Basket</label>
+          <select id="edit-basket" value={basketId} onChange={(e) => setBasketId(e.target.value)}>
+            <option value="">None</option>
+            {baskets.map((b) => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <button type="button" className="primary-btn" onClick={save}>
         Save changes

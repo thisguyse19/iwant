@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { AppSettings, WishlistItem } from './types'
+import type { AppSettings, Basket, WishlistItem } from './types'
 import { DEFAULT_SETTINGS } from './types'
 
 interface SettingsRecord {
@@ -14,6 +14,14 @@ interface IwantDB extends DBSchema {
     indexes: {
       status: WishlistItem['status']
       sortOrder: number
+      basketId: string
+    }
+  }
+  baskets: {
+    key: string
+    value: Basket
+    indexes: {
+      sortOrder: number
     }
   }
   settings: {
@@ -26,12 +34,27 @@ let dbPromise: Promise<IDBPDatabase<IwantDB>> | null = null
 
 function getDb() {
   if (!dbPromise) {
-    dbPromise = openDB<IwantDB>('iwant_db', 1, {
-      upgrade(db) {
-        const store = db.createObjectStore('items', { keyPath: 'id' })
-        store.createIndex('status', 'status')
-        store.createIndex('sortOrder', 'sortOrder')
-        db.createObjectStore('settings', { keyPath: 'key' })
+    dbPromise = openDB<IwantDB>('iwant_db', 2, {
+      upgrade(db, oldVersion, _newVersion, transaction) {
+        if (!db.objectStoreNames.contains('items')) {
+          const store = db.createObjectStore('items', { keyPath: 'id' })
+          store.createIndex('status', 'status')
+          store.createIndex('sortOrder', 'sortOrder')
+          store.createIndex('basketId', 'basketId')
+        }
+        if (!db.objectStoreNames.contains('settings')) {
+          db.createObjectStore('settings', { keyPath: 'key' })
+        }
+        if (!db.objectStoreNames.contains('baskets')) {
+          const basketStore = db.createObjectStore('baskets', { keyPath: 'id' })
+          basketStore.createIndex('sortOrder', 'sortOrder')
+        }
+        if (oldVersion >= 1 && db.objectStoreNames.contains('items')) {
+          const itemStore = transaction.objectStore('items')
+          if (!itemStore.indexNames.contains('basketId')) {
+            itemStore.createIndex('basketId', 'basketId')
+          }
+        }
       },
     })
   }
@@ -53,6 +76,21 @@ export async function deleteItem(id: string): Promise<void> {
   await db.delete('items', id)
 }
 
+export async function getAllBaskets(): Promise<Basket[]> {
+  const db = await getDb()
+  return db.getAll('baskets')
+}
+
+export async function saveBasket(basket: Basket): Promise<void> {
+  const db = await getDb()
+  await db.put('baskets', basket)
+}
+
+export async function deleteBasket(id: string): Promise<void> {
+  const db = await getDb()
+  await db.delete('baskets', id)
+}
+
 export async function getSettings(): Promise<AppSettings> {
   const db = await getDb()
   const stored = await db.get('settings', 'app')
@@ -65,8 +103,12 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
 }
 
 export async function exportData(): Promise<string> {
-  const [items, settings] = await Promise.all([getAllItems(), getSettings()])
-  return JSON.stringify({ version: 1, exportedAt: Date.now(), items, settings }, null, 2)
+  const [items, baskets, settings] = await Promise.all([
+    getAllItems(),
+    getAllBaskets(),
+    getSettings(),
+  ])
+  return JSON.stringify({ version: 2, exportedAt: Date.now(), items, baskets, settings }, null, 2)
 }
 
 export async function importData(
@@ -75,6 +117,7 @@ export async function importData(
 ): Promise<{ imported: number }> {
   const parsed = JSON.parse(json) as {
     items?: WishlistItem[]
+    baskets?: Basket[]
     settings?: AppSettings
   }
 
@@ -87,6 +130,8 @@ export async function importData(
   if (mode === 'replace') {
     const existing = await db.getAll('items')
     await Promise.all(existing.map((item) => db.delete('items', item.id)))
+    const existingBaskets = await db.getAll('baskets')
+    await Promise.all(existingBaskets.map((b) => db.delete('baskets', b.id)))
   }
 
   const existingIds = new Set(
@@ -98,6 +143,12 @@ export async function importData(
     if (mode === 'merge' && existingIds.has(item.id)) continue
     await db.put('items', item)
     imported++
+  }
+
+  if (parsed.baskets) {
+    for (const basket of parsed.baskets) {
+      await db.put('baskets', basket)
+    }
   }
 
   if (parsed.settings) {

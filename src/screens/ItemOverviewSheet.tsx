@@ -4,7 +4,7 @@ import type { WishlistItem } from '../types'
 import { daysSince, formatPriceOptional, vibrate } from '../utils'
 
 export function ItemOverviewSheet() {
-  const { viewingItem, setViewingItem, openEdit, updateItem, removeItem } = useApp()
+  const { viewingItem, setViewingItem, openEdit, updateItem, removeItem, baskets } = useApp()
 
   const close = () => setViewingItem(null)
 
@@ -24,6 +24,7 @@ export function ItemOverviewSheet() {
   if (!viewingItem) return null
 
   const days = daysSince(viewingItem.createdAt)
+  const basket = baskets.find((b) => b.id === viewingItem.basketId)
 
   return (
     <Sheet
@@ -51,6 +52,12 @@ export function ItemOverviewSheet() {
           <div className="detail-meta-row">
             <span>Tag</span>
             <span>{viewingItem.tag}</span>
+          </div>
+        )}
+        {basket && (
+          <div className="detail-meta-row">
+            <span>Basket</span>
+            <span>{basket.name}</span>
           </div>
         )}
         <div className="detail-meta-row">

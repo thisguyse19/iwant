@@ -1,0 +1,130 @@
+.basket-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.basket-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 0.5px solid var(--border-subtle);
+  text-align: left;
+  transition: transform 0.15s var(--spring);
+}
+
+.basket-card:active {
+  transform: scale(0.985);
+}
+
+.basket-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.basket-card-name {
+  display: block;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.basket-card-meta {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.basket-card-total {
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.basket-unassigned {
+  margin-top: 24px;
+}
+
+.basket-unassigned-meta {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.basket-create-inline {
+  margin-top: 16px;
+}
+
+.basket-create-inline input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  border: 0.5px solid var(--border-subtle);
+  font-size: 17px;
+  margin-bottom: 12px;
+}
+
+.basket-create-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.basket-create-actions .primary-btn {
+  width: auto;
+  padding: 10px 20px;
+  margin-top: 0;
+}
+
+.basket-new-btn {
+  margin-top: 16px;
+}
+
+.basket-detail-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 16px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border: 0.5px solid var(--border-subtle);
+  margin-bottom: 16px;
+}
+
+.basket-detail-total-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.basket-detail-total-amount {
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.basket-add-existing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.basket-add-existing-btn {
+  padding: 8px 12px;
+  font-size: 14px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  border: 0.5px solid var(--border-subtle);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.basket-add-existing-btn:active {
+  opacity: 0.7;
+}

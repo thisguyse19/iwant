@@ -1,8 +1,5 @@
 import type { SearchSuggestion, WishlistItem } from './types'
 
-const DDG_AC = 'https://duckduckgo.com/ac/'
-const DDG_IA = 'https://api.duckduckgo.com/'
-
 export function faviconFromUrl(url: string): string {
   try {
     const host = new URL(url).hostname
@@ -39,48 +36,50 @@ function localSuggestions(query: string, items: WishlistItem[]): SearchSuggestio
       link: item.link,
       source: 'local',
     })
-    if (results.length >= 2) break
+    if (results.length >= 3) break
   }
 
   return results
 }
 
-async function ddgPhrases(query: string): Promise<string[]> {
-  const res = await fetch(`${DDG_AC}?q=${encodeURIComponent(query)}&type=list`)
-  if (!res.ok) return []
-  const data = await res.json()
-  if (!Array.isArray(data) || !Array.isArray(data[1])) return []
-  return data[1] as string[]
-}
+function jsonpFetch<T>(url: string, timeoutMs = 4000): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const cb = `iwant_cb_${Date.now()}`
+    const script = document.createElement('script')
+    const timer = setTimeout(() => {
+      cleanup()
+      reject(new Error('timeout'))
+    }, timeoutMs)
 
-function extractOfficialUrl(infobox: { content?: { label: string; value: unknown }[] }): string | undefined {
-  const entry = infobox?.content?.find((c) => c.label === 'Official Website')
-  if (entry && typeof entry.value === 'string') return entry.value
-  return undefined
-}
-
-async function enrichPhrase(phrase: string): Promise<Partial<SearchSuggestion>> {
-  try {
-    const res = await fetch(
-      `${DDG_IA}?q=${encodeURIComponent(phrase)}&format=json&no_html=1&skip_disambig=1`,
-    )
-    if (!res.ok) return {}
-    const data = await res.json()
-
-    const link =
-      extractOfficialUrl(data.Infobox) ||
-      (data.AbstractURL && !data.AbstractURL.includes('wikipedia.org') ? data.AbstractURL : undefined)
-
-    let imageUrl: string | undefined
-    if (data.Image) {
-      imageUrl = data.Image.startsWith('http') ? data.Image : `https://duckduckgo.com${data.Image}`
-    } else if (link) {
-      imageUrl = faviconFromUrl(link)
+    const cleanup = () => {
+      clearTimeout(timer)
+      delete (window as unknown as Record<string, unknown>)[cb]
+      script.remove()
     }
 
-    return { link, imageUrl }
+    ;(window as unknown as Record<string, unknown>)[cb] = (data: T) => {
+      cleanup()
+      resolve(data)
+    }
+
+    const separator = url.includes('?') ? '&' : '?'
+    script.src = `${url}${separator}callback=${cb}`
+    script.onerror = () => {
+      cleanup()
+      reject(new Error('jsonp failed'))
+    }
+    document.head.appendChild(script)
+  })
+}
+
+async function fetchGooglePhrases(query: string): Promise<string[]> {
+  try {
+    const data = await jsonpFetch<[string, string[]]>(
+      `https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(query)}`,
+    )
+    return Array.isArray(data[1]) ? data[1] : []
   } catch {
-    return {}
+    return []
   }
 }
 
@@ -93,39 +92,25 @@ export async function searchSuggestions(
 
   const local = localSuggestions(q, items)
   const seen = new Set(local.map((s) => s.title.toLowerCase()))
+  seen.add(q.toLowerCase())
 
   let web: SearchSuggestion[] = []
   try {
-    const phrases = (await ddgPhrases(q))
-      .filter((p) => {
-        const lower = p.toLowerCase()
-        return lower !== q.toLowerCase() && !seen.has(lower)
-      })
+    const phrases = (await fetchGooglePhrases(q))
+      .filter((p) => !seen.has(p.toLowerCase()))
       .slice(0, 5 - local.length)
 
-    if (phrases.length > 0) {
-      const enriched = await enrichPhrase(phrases[0])
-      seen.add(phrases[0].toLowerCase())
-
-      web = phrases.map((phrase, i) => {
-        if (i === 0) {
-          return {
-            title: phrase,
-            source: 'web' as const,
-            imageUrl: enriched.imageUrl ?? faviconFromBrand(phrase),
-            link: enriched.link ?? `https://duckduckgo.com/?q=${encodeURIComponent(phrase)}`,
-          }
-        }
-        return {
-          title: phrase,
-          source: 'web' as const,
-          imageUrl: faviconFromBrand(phrase),
-          link: `https://duckduckgo.com/?q=${encodeURIComponent(phrase)}`,
-        }
-      })
-    }
+    web = phrases.map((phrase) => {
+      seen.add(phrase.toLowerCase())
+      return {
+        title: phrase,
+        source: 'web' as const,
+        imageUrl: faviconFromBrand(phrase),
+        link: `https://www.google.com/search?q=${encodeURIComponent(phrase)}`,
+      }
+    })
   } catch {
-    // offline — local suggestions still work
+    // offline
   }
 
   return [...local, ...web].slice(0, 5)
