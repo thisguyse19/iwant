@@ -56,9 +56,10 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
   }
 
   return (
-    <>
+    <div className="tab-bar-chrome">
       <div className="tab-bar-scroll-edge" aria-hidden="true" />
 
+      <div className="tab-bar-row">
       <nav
         className="tab-bar-liquid glass-surface"
         ref={navRef}
@@ -115,6 +116,7 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
           />
         </svg>
       </button>
+      </div>
 
       {menuOpen && (
         <div className="add-menu glass-surface" role="menu">
@@ -164,7 +166,7 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
           />,
           document.body,
         )}
-    </>
+    </div>
   )
 }
 
