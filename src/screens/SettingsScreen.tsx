@@ -16,6 +16,7 @@ const ACCENT_OPTIONS: Array<{ id: AccentStyle; label: string; swatch?: string; p
 const HERO_VIEW_OPTIONS: Array<{ id: BudgetHeroView; label: string }> = [
   { id: 'actual', label: 'Actual left' },
   { id: 'projected', label: 'Projected left' },
+  { id: 'freeplay', label: 'Freeplay' },
   { id: 'spent', label: 'Spent' },
   { id: 'budget', label: 'Budget cap' },
 ]
