@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { Tab } from '../App'
 import { useLiquidGlass } from '../liquidGlass/LiquidGlassProvider'
-import { ADD_MENU_GLASS, setGlassConfig, TAB_ACTION_GLASS, TAB_INDICATOR_GLASS, TAB_PILL_GLASS } from '../liquidGlass/config'
+import { ADD_MENU_GLASS, setGlassConfig, TAB_ACTION_GLASS, TAB_PILL_GLASS } from '../liquidGlass/config'
 import './TabBar.css'
 
 interface TabBarProps {
@@ -21,7 +21,6 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 
 export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps) {
   const pillGlassRef = useRef<HTMLDivElement>(null)
-  const indicatorGlassRef = useRef<HTMLDivElement>(null)
   const actionGlassRef = useRef<HTMLDivElement>(null)
   const menuGlassRef = useRef<HTMLDivElement>(null)
   const navRef = useRef<HTMLElement>(null)
@@ -43,11 +42,9 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
 
   useLayoutEffect(() => {
     const pillGlass = pillGlassRef.current
-    const indicatorGlass = indicatorGlassRef.current
     const actionGlass = actionGlassRef.current
     const menuGlass = menuGlassRef.current
     if (pillGlass) setGlassConfig(pillGlass, TAB_PILL_GLASS)
-    if (indicatorGlass) setGlassConfig(indicatorGlass, TAB_INDICATOR_GLASS)
     if (actionGlass) setGlassConfig(actionGlass, TAB_ACTION_GLASS)
     if (menuGlass) setGlassConfig(menuGlass, ADD_MENU_GLASS)
     markChanged()
@@ -100,11 +97,6 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
             }}
             aria-hidden="true"
           >
-            <div
-              ref={indicatorGlassRef}
-              className="tab-indicator-glass-surface glass-surface liquid-glass-panel"
-              aria-hidden="true"
-            />
             <div className="tab-indicator-glass" aria-hidden="true" />
           </div>
           {TABS.map((tab, index) => (
