@@ -68,6 +68,8 @@ export interface SearchSuggestion {
 
 export interface AppSettings {
   monthlyBudget?: number
+  /** Per-period overrides keyed by YYYY-MM */
+  monthBudgets?: Record<string, number>
   currency: string
   budgetResetDay: number
 }

@@ -1,41 +1,231 @@
-.screen-budget .screen-scroll {
-  padding-bottom: calc(var(--tab-bar-clearance) + var(--safe-bottom) + 180px);
+.budget-edit-link {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  padding: 4px 2px;
 }
 
-.budget-scroll {
-  flex: 1;
+.budget-edit-link:active {
+  opacity: 0.6;
 }
 
-.budget-dock {
-  position: fixed;
-  bottom: calc(var(--tab-bar-clearance) + var(--safe-bottom) + 4px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 520px;
-  padding: 0 16px;
-  z-index: 60;
+.budget-month-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.budget-month-arrow {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--accent);
+  background: var(--bg-elevated);
+  border: 0.5px solid var(--border-subtle);
+  transition: opacity 0.2s var(--spring), transform 0.2s var(--spring);
+}
+
+.budget-month-arrow:disabled {
+  opacity: 0.35;
   pointer-events: none;
 }
 
-.budget-dock .budget-hero {
-  pointer-events: auto;
-  box-shadow: var(--shadow-md);
+.budget-month-arrow:active:not(:disabled) {
+  transform: scale(0.94);
 }
 
-.budget-hero {
-  padding: 24px 20px;
+.budget-month-chips {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 0;
+}
+
+.budget-month-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.budget-month-chip {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 16px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1.5px solid var(--border-subtle);
+  transition: background 0.24s var(--spring), color 0.24s var(--spring), border-color 0.24s var(--spring);
+}
+
+.budget-month-chip.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.budget-month-chip:active {
+  transform: scale(0.96);
+}
+
+.budget-hero-card {
+  padding: 18px 16px 16px;
   background: var(--bg-card);
   border-radius: var(--radius-lg);
   border: 0.5px solid var(--border-subtle);
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
 }
 
-.budget-edit-btn {
+.budget-hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.budget-hero-period {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.budget-hero-amount {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+}
+
+.budget-hero-label {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.budget-hero-ring {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+}
+
+.budget-hero-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.budget-ring-bg {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 3;
+}
+
+.budget-ring-spent {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.budget-ring-planned {
+  fill: none;
+  stroke: var(--text-tertiary);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+.budget-ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.budget-progress {
+  position: relative;
+  display: flex;
+  height: 6px;
+  background: var(--border-subtle);
+  border-radius: 3px;
+  margin-top: 16px;
+  overflow: hidden;
+}
+
+.budget-progress-spent {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px 0 0 3px;
+  transition: width 0.45s var(--spring);
+}
+
+.budget-progress-planned {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: var(--text-tertiary);
+  opacity: 0.45;
+  transition: width 0.45s var(--spring), left 0.45s var(--spring);
+}
+
+.budget-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
   margin-top: 16px;
 }
 
-.budget-stats {
-  margin-bottom: 8px;
+.budget-stat-cell {
+  padding: 10px 12px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  border: 0.5px solid var(--border-subtle);
+}
+
+.budget-stat-label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.budget-stat-value {
+  display: block;
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.budget-stat-note {
+  display: block;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.budget-hero-warning {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 12px;
 }
 
 .budget-section {
@@ -44,4 +234,76 @@
 
 .budget-section .item-list {
   margin-top: 0;
+}
+
+.budget-spent-list .item-row-swipe .item-row-actions {
+  display: none;
+}
+
+.budget-more-note {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 8px;
+}
+
+.budget-empty-cta {
+  text-align: center;
+  padding: 24px 12px;
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+
+.budget-empty-cta p {
+  margin-bottom: 16px;
+}
+
+.budget-sheet-period {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text-secondary);
+}
+
+.budget-scope-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.budget-scope-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 12px 14px;
+  text-align: left;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-subtle);
+  transition: border-color 0.24s var(--spring), background 0.24s var(--spring);
+}
+
+.budget-scope-option.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-elevated));
+}
+
+.budget-scope-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.budget-scope-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.budget-field-hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 6px;
+  line-height: 1.4;
 }

@@ -9,6 +9,8 @@ import {
 } from 'react'
 import * as db from './db'
 import type { AppSettings, Basket, CategoryFilter, CategoryId, Priority, WishlistItem } from './types'
+import type { MonthRef } from './budget'
+import { summarizeBudgetPeriod } from './budget'
 import { PRIORITY_ORDER } from './types'
 
 interface AppState {
@@ -442,4 +444,12 @@ export function useBudgetSummary() {
       hasBudget: budget > 0,
     }
   }, [items, settings.monthlyBudget])
+}
+
+export function useBudgetPeriod(month: MonthRef) {
+  const { items, settings } = useApp()
+  return useMemo(
+    () => summarizeBudgetPeriod(items, settings, month),
+    [items, settings, month.year, month.month],
+  )
 }
