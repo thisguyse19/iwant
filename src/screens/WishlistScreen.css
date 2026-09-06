@@ -35,7 +35,7 @@
   font-size: 12px;
   font-weight: 500;
   border-radius: 20px;
-  touch-action: pan-x;
+  touch-action: pan-x pan-y;
   background: var(--bg-elevated);
   color: var(--text-secondary);
   border: 1.5px solid var(--border-subtle);

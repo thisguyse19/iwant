@@ -122,13 +122,13 @@ export function ItemRow({
       const scrollParent = getScrollParent(rootRef.current)
       const atScrollTop = !scrollParent || scrollParent.scrollTop <= 1
       if (atScrollTop) {
-        drag.axis = 'x'
+        drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
       } else {
         drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
-        if (drag.axis === 'y') {
-          resetDrag()
-          return
-        }
+      }
+      if (drag.axis === 'y') {
+        resetDrag()
+        return
       }
       bindDocumentEnd()
     }

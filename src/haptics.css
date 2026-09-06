@@ -10,6 +10,7 @@
   border: none;
   cursor: inherit;
   z-index: 5;
+  touch-action: pan-x pan-y;
   -webkit-appearance: none;
   appearance: none;
 }

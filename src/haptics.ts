@@ -136,7 +136,42 @@ function attachIOSSwitchOverlay(host: HTMLElement) {
     })
   })
 
+  let touchStart: { x: number; y: number } | null = null
+  let touchScrolled = false
+
+  overlay.addEventListener(
+    'touchstart',
+    (e) => {
+      if (e.touches.length !== 1) return
+      touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      touchScrolled = false
+    },
+    { passive: true },
+  )
+
+  overlay.addEventListener(
+    'touchmove',
+    (e) => {
+      if (!touchStart || e.touches.length !== 1) return
+      const t = e.touches[0]
+      if (Math.hypot(t.clientX - touchStart.x, t.clientY - touchStart.y) > 8) {
+        touchScrolled = true
+      }
+    },
+    { passive: true },
+  )
+
+  overlay.addEventListener('touchend', () => {
+    touchStart = null
+  }, { passive: true })
+
   overlay.addEventListener('click', (e) => {
+    if (touchScrolled) {
+      e.preventDefault()
+      e.stopPropagation()
+      touchScrolled = false
+      return
+    }
     e.stopPropagation()
     if (host instanceof HTMLInputElement || host instanceof HTMLTextAreaElement || host instanceof HTMLSelectElement) {
       return
