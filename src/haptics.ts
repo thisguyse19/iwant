@@ -113,9 +113,14 @@ export function triggerHaptic(kind: HapticKind = 'selection') {
   navigator.vibrate(patterns[kind])
 }
 
+function isInScrollableSurface(host: HTMLElement): boolean {
+  return !!host.closest('.screen-scroll, .sheet-body')
+}
+
 function attachIOSSwitchOverlay(host: HTMLElement) {
   if (host.dataset.hapticOverlay === 'true') return
   if (shouldSkip(host)) return
+  if (isInScrollableSurface(host)) return
 
   const style = window.getComputedStyle(host)
   if (style.position === 'absolute' || style.position === 'fixed') return
@@ -201,6 +206,7 @@ function onPointerDown(e: PointerEvent) {
 
   const host = target.closest(HOST_SELECTOR) as HTMLElement | null
   if (!host) return
+  if (isInScrollableSurface(host)) return
 
   // iOS: overlay hosts use native switch taps; layout-positioned hosts use fallback.
   if (isIOS() && !telegramHaptics()) {

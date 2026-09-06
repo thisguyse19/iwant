@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type KeyboardEvent } from 'react'
 import { compareMonths, getCurrentMonth, getRecentMonths, shiftMonth } from '../budget'
 import { budgetNoBudgetCopy, withinReachEmptyLine, withinReachLine } from '../copy'
 import {
@@ -259,6 +259,18 @@ export function BudgetScreen() {
       dayOfMonth: String(e.dayOfMonth),
     })
     setFixedSheetOpen(true)
+  }
+
+  const activateBudgetRow = (action: () => void) => {
+    vibrateTap()
+    action()
+  }
+
+  const onBudgetRowKeyDown = (e: KeyboardEvent, action: () => void) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      activateBudgetRow(action)
+    }
   }
 
   const closeFixedSheet = () => {
@@ -725,7 +737,7 @@ export function BudgetScreen() {
         <section className="budget-section">
           <div className="budget-fixed-header">
             <h2 className="section-label">Ad-hoc</h2>
-            <button type="button" className="budget-fixed-add" onClick={openAdhocAdd}>
+            <button type="button" className="budget-fixed-add haptic-skip" onClick={() => activateBudgetRow(openAdhocAdd)}>
               Add
             </button>
           </div>
@@ -736,11 +748,13 @@ export function BudgetScreen() {
           ) : (
             <div className="budget-fixed-list">
               {summary.adhocExpenses.map((expense) => (
-                <button
+                <div
                   key={expense.id}
-                  type="button"
-                  className="budget-fixed-row"
-                  onClick={() => openAdhocEdit(expense)}
+                  role="button"
+                  tabIndex={0}
+                  className="budget-fixed-row haptic-skip"
+                  onClick={() => activateBudgetRow(() => openAdhocEdit(expense))}
+                  onKeyDown={(e) => onBudgetRowKeyDown(e, () => openAdhocEdit(expense))}
                 >
                   <div className="budget-fixed-body">
                     <div className="budget-fixed-name">{expense.name}</div>
@@ -754,7 +768,7 @@ export function BudgetScreen() {
                   <span className="budget-fixed-amount">
                     {formatPrice(expense.amount, summary.currency)}
                   </span>
-                </button>
+                </div>
               ))}
             </div>
           )}
@@ -763,7 +777,7 @@ export function BudgetScreen() {
         <section className="budget-section">
           <div className="budget-fixed-header">
             <h2 className="section-label">Recurring</h2>
-            <button type="button" className="budget-fixed-add" onClick={openFixedAdd}>
+            <button type="button" className="budget-fixed-add haptic-skip" onClick={() => activateBudgetRow(openFixedAdd)}>
               Add
             </button>
           </div>
@@ -828,15 +842,15 @@ export function BudgetScreen() {
                       <div className="budget-budgeted-actions">
                         <button
                           type="button"
-                          className="budget-log-btn"
-                          onClick={() => openLogSpend(expense)}
+                          className="budget-log-btn haptic-skip"
+                          onClick={() => activateBudgetRow(() => openLogSpend(expense))}
                         >
                           Log spend
                         </button>
                         <button
                           type="button"
-                          className="budget-budgeted-edit"
-                          onClick={() => openFixedEdit(expense)}
+                          className="budget-budgeted-edit haptic-skip"
+                          onClick={() => activateBudgetRow(() => openFixedEdit(expense))}
                         >
                           Edit
                         </button>
@@ -867,11 +881,13 @@ export function BudgetScreen() {
                 }
 
                 return (
-                  <button
+                  <div
                     key={expense.id}
-                    type="button"
-                    className="budget-fixed-row"
-                    onClick={() => openFixedEdit(expense)}
+                    role="button"
+                    tabIndex={0}
+                    className="budget-fixed-row haptic-skip"
+                    onClick={() => activateBudgetRow(() => openFixedEdit(expense))}
+                    onKeyDown={(e) => onBudgetRowKeyDown(e, () => openFixedEdit(expense))}
                   >
                     <div className="budget-fixed-body">
                       <div className="budget-fixed-name-row">
@@ -890,7 +906,7 @@ export function BudgetScreen() {
                       </span>
                       <span className="budget-fixed-rate">{formatFixedRate(e, summary.currency)}</span>
                     </div>
-                  </button>
+                  </div>
                 )
               })}
             </div>
