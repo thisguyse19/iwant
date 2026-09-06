@@ -1,0 +1,22 @@
+---
+description: Mandatory agent workflow for this repo — deploy, test, and merge policy
+alwaysApply: true
+---
+
+# Agent workflow (mandatory)
+
+## Never use the dev server for UI testing or demos
+
+- Do **not** run `npm run dev`, `vite`, or `localhost` URLs to test, verify, or show the UI.
+- Do **not** use screen recordings or screenshots taken from a local dev server as walkthrough evidence.
+- UI validation and walkthroughs must use the **deployed GitHub Pages app** after changes are on `main`:
+  - **https://thisguyse19.github.io/iwant/**
+- Pushes to `main` trigger the deploy workflow (`.github/workflows/deploy.yml`) → `gh-pages`.
+- After merging, wait for the deploy workflow to finish, then test on the live site (hard-refresh or reinstall PWA if needed).
+- `npm run build` is fine for compile checks only; it is not a substitute for live UI testing.
+
+## Always merge completed work to `main`
+
+- Do **not** leave finished work on an open PR branch without merging.
+- When a task is complete and builds pass, **merge to `main`** (squash or merge commit per repo convention).
+- Do not treat "PR created" as done — merge is required unless the user explicitly asks to hold the PR open.
