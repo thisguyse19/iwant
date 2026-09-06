@@ -14,8 +14,6 @@ const HOST_SELECTOR = [
 const SKIP_SELECTOR = [
   '.haptic-skip',
   '.haptic-switch-overlay',
-  '.tab-action-liquid',
-  '.tab-bar-liquid',
   'input:not(.haptic-switch-overlay)',
   'textarea',
   'select',
@@ -166,11 +164,16 @@ function onPointerDown(e: PointerEvent) {
   const target = e.target as Element
   if (shouldSkip(target)) return
 
-  const host = target.closest(HOST_SELECTOR)
+  const host = target.closest(HOST_SELECTOR) as HTMLElement | null
   if (!host) return
 
-  // iOS uses native switch overlays for direct taps.
-  if (isIOS() && !telegramHaptics()) return
+  // iOS: overlay hosts use native switch taps; layout-positioned hosts use fallback.
+  if (isIOS() && !telegramHaptics()) {
+    if (host.dataset.hapticOverlay !== 'true') {
+      triggerHaptic('selection')
+    }
+    return
+  }
 
   triggerHaptic('selection')
 }

@@ -56,12 +56,11 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
   }
 
   return (
-    <div className="tab-bar-root">
+    <>
       <div className="tab-bar-scroll-edge" aria-hidden="true" />
 
-      <div className="tab-bar-bottom-row">
       <nav
-        className="tab-bar-liquid glass-surface haptic-skip"
+        className="tab-bar-liquid glass-surface"
         ref={navRef}
         aria-label="Main navigation"
       >
@@ -81,7 +80,7 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
               key={tab.id}
               ref={(el) => { tabRefs.current[index] = el }}
               type="button"
-              className={`tab-liquid-item haptic-skip ${active === tab.id ? 'active' : ''}`}
+              className={`tab-liquid-item ${active === tab.id ? 'active' : ''}`}
               onClick={() => onChange(tab.id)}
               aria-current={active === tab.id ? 'page' : undefined}
             >
@@ -94,7 +93,7 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
 
       <button
         type="button"
-        className={`tab-action-liquid glass-surface haptic-skip ${menuOpen ? 'open' : ''}`}
+        className={`tab-action-liquid glass-surface ${menuOpen ? 'open' : ''}`}
         onClick={() => setMenuOpen((v) => !v)}
         aria-label="Add"
         aria-expanded={menuOpen}
@@ -116,7 +115,6 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
           />
         </svg>
       </button>
-      </div>
 
       {menuOpen && (
         <div className="add-menu glass-surface" role="menu">
@@ -166,7 +164,7 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
           />,
           document.body,
         )}
-    </div>
+    </>
   )
 }
 
