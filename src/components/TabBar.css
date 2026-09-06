@@ -1,4 +1,4 @@
-/* Liquid Glass tab bar — WebGL refraction via @ybouane/liquidglass (direct app-shell children) */
+/* Liquid Glass tab bar — CSS glass surfaces (stable sizing; no WebGL on tab chrome) */
 
 .tab-bar-scroll-edge {
   position: absolute;
@@ -15,11 +15,7 @@
   z-index: 40;
 }
 
-.liquid-glass-panel {
-  position: absolute;
-  z-index: 50;
-  isolation: isolate;
-  overflow: hidden;
+.glass-surface {
   box-sizing: border-box;
   background:
     linear-gradient(180deg, var(--liquid-glass-border-inner) 0%, transparent 18%),
@@ -28,24 +24,6 @@
   -webkit-backdrop-filter: var(--liquid-glass-blur);
   border: 0.5px solid var(--liquid-glass-border);
   box-shadow: var(--liquid-glass-shadow), var(--liquid-glass-depth);
-  pointer-events: auto;
-}
-
-.app-shell.liquid-glass-active .liquid-glass-panel {
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border-color: transparent;
-  box-shadow: none;
-}
-
-.liquid-glass-panel > canvas {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  pointer-events: none;
-  z-index: 0 !important;
 }
 
 .tab-bar-glass-surface,
@@ -55,15 +33,11 @@
   left: var(--tab-bar-h-inset);
   width: calc(100% - (var(--tab-bar-h-inset) * 2) - var(--tab-bar-action-size) - var(--tab-bar-gap));
   height: var(--tab-bar-pill-h);
-  min-height: var(--tab-bar-pill-h);
-  max-height: var(--tab-bar-pill-h);
   border-radius: var(--tab-bar-radius);
-  box-sizing: border-box;
 }
 
 .tab-bar-glass-surface {
   z-index: 50;
-  padding: 0;
   pointer-events: none;
 }
 
@@ -84,7 +58,6 @@
   align-items: stretch;
   width: 100%;
   height: 100%;
-  min-height: 0;
 }
 
 .tab-indicator {
@@ -108,24 +81,6 @@
   -webkit-backdrop-filter: var(--liquid-glass-blur-indicator);
   border: 0.5px solid var(--liquid-glass-indicator-border);
   box-shadow: var(--liquid-glass-indicator-shadow);
-}
-
-.app-shell.liquid-glass-active .tab-indicator-glass {
-  background: rgba(255, 255, 255, 0.38);
-  backdrop-filter: blur(18px) saturate(165%);
-  -webkit-backdrop-filter: blur(18px) saturate(165%);
-  border: 0.5px solid rgba(255, 255, 255, 0.48);
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.08),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.42);
-}
-
-.app-shell.liquid-glass-active .tab-indicator-glass::before {
-  opacity: 0.42;
-}
-
-.app-shell.liquid-glass-active .tab-indicator-glass::after {
-  opacity: 0.38;
 }
 
 .tab-indicator-glass::before {
@@ -156,11 +111,10 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
-  padding: 0 2px;
+  gap: 2px;
+  padding: 4px 2px 3px;
   min-width: 0;
-  min-height: 0;
-  height: 100%;
+  min-height: 44px;
   color: var(--tab-inactive);
   font-size: 10.5px;
   font-weight: 500;
@@ -175,6 +129,7 @@
 .tab-liquid-item svg {
   width: 24px;
   height: 24px;
+  flex-shrink: 0;
   transition: transform 0.38s var(--spring), color 0.34s var(--spring);
 }
 
@@ -198,22 +153,17 @@
   right: var(--tab-bar-h-inset);
   width: var(--tab-bar-action-size);
   height: var(--tab-bar-action-size);
-  min-width: var(--tab-bar-action-size);
-  min-height: var(--tab-bar-action-size);
-  max-width: var(--tab-bar-action-size);
-  max-height: var(--tab-bar-action-size);
   border-radius: calc(var(--tab-bar-action-size) / 2);
   box-sizing: border-box;
 }
 
 .tab-action-glass-surface {
   z-index: 50;
-  padding: 0;
   pointer-events: none;
 }
 
 .tab-action-liquid {
-  z-index: 51;
+  z-index: 52;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -248,9 +198,12 @@
   right: var(--tab-bar-h-inset);
   bottom: calc(var(--tab-bar-float) + var(--safe-bottom) + var(--tab-bar-action-size) + 12px);
   z-index: 60;
+  pointer-events: auto;
 }
 
 .add-menu-item {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -306,7 +259,7 @@
 }
 
 @supports not (backdrop-filter: blur(1px)) {
-  .liquid-glass-panel {
+  .glass-surface {
     background: var(--bg-glass);
   }
 
@@ -317,11 +270,6 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  .app-shell.liquid-glass-active .tab-indicator-glass {
-    background: rgba(72, 72, 74, 0.48);
-    border-color: rgba(255, 255, 255, 0.14);
-  }
-
   .tab-indicator-glass::after {
     opacity: 0.35;
   }
@@ -344,14 +292,10 @@
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .liquid-glass-panel {
-    background:
-      linear-gradient(180deg, var(--liquid-glass-border-inner) 0%, transparent 18%),
-      var(--liquid-glass-bg);
-    backdrop-filter: var(--liquid-glass-blur);
-    -webkit-backdrop-filter: var(--liquid-glass-blur);
-    border: 0.5px solid var(--liquid-glass-border);
-    box-shadow: var(--liquid-glass-shadow), var(--liquid-glass-depth);
+  .glass-surface {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--bg-glass);
   }
 
   .tab-bar-scroll-edge {
