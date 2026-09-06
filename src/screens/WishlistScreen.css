@@ -1,3 +1,29 @@
+.screen-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.select-toggle {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  padding: 6px 4px;
+  margin-top: 4px;
+  transition: opacity 0.24s var(--spring), transform 0.24s var(--spring);
+}
+
+.select-toggle:active {
+  opacity: 0.6;
+  transform: scale(0.96);
+}
+
+.select-toggle.active {
+  color: var(--text-primary);
+}
+
 .header-subtitle {
   font-size: 14px;
   color: var(--text-secondary);

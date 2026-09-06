@@ -1,0 +1,213 @@
+/* Apple-style motion — subtle, spring-based, nothing abrupt */
+
+.screen-enter {
+  animation: screenEnter 0.42s var(--spring) both;
+}
+
+@keyframes screenEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.screen-header {
+  animation: fadeSlideDown 0.38s var(--spring) both;
+}
+
+.screen-header + *,
+.screen-header ~ .category-filter-row {
+  animation: fadeSlideUp 0.4s var(--spring) 0.04s both;
+}
+
+.item-list {
+  animation: fadeSlideUp 0.44s var(--spring) 0.08s both;
+}
+
+.total-bar {
+  animation: barReveal 0.36s var(--spring) 0.06s both;
+}
+
+@keyframes fadeSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes barReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.filter-chip {
+  transition:
+    transform 0.28s var(--spring),
+    background 0.32s var(--spring),
+    color 0.32s var(--spring),
+    border-color 0.32s var(--spring),
+    box-shadow 0.32s var(--spring);
+}
+
+.filter-chip.active {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.total-bar {
+  transition:
+    transform 0.32s var(--spring),
+    box-shadow 0.32s var(--spring),
+    opacity 0.28s var(--spring);
+}
+
+.item-row-swipe {
+  animation: listItemEnter 0.38s var(--spring) both;
+}
+
+.item-list .item-row-swipe:nth-child(1) { animation-delay: 0.02s; }
+.item-list .item-row-swipe:nth-child(2) { animation-delay: 0.04s; }
+.item-list .item-row-swipe:nth-child(3) { animation-delay: 0.06s; }
+.item-list .item-row-swipe:nth-child(4) { animation-delay: 0.08s; }
+.item-list .item-row-swipe:nth-child(5) { animation-delay: 0.1s; }
+.item-list .item-row-swipe:nth-child(n+6) { animation-delay: 0.12s; }
+
+@keyframes listItemEnter {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.item-row {
+  transition: background 0.22s var(--spring);
+}
+
+.item-row-main {
+  transition: background 0.22s var(--spring);
+}
+
+.basket-card,
+.settings-row,
+.search-suggestion-inline {
+  transition:
+    background 0.22s var(--spring),
+    transform 0.24s var(--spring);
+}
+
+.basket-card:active {
+  transform: scale(0.99);
+}
+
+.primary-btn,
+.secondary-btn,
+.text-btn {
+  transition:
+    background 0.24s var(--spring),
+    transform 0.24s var(--spring),
+    opacity 0.2s var(--spring),
+    box-shadow 0.24s var(--spring);
+}
+
+.empty-state {
+  animation: fadeIn 0.5s var(--spring) both;
+}
+
+.selection-bar {
+  animation: selectionBarIn 0.38s var(--spring) both;
+}
+
+@keyframes selectionBarIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.add-menu {
+  animation: addMenuIn 0.32s var(--spring) both;
+  transform-origin: bottom right;
+}
+
+@keyframes addMenuIn {
+  from {
+    opacity: 0;
+    transform: scale(0.88) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.add-menu-backdrop {
+  animation: fadeIn 0.22s var(--spring) both;
+}
+
+.item-select-check {
+  transition:
+    transform 0.28s var(--spring),
+    background 0.28s var(--spring),
+    border-color 0.28s var(--spring),
+    opacity 0.24s var(--spring);
+}
+
+.item-row.selected .item-row-main {
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg-list));
+}
+
+.budget-bar-fill {
+  transition: width 0.55s var(--spring);
+}
+
+.sheet-backdrop {
+  transition: opacity 0.32s var(--spring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-enter,
+  .screen-header,
+  .screen-header + *,
+  .screen-header ~ .category-filter-row,
+  .item-list,
+  .total-bar,
+  .item-row-swipe,
+  .empty-state,
+  .selection-bar,
+  .add-menu,
+  .add-menu-backdrop {
+    animation: none;
+  }
+}

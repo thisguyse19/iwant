@@ -59,7 +59,7 @@ export function BudgetScreen() {
 
   return (
     <>
-      <div className="screen screen-budget">
+      <div className="screen screen-budget screen-enter">
         <header className="screen-header">
           <h1 className="screen-title">Budget</h1>
         </header>

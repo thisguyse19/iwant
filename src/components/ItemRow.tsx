@@ -8,17 +8,28 @@ interface ItemRowProps {
   onTap: () => void
   onMarkBought?: () => void
   onRemove?: () => void
+  selectable?: boolean
+  selected?: boolean
+  onToggleSelect?: () => void
 }
 
 const ACTION_WIDTH = 68
 const AXIS_LOCK_PX = 10
 const OPEN_RATIO = 0.45
 
-export function ItemRow({ item, onTap, onMarkBought, onRemove }: ItemRowProps) {
+export function ItemRow({
+  item,
+  onTap,
+  onMarkBought,
+  onRemove,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
+}: ItemRowProps) {
   const category = getCategory(item.category)
   const priorityPill = item.priority === 'high' ? PRIORITY_PILL.high : null
   const isActive = item.status === 'queued' || item.status === 'ready'
-  const hasSwipe = isActive && (onMarkBought || onRemove)
+  const hasSwipe = isActive && (onMarkBought || onRemove) && !selectable
 
   const [open, setOpen] = useState(false)
   const offsetRef = useRef(0)
@@ -108,6 +119,10 @@ export function ItemRow({ item, onTap, onMarkBought, onRemove }: ItemRowProps) {
   }
 
   const handleTap = () => {
+    if (selectable) {
+      onToggleSelect?.()
+      return
+    }
     if (offsetRef.current > 0) {
       closeSwipe()
       return
@@ -124,7 +139,7 @@ export function ItemRow({ item, onTap, onMarkBought, onRemove }: ItemRowProps) {
   }
 
   return (
-    <div className={`item-row-swipe ${open ? 'open' : ''}`}>
+    <div className={`item-row-swipe ${open ? 'open' : ''} ${selected ? 'selected' : ''}`}>
       {hasSwipe && (
         <div className="item-row-actions" style={{ width: maxOffset }}>
           {onMarkBought && (
@@ -179,6 +194,24 @@ export function ItemRow({ item, onTap, onMarkBought, onRemove }: ItemRowProps) {
         onPointerCancel={endGesture}
       >
         <button type="button" className="item-row-main" onClick={handleTap}>
+          {selectable && (
+            <span
+              className={`item-select-check ${selected ? 'checked' : ''}`}
+              aria-hidden="true"
+            >
+              {selected && (
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path
+                    d="M2.5 6l2.5 2.5 4.5-5"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
+            </span>
+          )}
           {item.imageUrl ? (
             <img src={item.imageUrl} alt="" className="item-thumb" />
           ) : (

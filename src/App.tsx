@@ -16,7 +16,7 @@ export type Tab = 'wishlist' | 'baskets' | 'budget' | 'settings'
 
 function AppContent() {
   const [tab, setTab] = useState<Tab>('wishlist')
-  const { setAddOpen, loading, setViewingBasket } = useApp()
+  const { setAddOpen, loading, setViewingBasket, setBasketCreatePending, clearSelection } = useApp()
 
   const {
     needRefresh: [needRefresh],
@@ -33,6 +33,12 @@ function AppContent() {
     )
   }
 
+  const handleTabChange = (next: Tab) => {
+    clearSelection()
+    if (next !== 'baskets') setViewingBasket(null)
+    setTab(next)
+  }
+
   return (
     <div className="app-shell">
       {tab === 'wishlist' && <WishlistScreen />}
@@ -42,11 +48,13 @@ function AppContent() {
 
       <TabBar
         active={tab}
-        onChange={(next) => {
-          if (next !== 'baskets') setViewingBasket(null)
-          setTab(next)
+        onChange={handleTabChange}
+        onAddItem={() => setAddOpen(true)}
+        onNewBasket={() => {
+          setViewingBasket(null)
+          setTab('baskets')
+          setBasketCreatePending(true)
         }}
-        onAdd={() => setAddOpen(true)}
       />
 
       <AddSheet />

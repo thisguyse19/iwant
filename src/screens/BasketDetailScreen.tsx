@@ -1,7 +1,8 @@
 import type { CSSProperties } from 'react'
 import { useEffect, useMemo, useState } from 'react'
-import { useApp, useBasketItems, useListTotal } from '../store'
+import { useApp, useBasketItems, useListTotal, useSelectedTotal } from '../store'
 import { ItemRow } from '../components/ItemRow'
+import { SelectionBar } from '../components/SelectionBar'
 import { CATEGORIES, type CategoryFilter } from '../types'
 import { formatPrice } from '../utils'
 import { vibrate } from '../utils'
@@ -20,12 +21,19 @@ export function BasketDetailScreen() {
     removeBasket,
     removeItem,
     items,
+    selectionMode,
+    selectedIds,
+    setSelectionMode,
+    toggleSelected,
+    selectAll,
+    clearSelection,
   } = useApp()
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
 
   useEffect(() => {
     setCategoryFilter('all')
-  }, [viewingBasket?.id])
+    clearSelection()
+  }, [viewingBasket?.id, clearSelection])
 
   const basketItems = useBasketItems(viewingBasket?.id ?? '')
   const activeItems = useMemo(
@@ -37,6 +45,7 @@ export function BasketDetailScreen() {
     return activeItems.filter((item) => item.category === categoryFilter)
   }, [activeItems, categoryFilter])
   const listTotal = useListTotal(filtered)
+  const selectionTotal = useSelectedTotal(selectedIds)
   const unassigned = items.filter(
     (i) => !i.basketId && (i.status === 'queued' || i.status === 'ready'),
   )
@@ -65,8 +74,16 @@ export function BasketDetailScreen() {
     await updateItem(itemId, { basketId: viewingBasket.id })
   }
 
+  const toggleSelectionMode = () => {
+    if (selectionMode) {
+      clearSelection()
+    } else {
+      setSelectionMode(true)
+    }
+  }
+
   return (
-    <div className="screen basket-detail-screen">
+    <div className="screen basket-detail-screen screen-enter">
       <button type="button" className="screen-back" onClick={() => setViewingBasket(null)}>
         <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden="true">
           <path d="M10 2L2 10l8 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -74,12 +91,23 @@ export function BasketDetailScreen() {
         Baskets
       </button>
 
-      <header className="screen-header">
-        <h1 className="screen-title">{viewingBasket.name}</h1>
-        {activeItems.length > 0 && (
-          <p className="header-subtitle">
-            {activeItems.length} in this basket
-          </p>
+      <header className="screen-header screen-header-row">
+        <div>
+          <h1 className="screen-title">{viewingBasket.name}</h1>
+          {activeItems.length > 0 && (
+            <p className="header-subtitle">
+              {activeItems.length} in this basket
+            </p>
+          )}
+        </div>
+        {filtered.length > 0 && (
+          <button
+            type="button"
+            className={`select-toggle ${selectionMode ? 'active' : ''}`}
+            onClick={toggleSelectionMode}
+          >
+            {selectionMode ? 'Done' : 'Select'}
+          </button>
         )}
       </header>
 
@@ -107,7 +135,7 @@ export function BasketDetailScreen() {
         ))}
       </div>
 
-      {filtered.length > 0 && (
+      {filtered.length > 0 && !selectionMode && (
         <div className="total-bar">
           <span className="total-bar-label">
             {listTotal.count} item{listTotal.count !== 1 ? 's' : ''}
@@ -134,7 +162,10 @@ export function BasketDetailScreen() {
             <ItemRow
               key={item.id}
               item={item}
-              onTap={() => setViewingItem(item)}
+              selectable={selectionMode}
+              selected={selectedIds.has(item.id)}
+              onToggleSelect={() => toggleSelected(item.id)}
+              onTap={() => !selectionMode && setViewingItem(item)}
               onMarkBought={() => handleMarkBought(item.id)}
               onRemove={() => removeItem(item.id)}
             />
@@ -169,6 +200,18 @@ export function BasketDetailScreen() {
       <button type="button" className="secondary-btn destructive-btn" onClick={handleDelete}>
         Delete basket
       </button>
+
+      {selectionMode && (
+        <SelectionBar
+          count={selectionTotal.count}
+          total={selectionTotal.total}
+          pricedCount={selectionTotal.pricedCount}
+          unpriced={selectionTotal.unpriced}
+          currency={selectionTotal.currency}
+          onClear={clearSelection}
+          onSelectAll={() => selectAll(filtered.map((i) => i.id))}
+        />
+      )}
     </div>
   )
 }

@@ -38,7 +38,7 @@ export function SettingsScreen() {
   }
 
   return (
-    <div className="screen">
+    <div className="screen screen-enter">
       <header className="screen-header">
         <h1 className="screen-title">Settings</h1>
       </header>

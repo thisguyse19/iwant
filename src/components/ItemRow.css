@@ -50,6 +50,29 @@
   background: var(--destructive);
 }
 
+.item-select-check {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: transparent;
+}
+
+.item-select-check.checked {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.02);
+}
+
+.item-row.selected .item-row-main {
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg-list));
+}
+
 .item-row-main {
   display: flex;
   align-items: center;

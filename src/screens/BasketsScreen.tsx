@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useApp, useBasketItems, useListTotal } from '../store'
 import { BasketDetailScreen } from './BasketDetailScreen'
 import { formatPrice } from '../utils'
@@ -15,9 +15,16 @@ export function BasketsScreen() {
 }
 
 function BasketsList() {
-  const { baskets, items, addBasket, setViewingBasket } = useApp()
+  const { baskets, items, addBasket, setViewingBasket, basketCreatePending, setBasketCreatePending } = useApp()
   const [creating, setCreating] = useState(false)
   const [name, setName] = useState('')
+
+  useEffect(() => {
+    if (basketCreatePending) {
+      setCreating(true)
+      setBasketCreatePending(false)
+    }
+  }, [basketCreatePending, setBasketCreatePending])
 
   const unassigned = items.filter(
     (i) => !i.basketId && (i.status === 'queued' || i.status === 'ready'),
@@ -33,7 +40,7 @@ function BasketsList() {
   }
 
   return (
-    <div className="screen">
+    <div className="screen screen-enter">
       <header className="screen-header">
         <h1 className="screen-title">Baskets</h1>
         <p className="header-subtitle">Group items to buy together</p>

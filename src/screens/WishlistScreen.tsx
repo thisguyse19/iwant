@@ -1,31 +1,81 @@
 import type { CSSProperties } from 'react'
-import { useFilteredItems, useApp, useListTotal, useActiveItems } from '../store'
+import { useEffect } from 'react'
+import {
+  useFilteredItems,
+  useApp,
+  useListTotal,
+  useActiveItems,
+  useSelectedTotal,
+} from '../store'
 import { ItemRow } from '../components/ItemRow'
-import { CATEGORIES, type CategoryFilter } from '../types'
+import { SelectionBar } from '../components/SelectionBar'
+import { CATEGORIES, type CategoryFilter, type WishlistItem } from '../types'
 import { formatPrice } from '../utils'
 import { vibrate } from '../utils'
 import '../components/ItemRow.css'
 import './WishlistScreen.css'
 
 export function WishlistScreen() {
-  const { categoryFilter, setCategoryFilter, setAddOpen, setViewingItem, updateItem, removeItem } = useApp()
+  const {
+    categoryFilter,
+    setCategoryFilter,
+    setAddOpen,
+    setViewingItem,
+    updateItem,
+    removeItem,
+    selectionMode,
+    selectedIds,
+    setSelectionMode,
+    toggleSelected,
+    selectAll,
+    clearSelection,
+  } = useApp()
   const filtered = useFilteredItems()
   const activeItems = useActiveItems()
   const listTotal = useListTotal(filtered)
+  const selectionTotal = useSelectedTotal(selectedIds)
+
+  useEffect(() => {
+    return () => clearSelection()
+  }, [clearSelection])
 
   const handleMarkBought = async (id: string) => {
     vibrate()
     await updateItem(id, { status: 'bought' })
   }
 
+  const toggleSelectionMode = () => {
+    if (selectionMode) {
+      clearSelection()
+    } else {
+      setSelectionMode(true)
+    }
+  }
+
+  const handleRowTap = (item: WishlistItem) => {
+    if (selectionMode) return
+    setViewingItem(item)
+  }
+
   return (
-    <div className="screen">
-      <header className="screen-header">
-        <h1 className="screen-title">Want</h1>
-        {activeItems.length > 0 && (
-          <p className="header-subtitle">
-            {activeItems.length} on your list
-          </p>
+    <div className="screen screen-enter">
+      <header className="screen-header screen-header-row">
+        <div>
+          <h1 className="screen-title">Want</h1>
+          {activeItems.length > 0 && (
+            <p className="header-subtitle">
+              {activeItems.length} on your list
+            </p>
+          )}
+        </div>
+        {filtered.length > 0 && (
+          <button
+            type="button"
+            className={`select-toggle ${selectionMode ? 'active' : ''}`}
+            onClick={toggleSelectionMode}
+          >
+            {selectionMode ? 'Done' : 'Select'}
+          </button>
         )}
       </header>
 
@@ -53,7 +103,7 @@ export function WishlistScreen() {
         ))}
       </div>
 
-      {filtered.length > 0 && (
+      {filtered.length > 0 && !selectionMode && (
         <div className="total-bar">
           <span className="total-bar-label">
             {listTotal.count} item{listTotal.count !== 1 ? 's' : ''}
@@ -80,13 +130,28 @@ export function WishlistScreen() {
             <ItemRow
               key={item.id}
               item={item}
-              onTap={() => setViewingItem(item)}
+              selectable={selectionMode}
+              selected={selectedIds.has(item.id)}
+              onToggleSelect={() => toggleSelected(item.id)}
+              onTap={() => handleRowTap(item)}
               onMarkBought={() => handleMarkBought(item.id)}
               onRemove={() => removeItem(item.id)}
             />
           ))
         )}
       </div>
+
+      {selectionMode && (
+        <SelectionBar
+          count={selectionTotal.count}
+          total={selectionTotal.total}
+          pricedCount={selectionTotal.pricedCount}
+          unpriced={selectionTotal.unpriced}
+          currency={selectionTotal.currency}
+          onClear={clearSelection}
+          onSelectAll={() => selectAll(filtered.map((i) => i.id))}
+        />
+      )}
     </div>
   )
 }

@@ -22,11 +22,19 @@ interface AppState {
   viewingItem: WishlistItem | null
   editingItem: WishlistItem | null
   viewingBasket: Basket | null
+  selectionMode: boolean
+  selectedIds: Set<string>
+  basketCreatePending: boolean
   setCategoryFilter: (filter: CategoryFilter) => void
   setAddOpen: (open: boolean, basketId?: string | null) => void
   setViewingItem: (item: WishlistItem | null) => void
   setEditingItem: (item: WishlistItem | null) => void
   setViewingBasket: (basket: Basket | null) => void
+  setSelectionMode: (on: boolean) => void
+  toggleSelected: (id: string) => void
+  selectAll: (ids: string[]) => void
+  clearSelection: () => void
+  setBasketCreatePending: (pending: boolean) => void
   openEdit: (item: WishlistItem) => void
   addItem: (data: {
     title: string
@@ -76,6 +84,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [viewingItem, setViewingItem] = useState<WishlistItem | null>(null)
   const [editingItem, setEditingItem] = useState<WishlistItem | null>(null)
   const [viewingBasket, setViewingBasket] = useState<Basket | null>(null)
+  const [selectionMode, setSelectionModeState] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [basketCreatePending, setBasketCreatePendingState] = useState(false)
 
   const refresh = useCallback(async () => {
     const [loadedItems, loadedBaskets, loadedSettings] = await Promise.all([
@@ -101,6 +112,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const setAddOpen = useCallback((open: boolean, basketId?: string | null) => {
     setAddOpenState(open)
     setAddBasketId(open ? (basketId ?? null) : null)
+  }, [])
+
+  const setSelectionMode = useCallback((on: boolean) => {
+    setSelectionModeState(on)
+    if (!on) setSelectedIds(new Set())
+  }, [])
+
+  const toggleSelected = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const selectAll = useCallback((ids: string[]) => {
+    setSelectedIds(new Set(ids))
+  }, [])
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set())
+    setSelectionModeState(false)
+  }, [])
+
+  const setBasketCreatePending = useCallback((pending: boolean) => {
+    setBasketCreatePendingState(pending)
   }, [])
 
   const openEdit = useCallback((item: WishlistItem) => {
@@ -260,11 +298,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       viewingItem,
       editingItem,
       viewingBasket,
+      selectionMode,
+      selectedIds,
+      basketCreatePending,
       setCategoryFilter,
       setAddOpen,
       setViewingItem,
       setEditingItem,
       setViewingBasket,
+      setSelectionMode,
+      toggleSelected,
+      selectAll,
+      clearSelection,
+      setBasketCreatePending,
       openEdit,
       addItem,
       updateItem,
@@ -289,6 +335,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       viewingItem,
       editingItem,
       viewingBasket,
+      selectionMode,
+      selectedIds,
+      basketCreatePending,
       setAddOpen,
       openEdit,
       addItem,
@@ -356,6 +405,22 @@ export function useBasketTotal(basketId: string) {
   return useListTotal(basketItems)
 }
 
+export function useSelectedTotal(ids: Set<string>) {
+  const { items, settings } = useApp()
+  return useMemo(() => {
+    const selected = items.filter((i) => ids.has(i.id))
+    const priced = selected.filter((i) => i.price != null)
+    const total = priced.reduce((sum, i) => sum + (i.price ?? 0), 0)
+    const unpriced = selected.length - priced.length
+    return {
+      total,
+      count: selected.length,
+      pricedCount: priced.length,
+      unpriced,
+      currency: settings.currency,
+    }
+  }, [ids, items, settings.currency])
+}
 export function useBudgetSummary() {
   const { items, settings } = useApp()
   return useMemo(() => {
