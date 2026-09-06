@@ -140,9 +140,9 @@ export function BudgetChart({
                     style={{ height: `${Math.max(height, point.amount > 0 ? 4 : 0)}%` }}
                   />
                 </div>
-                {(point.day === 1 || point.day % 7 === 0 || point.day === data.length) && (
-                  <span className="budget-chart-axis">{point.day}</span>
-                )}
+                <span className="budget-chart-axis" aria-hidden={!(point.day === 1 || point.day % 7 === 0 || point.day === data.length)}>
+                  {point.day === 1 || point.day % 7 === 0 || point.day === data.length ? point.day : ''}
+                </span>
               </div>
             )
           })}
