@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef, useState, type TransitionEvent } from 'react'
 import { getCategory, PRIORITY_PILL, type WishlistItem } from '../types'
 import { formatPriceOptional } from '../utils'
 import './CategoryPicker.css'
@@ -11,7 +11,8 @@ interface ItemRowProps {
 }
 
 const ACTION_WIDTH = 68
-const SNAP_THRESHOLD = 36
+const AXIS_LOCK_PX = 10
+const OPEN_RATIO = 0.45
 
 export function ItemRow({ item, onTap, onMarkBought, onRemove }: ItemRowProps) {
   const category = getCategory(item.category)
@@ -19,42 +20,91 @@ export function ItemRow({ item, onTap, onMarkBought, onRemove }: ItemRowProps) {
   const isActive = item.status === 'queued' || item.status === 'ready'
   const hasSwipe = isActive && (onMarkBought || onRemove)
 
-  const [offset, setOffset] = useState(0)
+  const [open, setOpen] = useState(false)
   const offsetRef = useRef(0)
   const contentRef = useRef<HTMLDivElement>(null)
-  const dragRef = useRef({ startX: 0, startOffset: 0, dragging: false })
-  const rafRef = useRef<number | null>(null)
+  const dragRef = useRef({
+    startX: 0,
+    startY: 0,
+    startOffset: 0,
+    axis: null as 'x' | 'y' | null,
+    tracking: false,
+  })
 
   const actionCount = (onMarkBought ? 1 : 0) + (onRemove ? 1 : 0)
   const maxOffset = actionCount * ACTION_WIDTH
 
-  const applyOffset = useCallback((value: number, animate: boolean) => {
+  const paintOffset = useCallback((value: number, animate: boolean) => {
     const clamped = Math.max(0, Math.min(maxOffset, value))
     offsetRef.current = clamped
     const el = contentRef.current
-    if (el) el.style.transition = animate ? 'transform 0.22s var(--spring)' : 'none'
-    setOffset(clamped)
+    if (!el) return
+    el.style.transition = animate ? 'transform 0.22s var(--spring)' : 'none'
+    el.style.transform = clamped > 0 ? `translateX(-${clamped}px)` : ''
+    setOpen(clamped >= maxOffset * 0.5)
   }, [maxOffset])
 
-  const closeSwipe = useCallback(() => applyOffset(0, true), [applyOffset])
+  const snap = useCallback(() => {
+    const target = offsetRef.current >= maxOffset * OPEN_RATIO ? maxOffset : 0
+    paintOffset(target, true)
+  }, [maxOffset, paintOffset])
 
-  const onDragStart = (clientX: number) => {
+  const closeSwipe = useCallback(() => {
+    paintOffset(0, true)
+  }, [paintOffset])
+
+  const resetDrag = useCallback(() => {
+    dragRef.current.tracking = false
+    dragRef.current.axis = null
+  }, [])
+
+  const endGesture = useCallback(() => {
+    if (dragRef.current.axis === 'x') {
+      snap()
+    }
+    resetDrag()
+  }, [snap, resetDrag])
+
+  const bindDocumentEnd = useCallback(() => {
+    const onEnd = () => endGesture()
+    document.addEventListener('touchend', onEnd, { once: true, passive: true })
+    document.addEventListener('touchcancel', onEnd, { once: true, passive: true })
+    document.addEventListener('pointerup', onEnd, { once: true })
+    document.addEventListener('pointercancel', onEnd, { once: true })
+  }, [endGesture])
+
+  const onGestureStart = (clientX: number, clientY: number) => {
     if (!hasSwipe) return
-    dragRef.current = { startX: clientX, startOffset: offsetRef.current, dragging: true }
+    dragRef.current = {
+      startX: clientX,
+      startY: clientY,
+      startOffset: offsetRef.current,
+      axis: null,
+      tracking: true,
+    }
   }
 
-  const onDragMove = (clientX: number) => {
-    if (!dragRef.current.dragging || !hasSwipe) return
-    const delta = dragRef.current.startX - clientX
-    const next = dragRef.current.startOffset + delta
-    if (rafRef.current) cancelAnimationFrame(rafRef.current)
-    rafRef.current = requestAnimationFrame(() => applyOffset(next, false))
-  }
+  const onGestureMove = (clientX: number, clientY: number, preventDefault?: () => void) => {
+    const drag = dragRef.current
+    if (!hasSwipe || !drag.tracking) return
 
-  const onDragEnd = () => {
-    if (!dragRef.current.dragging) return
-    dragRef.current.dragging = false
-    applyOffset(offsetRef.current > SNAP_THRESHOLD ? maxOffset : 0, true)
+    const dx = drag.startX - clientX
+    const dy = drag.startY - clientY
+
+    if (drag.axis === null) {
+      if (Math.abs(dx) < AXIS_LOCK_PX && Math.abs(dy) < AXIS_LOCK_PX) return
+      drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+      if (drag.axis === 'y') {
+        resetDrag()
+        return
+      }
+      bindDocumentEnd()
+    }
+
+    if (drag.axis !== 'x') return
+
+    preventDefault?.()
+    paintOffset(drag.startOffset + dx, false)
   }
 
   const handleTap = () => {
@@ -65,8 +115,16 @@ export function ItemRow({ item, onTap, onMarkBought, onRemove }: ItemRowProps) {
     onTap()
   }
 
+  const onTransitionEnd = (e: TransitionEvent<HTMLDivElement>) => {
+    if (e.propertyName !== 'transform') return
+    const target = offsetRef.current >= maxOffset * OPEN_RATIO ? maxOffset : 0
+    if (Math.abs(offsetRef.current - target) > 0.5) {
+      paintOffset(target, false)
+    }
+  }
+
   return (
-    <div className={`item-row-swipe ${offset > 0 ? 'open' : ''}`}>
+    <div className={`item-row-swipe ${open ? 'open' : ''}`}>
       {hasSwipe && (
         <div className="item-row-actions" style={{ width: maxOffset }}>
           {onMarkBought && (
@@ -101,14 +159,24 @@ export function ItemRow({ item, onTap, onMarkBought, onRemove }: ItemRowProps) {
       <div
         ref={contentRef}
         className="item-row"
-        style={{ transform: offset > 0 ? `translateX(-${offset}px)` : undefined }}
-        onTouchStart={(e) => onDragStart(e.touches[0].clientX)}
+        onTransitionEnd={onTransitionEnd}
+        onTouchStart={(e) => onGestureStart(e.touches[0].clientX, e.touches[0].clientY)}
         onTouchMove={(e) => {
-          if (!dragRef.current.dragging) return
-          onDragMove(e.touches[0].clientX)
+          onGestureMove(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault())
         }}
-        onTouchEnd={onDragEnd}
-        onTouchCancel={onDragEnd}
+        onTouchEnd={endGesture}
+        onTouchCancel={endGesture}
+        onPointerDown={(e) => {
+          if (e.pointerType === 'touch') return
+          onGestureStart(e.clientX, e.clientY)
+          e.currentTarget.setPointerCapture(e.pointerId)
+        }}
+        onPointerMove={(e) => {
+          if (e.pointerType === 'touch') return
+          onGestureMove(e.clientX, e.clientY)
+        }}
+        onPointerUp={endGesture}
+        onPointerCancel={endGesture}
       >
         <button type="button" className="item-row-main" onClick={handleTap}>
           {item.imageUrl ? (
