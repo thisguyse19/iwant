@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useMemo, useState, type KeyboardEvent } from 'react'
 import { compareMonths, getCurrentMonth, getRecentMonths, shiftMonth } from '../budget'
 import { budgetNoBudgetCopy, withinReachEmptyLine, withinReachLine } from '../copy'
 import {
@@ -189,7 +189,6 @@ export function BudgetScreen() {
   const [logExpense, setLogExpense] = useState<FixedExpense | null>(null)
   const [logDraft, setLogDraft] = useState<LogDraft | null>(null)
   const [recurringExpanded, setRecurringExpanded] = useState(false)
-  const logSpendSelectRef = useRef<HTMLSelectElement>(null)
 
   const fixedTemplates = useMemo(
     () =>
@@ -313,21 +312,6 @@ export function BudgetScreen() {
       amount: String(target.amount),
     })
     setLogSheetOpen(true)
-  }
-
-  const openLogSpendPicker = () => {
-    const select = logSpendSelectRef.current
-    if (!select || budgetedRecurring.length === 0) return
-    vibrateTap()
-    if (typeof select.showPicker === 'function') {
-      try {
-        select.showPicker()
-        return
-      } catch {
-        // showPicker can throw if not user-gesture; fall back below
-      }
-    }
-    select.click()
   }
 
   const onLogSpendPick = (expenseId: string) => {
@@ -838,32 +822,27 @@ export function BudgetScreen() {
             )}
             <div className="budget-fixed-header-actions">
               {!recurringExpanded && budgetedRecurring.length > 0 && (
-                <>
-                  <button
-                    type="button"
-                    className="budget-log-spend-picker-btn haptic-skip"
-                    onClick={openLogSpendPicker}
-                  >
-                    Log spend
-                  </button>
+                <label className="budget-log-select-wrap haptic-skip">
+                  <span className="budget-log-spend-picker-btn">Log spend</span>
                   <select
-                    ref={logSpendSelectRef}
-                    className="budget-log-select-native"
+                    className="budget-log-select-overlay"
                     defaultValue=""
                     onChange={(e) => {
                       const id = e.target.value
                       e.target.value = ''
-                      onLogSpendPick(id)
+                      if (id) {
+                        vibrateTap()
+                        onLogSpendPick(id)
+                      }
                     }}
-                    aria-hidden="true"
-                    tabIndex={-1}
+                    aria-label="Log spend for allowance"
                   >
-                    <option value="" disabled>Log spend for…</option>
+                    <option value="" disabled hidden>Log spend for…</option>
                     {budgetedRecurring.map((expense) => (
                       <option key={expense.id} value={expense.id}>{expense.name}</option>
                     ))}
                   </select>
-                </>
+                </label>
               )}
               <button type="button" className="budget-fixed-add haptic-skip" onClick={() => activateBudgetRow(openFixedAdd)}>
                 Add
@@ -874,27 +853,31 @@ export function BudgetScreen() {
             <p className="budget-fixed-empty">
               Fixed bills like Netflix, or budgeted allowances like food. Budgeted amounts accrue by default; log spend to override a day, week, or month.
             </p>
-          ) : !recurringExpanded ? (
-            <div
-              role="button"
-              tabIndex={0}
-              className="budget-recurring-collapsed haptic-skip"
-              onClick={() => activateBudgetRow(() => setRecurringExpanded(true))}
-              onKeyDown={(e) => onBudgetRowKeyDown(e, () => setRecurringExpanded(true))}
-              aria-expanded="false"
-            >
-              <span className="budget-recurring-collapsed-label">
-                {recurringSummary.count} recurring
-              </span>
-              <span className="budget-recurring-collapsed-amount">
-                {formatPrice(recurringSummary.total, summary.currency)}
-              </span>
-              <svg className="budget-section-chevron" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-                <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-              </svg>
-            </div>
           ) : (
-            <div className="budget-fixed-list">
+            <div className="budget-recurring-accordion" data-open={recurringExpanded}>
+              <div className="budget-recurring-collapsed-slot">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className="budget-recurring-collapsed haptic-skip"
+                  onClick={() => activateBudgetRow(() => setRecurringExpanded(true))}
+                  onKeyDown={(e) => onBudgetRowKeyDown(e, () => setRecurringExpanded(true))}
+                  aria-expanded={recurringExpanded}
+                  aria-hidden={recurringExpanded}
+                >
+                  <span className="budget-recurring-collapsed-label">
+                    {recurringSummary.count} recurring
+                  </span>
+                  <span className="budget-recurring-collapsed-amount">
+                    {formatPrice(recurringSummary.total, summary.currency)}
+                  </span>
+                  <svg className="budget-section-chevron" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                    <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                  </svg>
+                </div>
+              </div>
+              <div className="budget-recurring-expanded-slot">
+                <div className="budget-fixed-list" aria-hidden={!recurringExpanded}>
               {fixedTemplates.map((expense) => {
                 const e = normalizeFixedExpense(expense)
                 const periodTotal = getFixedExpensePeriodTotal(e, summary.period)
@@ -1017,6 +1000,8 @@ export function BudgetScreen() {
                   </div>
                 )
               })}
+                </div>
+              </div>
             </div>
           )}
         </section>
