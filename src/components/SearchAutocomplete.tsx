@@ -18,11 +18,13 @@ export function SearchAutocomplete({ query, onSelect, visible, focused }: Search
 
   const trimmed = query.trim()
   const localSuggestions = useMemo(
-    () => (trimmed.length >= 1 ? getLocalSuggestions(trimmed, items) : []),
-    [trimmed, items],
+    () => (focused && trimmed.length >= 1 ? getLocalSuggestions(trimmed, items) : []),
+    [focused, trimmed, items],
   )
 
   const suggestions = useMemo(() => {
+    if (!focused || trimmed.length < 1) return []
+
     const merged = [...localSuggestions, ...webSuggestions]
     const seen = new Set<string>()
     const unique: SearchSuggestion[] = []
@@ -33,7 +35,7 @@ export function SearchAutocomplete({ query, onSelect, visible, focused }: Search
       unique.push(s)
       if (unique.length >= 4) break
     }
-    if (unique.length === 0 && trimmed.length >= 1 && !loadingWeb) {
+    if (unique.length === 0 && !loadingWeb) {
       unique.push({
         title: toProductTitle(trimmed),
         source: 'web',
@@ -41,10 +43,18 @@ export function SearchAutocomplete({ query, onSelect, visible, focused }: Search
       })
     }
     return unique
-  }, [localSuggestions, webSuggestions, trimmed, loadingWeb])
+  }, [focused, localSuggestions, webSuggestions, trimmed, loadingWeb])
 
   useEffect(() => {
-    if (!visible || trimmed.length < 2) {
+    if (!focused) {
+      requestId.current++
+      setWebSuggestions([])
+      setLoadingWeb(false)
+    }
+  }, [focused])
+
+  useEffect(() => {
+    if (!visible || !focused || trimmed.length < 2) {
       setWebSuggestions([])
       setLoadingWeb(false)
       return
@@ -65,9 +75,9 @@ export function SearchAutocomplete({ query, onSelect, visible, focused }: Search
         setWebSuggestions([])
         setLoadingWeb(false)
       })
-  }, [trimmed, visible, items])
+  }, [trimmed, visible, focused, items])
 
-  const showPanel = visible && trimmed.length >= 1 && (focused || loadingWeb || suggestions.length > 0)
+  const showPanel = visible && focused && trimmed.length >= 1
   if (!showPanel) return null
 
   const showLoading = loadingWeb && trimmed.length >= 2 && webSuggestions.length === 0
@@ -80,7 +90,9 @@ export function SearchAutocomplete({ query, onSelect, visible, focused }: Search
             type="button"
             className="search-suggestion-inline"
             role="option"
+            tabIndex={-1}
             onMouseDown={(e) => e.preventDefault()}
+            onTouchStart={(e) => e.preventDefault()}
             onClick={() => onSelect(s)}
           >
             <span className="search-suggestion-inline-title">{s.title}</span>

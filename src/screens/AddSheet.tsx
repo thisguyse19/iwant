@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
 import { SearchAutocomplete } from '../components/SearchAutocomplete'
@@ -19,6 +19,7 @@ export function AddSheet() {
   const [showMore, setShowMore] = useState(false)
   const [saving, setSaving] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
+  const searchAreaRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (addOpen && addBasketId) setBasketId(addBasketId)
@@ -90,7 +91,16 @@ export function AddSheet() {
 
   return (
     <Sheet open={addOpen} onClose={handleClose} title="Add to list" autoFocus>
-      <div className="field field-search">
+      <div
+        ref={searchAreaRef}
+        className="field field-search"
+        onFocus={() => setSearchFocused(true)}
+        onBlur={(e) => {
+          const next = e.relatedTarget as Node | null
+          if (next && searchAreaRef.current?.contains(next)) return
+          setSearchFocused(false)
+        }}
+      >
         <label htmlFor="add-title">What is it?</label>
         <div className="field-with-action">
           <input
@@ -99,8 +109,6 @@ export function AddSheet() {
             placeholder="Running shoes, gym pass…"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            onFocus={() => setSearchFocused(true)}
-            onBlur={() => window.setTimeout(() => setSearchFocused(false), 120)}
             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
             autoComplete="off"
           />
