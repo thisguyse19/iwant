@@ -59,10 +59,16 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
   return (
     <>
       <div className="tab-bar-dock" role="presentation">
+        <div className="tab-bar-scroll-edge" aria-hidden="true" />
         <nav className="tab-bar-liquid" ref={navRef} aria-label="Main navigation">
           <div className="tab-bar-glass-layers" aria-hidden="true">
+            <div className="tab-bar-lens" />
+            <div className="tab-bar-tint" />
             <div className="tab-bar-specular" />
+            <div className="tab-bar-caustic" />
             <div className="tab-bar-rim" />
+            <div className="tab-bar-noise" />
+            <div className="tab-bar-edge-line" />
           </div>
           <div
             className="tab-indicator"
@@ -71,7 +77,9 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
               transform: `translateX(${indicator.x}px)`,
             }}
             aria-hidden="true"
-          />
+          >
+            <div className="tab-indicator-glass" aria-hidden="true" />
+          </div>
           {TABS.map((tab, index) => (
             <button
               key={tab.id}
@@ -97,8 +105,13 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
             aria-haspopup="menu"
           >
             <div className="tab-action-glass-layers" aria-hidden="true">
+              <div className="tab-bar-lens" />
+              <div className="tab-bar-tint" />
               <div className="tab-bar-specular" />
+              <div className="tab-bar-caustic" />
               <div className="tab-bar-rim" />
+              <div className="tab-bar-noise" />
+              <div className="tab-bar-edge-line" />
             </div>
             <svg
               className="tab-action-icon"
@@ -119,6 +132,13 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
 
           {menuOpen && (
             <div className="add-menu" role="menu">
+              <div className="tab-bar-glass-layers" aria-hidden="true">
+                <div className="tab-bar-lens" />
+                <div className="tab-bar-tint" />
+                <div className="tab-bar-specular" />
+                <div className="tab-bar-rim" />
+                <div className="tab-bar-noise" />
+              </div>
               <button type="button" className="add-menu-item" role="menuitem" onClick={handleAddItem}>
                 <span className="add-menu-icon" aria-hidden="true">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
