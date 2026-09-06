@@ -26,6 +26,7 @@ import type {
   RecurringExpenseActual,
   RecurringExpenseKind,
 } from '../types'
+import { AmountInput } from '../components/AmountInput'
 import { dateInputValue, formatPrice, vibrateTap } from '../utils'
 import '../components/ItemRow.css'
 import './BudgetScreen.css'
@@ -784,21 +785,15 @@ export function BudgetScreen() {
       </ScreenChrome>
 
       <Sheet open={editOpen} onClose={() => setEditOpen(false)} title="Budget options">
-        <p className="budget-sheet-period">{summary.period.label}</p>
+        <AmountInput
+          id="budget-amount"
+          label={`Amount (${settings.currency})`}
+          value={budgetInput}
+          onChange={setBudgetInput}
+          currency={settings.currency}
+        />
 
-        <div className="field">
-          <label htmlFor="budget-amount">Amount ({settings.currency})</label>
-          <input
-            id="budget-amount"
-            type="number"
-            inputMode="decimal"
-            min="0"
-            step="any"
-            placeholder="0"
-            value={budgetInput}
-            onChange={(e) => setBudgetInput(e.target.value)}
-          />
-        </div>
+        <p className="budget-sheet-period">{summary.period.label}</p>
 
         <div className="budget-scope-group" role="radiogroup" aria-label="Budget scope">
           <button
@@ -855,6 +850,14 @@ export function BudgetScreen() {
       >
         {fixedDraft && (
           <>
+            <AmountInput
+              id="fixed-amount"
+              label={`Amount (${settings.currency})`}
+              value={fixedDraft.amount}
+              onChange={(amount) => setFixedDraft({ ...fixedDraft, amount })}
+              currency={settings.currency}
+            />
+
             <div className="field">
               <label htmlFor="fixed-name">Name</label>
               <input
@@ -897,20 +900,6 @@ export function BudgetScreen() {
                   ? 'A set bill, like a subscription.'
                   : 'An allowance you log actual spending against.'}
               </p>
-            </div>
-
-            <div className="field">
-              <label htmlFor="fixed-amount">Amount ({settings.currency})</label>
-              <input
-                id="fixed-amount"
-                type="number"
-                inputMode="decimal"
-                min="0"
-                step="any"
-                placeholder="0"
-                value={fixedDraft.amount}
-                onChange={(e) => setFixedDraft({ ...fixedDraft, amount: e.target.value })}
-              />
             </div>
 
             <div className="field">
@@ -977,29 +966,22 @@ export function BudgetScreen() {
                     ))}
                   </ul>
                 )}
-                <div className="field-row">
-                  <div className="field">
-                    <label htmlFor="actual-amount">Amount</label>
-                    <input
-                      id="actual-amount"
-                      type="number"
-                      inputMode="decimal"
-                      min="0"
-                      step="any"
-                      placeholder="0"
-                      value={actualDraft.amount}
-                      onChange={(e) => setActualDraft({ ...actualDraft, amount: e.target.value })}
-                    />
-                  </div>
-                  <div className="field">
-                    <label htmlFor="actual-date">Date</label>
-                    <input
-                      id="actual-date"
-                      type="date"
-                      value={actualDraft.spentAt}
-                      onChange={(e) => setActualDraft({ ...actualDraft, spentAt: e.target.value })}
-                    />
-                  </div>
+                <AmountInput
+                  id="actual-amount"
+                  label="Amount"
+                  value={actualDraft.amount}
+                  onChange={(amount) => setActualDraft({ ...actualDraft, amount })}
+                  currency={settings.currency}
+                  compact
+                />
+                <div className="field">
+                  <label htmlFor="actual-date">Date</label>
+                  <input
+                    id="actual-date"
+                    type="date"
+                    value={actualDraft.spentAt}
+                    onChange={(e) => setActualDraft({ ...actualDraft, spentAt: e.target.value })}
+                  />
                 </div>
                 <button type="button" className="secondary-btn" onClick={() => void logRecurringActual()}>
                   Log spend
@@ -1027,6 +1009,14 @@ export function BudgetScreen() {
       >
         {adhocDraft && (
           <>
+            <AmountInput
+              id="adhoc-amount"
+              label={`Amount (${settings.currency})`}
+              value={adhocDraft.amount}
+              onChange={(amount) => setAdhocDraft({ ...adhocDraft, amount })}
+              currency={settings.currency}
+            />
+
             <div className="field">
               <label htmlFor="adhoc-name">Name</label>
               <input
@@ -1035,20 +1025,6 @@ export function BudgetScreen() {
                 placeholder="Parking, tip, repair…"
                 value={adhocDraft.name}
                 onChange={(e) => setAdhocDraft({ ...adhocDraft, name: e.target.value })}
-              />
-            </div>
-
-            <div className="field">
-              <label htmlFor="adhoc-amount">Amount ({settings.currency})</label>
-              <input
-                id="adhoc-amount"
-                type="number"
-                inputMode="decimal"
-                min="0"
-                step="any"
-                placeholder="0"
-                value={adhocDraft.amount}
-                onChange={(e) => setAdhocDraft({ ...adhocDraft, amount: e.target.value })}
               />
             </div>
 

@@ -3,10 +3,11 @@ import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
 import { CategoryPicker } from '../components/CategoryPicker'
 import { ProductImagePicker } from '../components/ProductImagePicker'
+import { AmountInput } from '../components/AmountInput'
 import type { CategoryId, Priority } from '../types'
 
 export function ItemEditSheet() {
-  const { editingItem, setEditingItem, updateItem, baskets } = useApp()
+  const { editingItem, setEditingItem, updateItem, baskets, settings } = useApp()
   const [title, setTitle] = useState('')
   const [price, setPrice] = useState('')
   const [category, setCategory] = useState<CategoryId | undefined>()
@@ -60,6 +61,16 @@ export function ItemEditSheet() {
         />
       </div>
 
+      <AmountInput
+        id="edit-price"
+        label="Price"
+        value={price}
+        onChange={setPrice}
+        currency={settings.currency}
+        allowEmpty
+        placeholder="Optional"
+      />
+
       <ProductImagePicker title={title} value={imageUrl} onChange={setImageUrl} />
 
       <div className="field">
@@ -67,29 +78,17 @@ export function ItemEditSheet() {
         <CategoryPicker value={category} onChange={setCategory} />
       </div>
 
-      <div className="field-row">
-        <div className="field">
-          <label htmlFor="edit-price">Price</label>
-          <input
-            id="edit-price"
-            type="number"
-            inputMode="decimal"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="edit-priority">Priority</label>
-          <select
-            id="edit-priority"
-            value={priority}
-            onChange={(e) => setPriority(e.target.value as Priority)}
-          >
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
-        </div>
+      <div className="field">
+        <label htmlFor="edit-priority">Priority</label>
+        <select
+          id="edit-priority"
+          value={priority}
+          onChange={(e) => setPriority(e.target.value as Priority)}
+        >
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
       </div>
 
       <div className="field">

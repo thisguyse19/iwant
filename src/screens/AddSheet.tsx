@@ -5,10 +5,11 @@ import { SearchAutocomplete } from '../components/SearchAutocomplete'
 import { CategoryPicker } from '../components/CategoryPicker'
 import { ProductImagePicker } from '../components/ProductImagePicker'
 import type { CategoryId, Priority, SearchSuggestion } from '../types'
+import { AmountInput } from '../components/AmountInput'
 import { detectClipboardContent, vibrateTap } from '../utils'
 
 export function AddSheet() {
-  const { addOpen, addBasketId, setAddOpen, addItem, items, baskets } = useApp()
+  const { addOpen, addBasketId, setAddOpen, addItem, items, baskets, settings } = useApp()
   const [title, setTitle] = useState('')
   const [price, setPrice] = useState('')
   const [category, setCategory] = useState<CategoryId | undefined>()
@@ -121,6 +122,16 @@ export function AddSheet() {
         />
       </div>
 
+      <AmountInput
+        id="add-price"
+        label="Price"
+        value={price}
+        onChange={setPrice}
+        currency={settings.currency}
+        allowEmpty
+        placeholder="Optional"
+      />
+
       <ProductImagePicker title={title} value={imageUrl} onChange={setImageUrl} />
 
       <div className="field">
@@ -128,31 +139,16 @@ export function AddSheet() {
         <CategoryPicker value={category} onChange={setCategory} />
       </div>
 
-      <div className="field-price-row">
-        <div className="field">
-          <label htmlFor="add-price">Price</label>
-          <input
-            id="add-price"
-            type="number"
-            inputMode="decimal"
-            min="0"
-            step="any"
-            placeholder="Optional"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-          />
-        </div>
-        {pageUrl && (
-          <a
-            href={pageUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="open-page-link"
-          >
-            Open page ↗
-          </a>
-        )}
-      </div>
+      {pageUrl && (
+        <a
+          href={pageUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="open-page-link"
+        >
+          Open page ↗
+        </a>
+      )}
 
       {baskets.length > 0 && (
         <div className="field">

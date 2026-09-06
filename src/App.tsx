@@ -47,7 +47,18 @@ function AppMain() {
   }
 
   return (
-    <div className="app-shell">
+    <div
+      className="app-shell"
+      onContextMenu={(e) => {
+        const target = e.target as HTMLElement
+        if (
+          target.closest('input, textarea, select, [contenteditable="true"]')
+        ) {
+          return
+        }
+        e.preventDefault()
+      }}
+    >
       {tab === 'wishlist' && <WishlistScreen />}
       {tab === 'baskets' && <BasketsScreen />}
       {tab === 'budget' && <BudgetScreen />}

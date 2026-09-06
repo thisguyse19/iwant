@@ -33,6 +33,38 @@ export function formatPriceOptional(amount?: number, currency?: string): string 
   return formatPrice(amount, currency ?? 'GBP')
 }
 
+export function currencySymbol(currency: string): string {
+  const parts = new Intl.NumberFormat(currencyLocale(currency), {
+    style: 'currency',
+    currency,
+  }).formatToParts(0)
+  return parts.find((p) => p.type === 'currency')?.value ?? currency
+}
+
+export function sanitizeAmountInput(raw: string, currency: string): string {
+  let cleaned = raw.replace(/[^\d.]/g, '')
+  if (currency === 'JPY') return cleaned.replace(/\D/g, '')
+  const dot = cleaned.indexOf('.')
+  if (dot !== -1) {
+    cleaned = cleaned.slice(0, dot + 1) + cleaned.slice(dot + 1).replace(/\./g, '')
+    const [, frac = ''] = cleaned.split('.')
+    if (frac.length > 2) cleaned = `${cleaned.split('.')[0]}.${frac.slice(0, 2)}`
+  }
+  return cleaned
+}
+
+export function formatAmountValue(amount: number, currency: string): string {
+  if (currency === 'JPY') return String(Math.round(amount))
+  if (Math.abs(amount % 1) < 0.001) return String(Math.round(amount))
+  return amount.toFixed(2).replace(/\.?0+$/, '')
+}
+
+export function parseAmountValue(value: string, allowEmpty = false): number {
+  if (value === '') return allowEmpty ? 0 : 0
+  const n = parseFloat(value)
+  return Number.isFinite(n) ? Math.max(0, n) : 0
+}
+
 export function daysSince(timestamp: number): number {
   return Math.floor((Date.now() - timestamp) / (1000 * 60 * 60 * 24))
 }
