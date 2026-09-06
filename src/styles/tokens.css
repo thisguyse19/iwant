@@ -99,7 +99,7 @@
     rgba(245, 245, 247, 0.48) 76%,
     rgba(245, 245, 247, 0.68) 100%
   );
-  --liquid-glass-indicator: rgba(0, 0, 0, 0.16);
+  --liquid-glass-indicator: rgba(0, 0, 0, 0.12);
   --liquid-glass-indicator-border: rgba(255, 255, 255, 0.26);
   --liquid-glass-indicator-shadow:
     inset 0 0.5px 0 rgba(255, 255, 255, 0.32),
