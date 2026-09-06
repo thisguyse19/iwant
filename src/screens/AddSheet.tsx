@@ -4,9 +4,10 @@ import { Sheet } from '../components/Sheet'
 import { SearchAutocomplete } from '../components/SearchAutocomplete'
 import type { Priority, SearchSuggestion } from '../types'
 import { detectClipboardContent, vibrate } from '../utils'
+import { faviconFromUrl } from '../search'
 
 export function AddSheet() {
-  const { addOpen, setAddOpen, addItem } = useApp()
+  const { addOpen, setAddOpen, addItem, items } = useApp()
   const [title, setTitle] = useState('')
   const [price, setPrice] = useState('')
   const [tag, setTag] = useState('')
@@ -37,7 +38,10 @@ export function AddSheet() {
       const text = await navigator.clipboard.readText()
       const detected = detectClipboardContent(text)
       if (detected.title) setTitle(detected.title)
-      if (detected.link) setLink(detected.link)
+      if (detected.link) {
+        setLink(detected.link)
+        setImageUrl(faviconFromUrl(detected.link))
+      }
     } catch {
       // clipboard unavailable
     }
@@ -47,6 +51,11 @@ export function AddSheet() {
     setTitle(s.title)
     if (s.link) setLink(s.link)
     if (s.imageUrl) setImageUrl(s.imageUrl)
+    if (s.source === 'local' && s.description === 'From your list') {
+      const match = items.find((i) => i.title === s.title)
+      if (match?.tag) setTag(match.tag)
+      if (match?.price != null) setPrice(match.price.toString())
+    }
   }
 
   const handleSave = async () => {

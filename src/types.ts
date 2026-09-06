@@ -23,6 +23,7 @@ export interface SearchSuggestion {
   description?: string
   imageUrl?: string
   link?: string
+  source?: 'local' | 'web'
 }
 
 export interface AppSettings {
