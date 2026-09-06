@@ -118,13 +118,20 @@
 
 .settings-accent-swatch-pride {
   background: linear-gradient(
-    135deg,
-    #c9a0b0 0%,
-    #b8a0c8 34%,
-    #9eb5d0 68%,
-    #a8c4a8 100%
+    180deg,
+    #e40303 0%,
+    #e40303 16.67%,
+    #ff8c00 16.67%,
+    #ff8c00 33.33%,
+    #ffed00 33.33%,
+    #ffed00 50%,
+    #008026 50%,
+    #008026 66.67%,
+    #004dff 66.67%,
+    #004dff 83.33%,
+    #750787 83.33%,
+    #750787 100%
   );
-  opacity: 0.92;
 }
 
 .settings-toggle-row {

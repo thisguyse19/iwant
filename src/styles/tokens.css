@@ -233,12 +233,31 @@
 }
 
 :root[data-accent='pride'] {
-  --accent: #8a5a82;
-  --accent-pressed: #734a6c;
-  --accent-soft: rgba(138, 90, 130, 0.12);
-  --ready-stripe: #8a5a82;
-  --interval-month: #8a5a82;
-  --liquid-glass-tint: rgba(138, 90, 130, 0.05);
+  --pride-red: #e40303;
+  --pride-orange: #ff8c00;
+  --pride-yellow: #ffed00;
+  --pride-green: #008026;
+  --pride-blue: #004dff;
+  --pride-violet: #750787;
+  --pride-gradient: linear-gradient(
+    90deg,
+    var(--pride-red) 0%,
+    var(--pride-orange) 20%,
+    var(--pride-yellow) 40%,
+    var(--pride-green) 60%,
+    var(--pride-blue) 80%,
+    var(--pride-violet) 100%
+  );
+  --accent: #004dff;
+  --accent-pressed: #0039b8;
+  --accent-soft: rgba(0, 77, 255, 0.12);
+  --ready-stripe: var(--pride-violet);
+  --interval-day: var(--pride-red);
+  --interval-week: var(--pride-orange);
+  --interval-month: var(--pride-blue);
+  --interval-year: var(--pride-violet);
+  --liquid-glass-tint: rgba(0, 77, 255, 0.05);
+  --tab-active: var(--pride-blue);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -257,9 +276,15 @@
   }
 
   :root[data-accent='pride'] {
-    --accent: #c49ab8;
-    --accent-pressed: #d4aac8;
-    --accent-soft: rgba(196, 154, 184, 0.14);
-    --interval-month: #c49ab8;
+    --pride-red: #ff4d4d;
+    --pride-orange: #ffa033;
+    --pride-yellow: #ffe033;
+    --pride-green: #2db84d;
+    --pride-blue: #4d8fff;
+    --pride-violet: #b366d4;
+    --accent: #4d8fff;
+    --accent-pressed: #6ba3ff;
+    --accent-soft: rgba(77, 143, 255, 0.16);
+    --tab-active: var(--pride-blue);
   }
 }

@@ -922,3 +922,41 @@ a {
   margin-bottom: 16px;
 }
 
+/* Pride theme: Gilbert Baker rainbow (red, orange, yellow, green, blue, violet) */
+:root[data-accent='pride'] .primary-btn {
+  background: var(--pride-gradient);
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
+}
+
+:root[data-accent='pride'] .primary-btn:active:not(:disabled) {
+  background: var(--pride-gradient);
+  filter: brightness(0.92);
+}
+
+:root[data-accent='pride'] .settings-chip.active {
+  background: var(--pride-gradient);
+  border-color: transparent;
+  color: #fff;
+}
+
+:root[data-accent='pride'] .settings-segmented-btn.active {
+  border-color: var(--pride-blue);
+  background: color-mix(in srgb, var(--pride-blue) 10%, var(--bg-base));
+}
+
+:root[data-accent='pride'] .tab-indicator-glass {
+  background: var(--pride-gradient);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+:root[data-accent='pride'] .budget-ring-spent {
+  stroke: var(--pride-blue);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-accent='pride'] .primary-btn {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  }
+}
+
