@@ -3,9 +3,9 @@ import {
   getAdHocInPeriod,
   getFixedExpenseAccrued,
   getFixedExpensePeriodTotal,
+  getBudgetedExpenseSpent,
   getRecurringActualsInPeriod,
   normalizeFixedExpense,
-  sumRecurringActuals,
 } from './fixedExpenses'
 
 export interface MonthRef {
@@ -340,9 +340,8 @@ export function summarizeBudgetPeriod(
     const periodTotal = getFixedExpensePeriodTotal(e, period)
     if (e.kind === 'budgeted') {
       budgeted += periodTotal
-      budgetedActual += sumRecurringActuals(
-        getRecurringActualsInPeriod(recurringActuals, period, e.id),
-      )
+      const expenseActuals = (settings.recurringActuals ?? []).filter((a) => a.expenseId === e.id)
+      budgetedActual += getBudgetedExpenseSpent(e, period, expenseActuals)
     } else {
       fixed += periodTotal
       fixedActual += getFixedExpenseAccrued(e, period, counting)
