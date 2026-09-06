@@ -28,6 +28,6 @@ npm run preview
 
 Pushes to `main` run the GitHub Actions workflow, which builds the app and deploys the `dist` folder.
 
-**One-time setup:** In your repo → Settings → Pages → Build and deployment → Source, choose **GitHub Actions** (not “Deploy from branch”).
+**One-time setup:** In your repo → Settings → Pages → Build and deployment → Source, choose **Deploy from a branch**, then branch **`gh-pages`** and folder **`/ (root)`**.
 
-The app is served at `https://<username>.github.io/iwant/`.
+Pushes to `main` build the app and publish the output to the `gh-pages` branch automatically.
