@@ -4,10 +4,13 @@ import { budgetNoBudgetCopy, withinReachEmptyLine, withinReachLine } from '../co
 import {
   FIXED_INTERVAL_LABELS,
   FIXED_INTERVALS,
+  RECURRING_KIND_LABELS,
   formatFixedExpenseMeta,
   formatFixedRate,
   getFixedExpensePeriodTotal,
+  getRecurringActualsInPeriod,
   normalizeFixedExpense,
+  sumRecurringActuals,
 } from '../fixedExpenses'
 import { useExitAnimation, useBudgetPulse } from '../exitAnimation'
 import { useApp, useBudgetPeriod } from '../store'
@@ -15,8 +18,15 @@ import { ItemRow } from '../components/ItemRow'
 import { BudgetChart } from '../components/BudgetChart'
 import { Sheet } from '../components/Sheet'
 import { ScreenChrome } from '../components/ScreenChrome'
-import type { BudgetHeroView, FixedExpense, FixedExpenseInterval } from '../types'
-import { formatPrice, vibrateTap } from '../utils'
+import type {
+  AdHocExpense,
+  BudgetHeroView,
+  FixedExpense,
+  FixedExpenseInterval,
+  RecurringExpenseActual,
+  RecurringExpenseKind,
+} from '../types'
+import { dateInputValue, formatPrice, vibrateTap } from '../utils'
 import '../components/ItemRow.css'
 import './BudgetScreen.css'
 
@@ -27,7 +37,21 @@ interface FixedExpenseDraft {
   name: string
   amount: string
   interval: FixedExpenseInterval
+  kind: RecurringExpenseKind
   dayOfMonth: string
+}
+
+interface AdHocDraft {
+  id?: string
+  name: string
+  amount: string
+  spentAt: string
+}
+
+interface ActualDraft {
+  expenseId: string
+  amount: string
+  spentAt: string
 }
 
 const HERO_VIEWS: Array<{ id: BudgetHeroView; label: string; short: string }> = [
@@ -57,7 +81,7 @@ function heroViewData(
     if (view === 'budget') {
       return { amount: summary.budget, label: 'Budget for period', over: false }
     }
-    const diff = summary.budget - summary.spent - summary.fixed
+    const diff = summary.budget - summary.spent - summary.recurringCommitted
     return {
       amount: Math.abs(diff),
       label: diff >= 0
@@ -86,14 +110,17 @@ function heroViewData(
       }
     case 'spent':
       return {
-        amount: summary.spent,
-        label: `${summary.spentCount} bought, ${formatPrice(summary.fixedActual, currency)} fixed`,
+        amount: summary.spent + summary.recurringCommittedActual,
+        label: [
+          `${summary.spentCount} from list`,
+          summary.adhocExpenses.length > 0 ? `${summary.adhocExpenses.length} ad hoc` : null,
+        ].filter(Boolean).join(', '),
         over: false,
       }
     case 'budget':
       return {
         amount: summary.budget,
-        label: `${formatPrice(summary.spent + summary.fixedActual, currency)} used`,
+        label: `${formatPrice(summary.spent + summary.recurringCommittedActual, currency)} used`,
         over: false,
       }
   }
@@ -113,6 +140,9 @@ export function BudgetScreen() {
   const [heldChartDay, setHeldChartDay] = useState<number | null>(null)
   const [fixedSheetOpen, setFixedSheetOpen] = useState(false)
   const [fixedDraft, setFixedDraft] = useState<FixedExpenseDraft | null>(null)
+  const [adhocSheetOpen, setAdhocSheetOpen] = useState(false)
+  const [adhocDraft, setAdhocDraft] = useState<AdHocDraft | null>(null)
+  const [actualDraft, setActualDraft] = useState<ActualDraft | null>(null)
 
   const fixedTemplates = useMemo(
     () =>
@@ -169,7 +199,8 @@ export function BudgetScreen() {
   }
 
   const openFixedAdd = () => {
-    setFixedDraft({ name: '', amount: '', interval: 'month', dayOfMonth: '1' })
+    setFixedDraft({ name: '', amount: '', interval: 'month', kind: 'fixed', dayOfMonth: '1' })
+    setActualDraft(null)
     setFixedSheetOpen(true)
   }
 
@@ -180,14 +211,21 @@ export function BudgetScreen() {
       name: e.name,
       amount: String(e.amount),
       interval: e.interval,
+      kind: e.kind,
       dayOfMonth: String(e.dayOfMonth),
     })
+    setActualDraft(
+      e.kind === 'budgeted'
+        ? { expenseId: e.id, amount: '', spentAt: dateInputValue(Date.now()) }
+        : null,
+    )
     setFixedSheetOpen(true)
   }
 
   const closeFixedSheet = () => {
     setFixedSheetOpen(false)
     setFixedDraft(null)
+    setActualDraft(null)
   }
 
   const saveFixedExpense = async () => {
@@ -201,7 +239,7 @@ export function BudgetScreen() {
     if (fixedDraft.id) {
       const next = existing.map((e) =>
         e.id === fixedDraft.id
-          ? { ...e, name, amount, interval: fixedDraft.interval, dayOfMonth }
+          ? { ...e, name, amount, interval: fixedDraft.interval, kind: fixedDraft.kind, dayOfMonth }
           : e,
       )
       await updateSettings({ fixedExpenses: next })
@@ -211,6 +249,7 @@ export function BudgetScreen() {
         name,
         amount,
         interval: fixedDraft.interval,
+        kind: fixedDraft.kind,
         dayOfMonth,
         sortOrder: existing.length,
         createdAt: Date.now(),
@@ -223,25 +262,106 @@ export function BudgetScreen() {
   const removeFixedExpense = async () => {
     if (!fixedDraft?.id) return
     const next = (settings.fixedExpenses ?? []).filter((e) => e.id !== fixedDraft.id)
-    await updateSettings({ fixedExpenses: next })
+    const actuals = (settings.recurringActuals ?? []).filter((a) => a.expenseId !== fixedDraft.id)
+    await updateSettings({ fixedExpenses: next, recurringActuals: actuals })
     closeFixedSheet()
   }
 
-  const fixedForProgress = heroView === 'actual' ? summary.fixedActual : summary.fixed
+  const openAdhocAdd = () => {
+    setAdhocDraft({ name: '', amount: '', spentAt: dateInputValue(Date.now()) })
+    setAdhocSheetOpen(true)
+  }
+
+  const openAdhocEdit = (expense: AdHocExpense) => {
+    setAdhocDraft({
+      id: expense.id,
+      name: expense.name,
+      amount: String(expense.amount),
+      spentAt: dateInputValue(expense.spentAt),
+    })
+    setAdhocSheetOpen(true)
+  }
+
+  const closeAdhocSheet = () => {
+    setAdhocSheetOpen(false)
+    setAdhocDraft(null)
+  }
+
+  const saveAdhocExpense = async () => {
+    if (!adhocDraft) return
+    const name = adhocDraft.name.trim()
+    const amount = parseFloat(adhocDraft.amount)
+    const spentAt = new Date(adhocDraft.spentAt).getTime()
+    if (!name || isNaN(amount) || amount < 0 || isNaN(spentAt)) return
+
+    const existing = settings.adHocExpenses ?? []
+    if (adhocDraft.id) {
+      const next = existing.map((e) =>
+        e.id === adhocDraft.id ? { ...e, name, amount, spentAt } : e,
+      )
+      await updateSettings({ adHocExpenses: next })
+    } else {
+      const expense: AdHocExpense = {
+        id: crypto.randomUUID(),
+        name,
+        amount,
+        spentAt,
+        createdAt: Date.now(),
+      }
+      await updateSettings({ adHocExpenses: [...existing, expense] })
+    }
+    closeAdhocSheet()
+  }
+
+  const removeAdhocExpense = async () => {
+    if (!adhocDraft?.id) return
+    const next = (settings.adHocExpenses ?? []).filter((e) => e.id !== adhocDraft.id)
+    await updateSettings({ adHocExpenses: next })
+    closeAdhocSheet()
+  }
+
+  const logRecurringActual = async () => {
+    if (!actualDraft || !fixedDraft?.id) return
+    const amount = parseFloat(actualDraft.amount)
+    const spentAt = new Date(actualDraft.spentAt).getTime()
+    if (isNaN(amount) || amount < 0 || isNaN(spentAt)) return
+
+    const entry: RecurringExpenseActual = {
+      id: crypto.randomUUID(),
+      expenseId: fixedDraft.id,
+      amount,
+      spentAt,
+      createdAt: Date.now(),
+    }
+    await updateSettings({ recurringActuals: [...(settings.recurringActuals ?? []), entry] })
+    setActualDraft({ expenseId: fixedDraft.id, amount: '', spentAt: dateInputValue(Date.now()) })
+  }
+
+  const removeRecurringActual = async (id: string) => {
+    const next = (settings.recurringActuals ?? []).filter((a) => a.id !== id)
+    await updateSettings({ recurringActuals: next })
+  }
+
+  const recurringForProgress =
+    heroView === 'actual' ? summary.recurringCommittedActual : summary.recurringCommitted
 
   const spentPercent = summary.hasBudget
-    ? Math.min(100, (summary.spent / summary.budget) * 100)
+    ? Math.min(100, ((summary.spent + recurringForProgress) / summary.budget) * 100)
     : 0
-  const fixedPercent = summary.hasBudget
-    ? Math.min(100 - spentPercent, (fixedForProgress / summary.budget) * 100)
+  const wishlistAdhocPercent = summary.hasBudget
+    ? Math.min(spentPercent, (summary.spent / summary.budget) * 100)
+    : 0
+  const recurringPercent = summary.hasBudget
+    ? Math.min(spentPercent - wishlistAdhocPercent, (recurringForProgress / summary.budget) * 100)
     : 0
   const plannedPercent = summary.hasBudget && summary.period.isCurrent && heroView === 'projected'
-    ? Math.min(100 - spentPercent - fixedPercent, (summary.planned / summary.budget) * 100)
+    ? Math.min(100 - spentPercent, (summary.planned / summary.budget) * 100)
     : 0
 
   const ringCircumference = 2 * Math.PI * 15.5
-  const committedPercent = spentPercent + fixedPercent
-  const spentDash = (committedPercent / 100) * ringCircumference
+  const committedPercent = spentPercent
+  const spentDash = (wishlistAdhocPercent / 100) * ringCircumference
+  const recurringDash = (recurringPercent / 100) * ringCircumference
   const plannedDash = (plannedPercent / 100) * ringCircumference
 
   const hero = heroViewData(heroView, summary)
@@ -321,6 +441,11 @@ export function BudgetScreen() {
   const showDueDay =
     fixedDraft?.interval === 'month' || fixedDraft?.interval === 'year'
 
+  const fixedSheetActuals =
+    fixedDraft?.id && fixedDraft.kind === 'budgeted'
+      ? getRecurringActualsInPeriod(settings.recurringActuals ?? [], summary.period, fixedDraft.id)
+      : []
+
   return (
     <>
       <ScreenChrome
@@ -367,7 +492,7 @@ export function BudgetScreen() {
               <p className="budget-hero-label">{hero.label}</p>
               {summary.period.isCurrent && heroView === 'actual' && settings.fixedExpenseCounting === 'accrue' && summary.fixed > summary.fixedActual && (
                 <p className="budget-hero-reach muted">
-                  {formatPrice(summary.fixed - summary.fixedActual, summary.currency)} more fixed this period
+                  {formatPrice(summary.fixed - summary.fixedActual, summary.currency)} more in fixed bills this period
                 </p>
               )}
               {summary.period.isCurrent && reachLine && heroView === 'projected' && (
@@ -394,10 +519,22 @@ export function BudgetScreen() {
                     cy="18"
                     r="15.5"
                     style={{
-                      strokeDasharray: `${plannedDash} ${ringCircumference - plannedDash}`,
+                      strokeDasharray: `${recurringDash} ${ringCircumference - recurringDash}`,
                       strokeDashoffset: -spentDash,
                     }}
                   />
+                  {summary.period.isCurrent && heroView === 'projected' && (
+                    <circle
+                      className="budget-ring-planned budget-ring-list"
+                      cx="18"
+                      cy="18"
+                      r="15.5"
+                      style={{
+                        strokeDasharray: `${plannedDash} ${ringCircumference - plannedDash}`,
+                        strokeDashoffset: -(spentDash + recurringDash),
+                      }}
+                    />
+                  )}
                 </svg>
                 <span className="budget-ring-label">{Math.round(committedPercent + plannedPercent)}%</span>
               </div>
@@ -406,17 +543,17 @@ export function BudgetScreen() {
 
           {summary.hasBudget && (
             <div className="budget-progress" aria-hidden="true">
-              <div className="budget-progress-spent" style={{ width: `${spentPercent}%` }} />
+              <div className="budget-progress-spent" style={{ width: `${wishlistAdhocPercent}%` }} />
               <div
                 className="budget-progress-fixed"
-                style={{ width: `${fixedPercent}%`, left: `${spentPercent}%` }}
+                style={{ width: `${recurringPercent}%`, left: `${wishlistAdhocPercent}%` }}
               />
               {summary.period.isCurrent && heroView === 'projected' && (
                 <div
                   className="budget-progress-planned"
                   style={{
                     width: `${plannedPercent}%`,
-                    left: `${spentPercent + fixedPercent}%`,
+                    left: `${wishlistAdhocPercent + recurringPercent}%`,
                   }}
                 />
               )}
@@ -434,19 +571,29 @@ export function BudgetScreen() {
               )}
             </div>
             <div className="budget-stat-cell">
-              <span className="budget-stat-label">Spent</span>
+              <span className="budget-stat-label">Out of pocket</span>
               <span className="budget-stat-value">{formatPrice(summary.spent, summary.currency)}</span>
-              <span className="budget-stat-note">{summary.spentCount} bought</span>
+              <span className="budget-stat-note">
+                {summary.spentCount} from list
+                {summary.adhocExpenses.length > 0 ? `, ${summary.adhocExpenses.length} ad hoc` : ''}
+              </span>
             </div>
-            {(summary.fixed > 0 || fixedTemplates.length > 0) && (
+            {(summary.fixed > 0 || fixedTemplates.some((e) => normalizeFixedExpense(e).kind === 'fixed')) && (
               <div className="budget-stat-cell">
-                <span className="budget-stat-label">Fixed</span>
+                <span className="budget-stat-label">Fixed bills</span>
                 <span className="budget-stat-value">{formatPrice(summary.fixed, summary.currency)}</span>
                 <span className="budget-stat-note">
                   {summary.period.isCurrent && settings.fixedExpenseCounting === 'accrue'
                     ? `${formatPrice(summary.fixedActual, summary.currency)} so far`
-                    : `${summary.fixedCount || fixedTemplates.length} in period`}
+                    : `${summary.fixedCount} due`}
                 </span>
+              </div>
+            )}
+            {(summary.budgeted > 0 || fixedTemplates.some((e) => normalizeFixedExpense(e).kind === 'budgeted')) && (
+              <div className="budget-stat-cell">
+                <span className="budget-stat-label">Budgeted</span>
+                <span className="budget-stat-value">{formatPrice(summary.budgetedActual, summary.currency)}</span>
+                <span className="budget-stat-note">of {formatPrice(summary.budgeted, summary.currency)}</span>
               </div>
             )}
             {summary.period.isCurrent && (
@@ -485,20 +632,62 @@ export function BudgetScreen() {
 
         <section className="budget-section">
           <div className="budget-fixed-header">
-            <h2 className="section-label">Fixed expenses</h2>
+            <h2 className="section-label">Ad-hoc</h2>
+            <button type="button" className="budget-fixed-add" onClick={openAdhocAdd}>
+              Add
+            </button>
+          </div>
+          {summary.adhocExpenses.length === 0 ? (
+            <p className="budget-fixed-empty">
+              One-off spends that are not on your list. Parking, cash, extras.
+            </p>
+          ) : (
+            <div className="budget-fixed-list">
+              {summary.adhocExpenses.map((expense) => (
+                <button
+                  key={expense.id}
+                  type="button"
+                  className="budget-fixed-row"
+                  onClick={() => openAdhocEdit(expense)}
+                >
+                  <div className="budget-fixed-body">
+                    <div className="budget-fixed-name">{expense.name}</div>
+                    <div className="budget-fixed-meta">
+                      {new Date(expense.spentAt).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </div>
+                  </div>
+                  <span className="budget-fixed-amount">
+                    {formatPrice(expense.amount, summary.currency)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="budget-section">
+          <div className="budget-fixed-header">
+            <h2 className="section-label">Recurring</h2>
             <button type="button" className="budget-fixed-add" onClick={openFixedAdd}>
               Add
             </button>
           </div>
           {fixedTemplates.length === 0 ? (
             <p className="budget-fixed-empty">
-              Rent, subscriptions, bills. Add anything that repeats.
+              Fixed bills like Netflix, or budgeted allowances like food. Log actuals for budgeted items.
             </p>
           ) : (
             <div className="budget-fixed-list">
               {fixedTemplates.map((expense) => {
                 const e = normalizeFixedExpense(expense)
                 const periodTotal = getFixedExpensePeriodTotal(e, summary.period)
+                const actualSpent = sumRecurringActuals(
+                  getRecurringActualsInPeriod(summary.recurringActuals, summary.period, e.id),
+                )
+                const displayAmount = e.kind === 'budgeted' ? actualSpent : periodTotal
                 return (
                   <button
                     key={expense.id}
@@ -507,14 +696,19 @@ export function BudgetScreen() {
                     onClick={() => openFixedEdit(expense)}
                   >
                     <div className="budget-fixed-body">
-                      <div className="budget-fixed-name">{e.name}</div>
+                      <div className="budget-fixed-name-row">
+                        <span className="budget-fixed-name">{e.name}</span>
+                        <span className={`budget-kind-pill budget-kind-${e.kind}`}>
+                          {RECURRING_KIND_LABELS[e.kind]}
+                        </span>
+                      </div>
                       <div className="budget-fixed-meta">
-                        {formatFixedExpenseMeta(e, periodTotal, summary.currency)}
+                        {formatFixedExpenseMeta(e, periodTotal, summary.currency, actualSpent)}
                       </div>
                     </div>
                     <div className="budget-fixed-amount-col">
                       <span className="budget-fixed-amount">
-                        {formatPrice(periodTotal, summary.currency)}
+                        {formatPrice(displayAmount, summary.currency)}
                       </span>
                       <span className="budget-fixed-rate">{formatFixedRate(e, summary.currency)}</span>
                     </div>
@@ -523,9 +717,13 @@ export function BudgetScreen() {
               })}
             </div>
           )}
-          {summary.fixed > 0 && (
+          {summary.recurringCommitted > 0 && (
             <p className="budget-fixed-period-note">
-              {formatPrice(summary.fixed, summary.currency)} in fixed costs this period.
+              {formatPrice(summary.recurringCommitted, summary.currency)} recurring this period
+              {summary.budgetedActual > 0
+                ? `, ${formatPrice(summary.budgetedActual, summary.currency)} logged against budgets`
+                : ''}
+              .
             </p>
           )}
         </section>
@@ -653,7 +851,7 @@ export function BudgetScreen() {
       <Sheet
         open={fixedSheetOpen}
         onClose={closeFixedSheet}
-        title={fixedDraft?.id ? 'Edit fixed expense' : 'Add fixed expense'}
+        title={fixedDraft?.id ? 'Edit recurring' : 'Add recurring'}
       >
         {fixedDraft && (
           <>
@@ -662,10 +860,43 @@ export function BudgetScreen() {
               <input
                 id="fixed-name"
                 type="text"
-                placeholder="Rent, phone bill, coffee…"
+                placeholder="Netflix, food, rent…"
                 value={fixedDraft.name}
                 onChange={(e) => setFixedDraft({ ...fixedDraft, name: e.target.value })}
               />
+            </div>
+
+            <div className="field">
+              <span className="field-label">Type</span>
+              <div className="budget-interval-grid">
+                {(['fixed', 'budgeted'] as RecurringExpenseKind[]).map((kind) => (
+                  <button
+                    key={kind}
+                    type="button"
+                    className={`budget-interval-btn ${fixedDraft.kind === kind ? 'active' : ''}`}
+                    onClick={() => {
+                      const next = { ...fixedDraft, kind }
+                      setFixedDraft(next)
+                      if (kind === 'budgeted' && fixedDraft.id) {
+                        setActualDraft({
+                          expenseId: fixedDraft.id,
+                          amount: '',
+                          spentAt: dateInputValue(Date.now()),
+                        })
+                      } else if (kind === 'fixed') {
+                        setActualDraft(null)
+                      }
+                    }}
+                  >
+                    {RECURRING_KIND_LABELS[kind]}
+                  </button>
+                ))}
+              </div>
+              <p className="budget-field-hint">
+                {fixedDraft.kind === 'fixed'
+                  ? 'A set bill, like a subscription.'
+                  : 'An allowance you log actual spending against.'}
+              </p>
             </div>
 
             <div className="field">
@@ -718,12 +949,125 @@ export function BudgetScreen() {
               </div>
             )}
 
+            {fixedDraft.kind === 'budgeted' && fixedDraft.id && actualDraft && (
+              <div className="budget-actual-log">
+                <p className="budget-actual-log-title">Log actual spend</p>
+                {fixedSheetActuals.length > 0 && (
+                  <ul className="budget-actual-list">
+                    {fixedSheetActuals.map((entry) => (
+                      <li key={entry.id} className="budget-actual-row">
+                        <span>
+                          {new Date(entry.spentAt).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </span>
+                        <span className="budget-actual-amount">
+                          {formatPrice(entry.amount, settings.currency)}
+                        </span>
+                        <button
+                          type="button"
+                          className="budget-actual-remove"
+                          onClick={() => void removeRecurringActual(entry.id)}
+                          aria-label="Remove entry"
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="field-row">
+                  <div className="field">
+                    <label htmlFor="actual-amount">Amount</label>
+                    <input
+                      id="actual-amount"
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      step="any"
+                      placeholder="0"
+                      value={actualDraft.amount}
+                      onChange={(e) => setActualDraft({ ...actualDraft, amount: e.target.value })}
+                    />
+                  </div>
+                  <div className="field">
+                    <label htmlFor="actual-date">Date</label>
+                    <input
+                      id="actual-date"
+                      type="date"
+                      value={actualDraft.spentAt}
+                      onChange={(e) => setActualDraft({ ...actualDraft, spentAt: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <button type="button" className="secondary-btn" onClick={() => void logRecurringActual()}>
+                  Log spend
+                </button>
+              </div>
+            )}
+
             <button type="button" className="primary-btn" onClick={saveFixedExpense}>
               Save
             </button>
 
             {fixedDraft.id && (
               <button type="button" className="secondary-btn budget-destructive-btn" onClick={removeFixedExpense}>
+                Remove
+              </button>
+            )}
+          </>
+        )}
+      </Sheet>
+
+      <Sheet
+        open={adhocSheetOpen}
+        onClose={closeAdhocSheet}
+        title={adhocDraft?.id ? 'Edit ad-hoc expense' : 'Add ad-hoc expense'}
+      >
+        {adhocDraft && (
+          <>
+            <div className="field">
+              <label htmlFor="adhoc-name">Name</label>
+              <input
+                id="adhoc-name"
+                type="text"
+                placeholder="Parking, tip, repair…"
+                value={adhocDraft.name}
+                onChange={(e) => setAdhocDraft({ ...adhocDraft, name: e.target.value })}
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="adhoc-amount">Amount ({settings.currency})</label>
+              <input
+                id="adhoc-amount"
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="any"
+                placeholder="0"
+                value={adhocDraft.amount}
+                onChange={(e) => setAdhocDraft({ ...adhocDraft, amount: e.target.value })}
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="adhoc-date">Date</label>
+              <input
+                id="adhoc-date"
+                type="date"
+                value={adhocDraft.spentAt}
+                onChange={(e) => setAdhocDraft({ ...adhocDraft, spentAt: e.target.value })}
+              />
+            </div>
+
+            <button type="button" className="primary-btn" onClick={saveAdhocExpense}>
+              Save
+            </button>
+
+            {adhocDraft.id && (
+              <button type="button" className="secondary-btn budget-destructive-btn" onClick={removeAdhocExpense}>
                 Remove
               </button>
             )}

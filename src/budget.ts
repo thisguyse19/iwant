@@ -1,8 +1,11 @@
-import type { AppSettings, FixedExpense, WishlistItem } from './types'
+import type { AdHocExpense, AppSettings, FixedExpense, RecurringExpenseActual, WishlistItem } from './types'
 import {
+  getAdHocInPeriod,
   getFixedExpenseAccrued,
   getFixedExpensePeriodTotal,
+  getRecurringActualsInPeriod,
   normalizeFixedExpense,
+  sumRecurringActuals,
 } from './fixedExpenses'
 
 export interface MonthRef {
@@ -39,10 +42,18 @@ export interface FixedExpenseEntry {
 export interface BudgetPeriodSummary {
   period: BudgetPeriod
   budget: number
+  wishlistSpent: number
+  adhocSpent: number
   spent: number
   fixed: number
   fixedActual: number
+  budgeted: number
+  budgetedActual: number
+  recurringCommitted: number
+  recurringCommittedActual: number
   fixedEntries: FixedExpenseEntry[]
+  adhocExpenses: AdHocExpense[]
+  recurringActuals: RecurringExpenseActual[]
   planned: number
   remaining: number
   actualRemaining: number
@@ -155,7 +166,24 @@ function inPeriod(ts: number | undefined, period: BudgetPeriod): boolean {
   return ts >= period.startMs && ts < period.endMs
 }
 
-/** Fixed expenses due within a budget period (month/year intervals). */
+function addToBucket(
+  buckets: DailySpend[],
+  startMs: number,
+  daysInPeriod: number,
+  spentAt: number,
+  id: string,
+  title: string,
+  amount: number,
+  currency: string,
+) {
+  const msPerDay = 86400000
+  const index = Math.min(daysInPeriod - 1, Math.floor((spentAt - startMs) / msPerDay))
+  buckets[index].amount += amount
+  buckets[index].itemCount += 1
+  buckets[index].items.push({ id, title, price: amount, currency })
+}
+
+/** Fixed-kind recurring due within a budget period (month/year intervals). */
 export function getFixedExpenseEntries(
   expenses: FixedExpense[],
   period: BudgetPeriod,
@@ -175,6 +203,7 @@ export function getFixedExpenseEntries(
     const lastDay = new Date(year, month + 1, 0).getDate()
     for (const expense of expenses) {
       const e = normalizeFixedExpense(expense)
+      if (e.kind !== 'fixed') continue
       if (e.interval !== 'month' && e.interval !== 'year') continue
 
       if (e.interval === 'year') {
@@ -202,9 +231,10 @@ export function getDailySpending(
   items: WishlistItem[],
   period: BudgetPeriod,
   fixedExpenses: FixedExpense[] = [],
+  adhocExpenses: AdHocExpense[] = [],
+  recurringActuals: RecurringExpenseActual[] = [],
 ): DailySpend[] {
   const { startMs, endMs, daysInPeriod } = period
-  const msPerDay = 86400000
   const buckets = Array.from({ length: daysInPeriod }, (_, i) => ({
     day: i + 1,
     amount: 0,
@@ -216,53 +246,59 @@ export function getDailySpending(
   for (const item of items) {
     if (item.status !== 'bought' || item.boughtAt == null || item.price == null) continue
     if (item.boughtAt < startMs || item.boughtAt >= endMs) continue
-    const index = Math.min(daysInPeriod - 1, Math.floor((item.boughtAt - startMs) / msPerDay))
-    buckets[index].amount += item.price
-    buckets[index].itemCount += 1
-    buckets[index].items.push({
-      id: item.id,
-      title: item.title,
-      price: item.price,
-      currency: item.currency,
-    })
+    addToBucket(buckets, startMs, daysInPeriod, item.boughtAt, item.id, item.title, item.price, item.currency)
+  }
+
+  for (const expense of adhocExpenses) {
+    if (expense.spentAt < startMs || expense.spentAt >= endMs) continue
+    addToBucket(
+      buckets,
+      startMs,
+      daysInPeriod,
+      expense.spentAt,
+      expense.id,
+      expense.name,
+      expense.amount,
+      '',
+    )
+  }
+
+  const expenseNames = new Map(fixedExpenses.map((e) => [e.id, normalizeFixedExpense(e).name]))
+
+  for (const actual of recurringActuals) {
+    if (actual.spentAt < startMs || actual.spentAt >= endMs) continue
+    addToBucket(
+      buckets,
+      startMs,
+      daysInPeriod,
+      actual.spentAt,
+      actual.id,
+      expenseNames.get(actual.expenseId) ?? 'Recurring',
+      actual.amount,
+      '',
+    )
   }
 
   for (const expense of fixedExpenses) {
     const e = normalizeFixedExpense(expense)
+    if (e.kind !== 'fixed') continue
+
     if (e.interval === 'day') {
       for (let i = 0; i < daysInPeriod; i++) {
         buckets[i].amount += e.amount
         buckets[i].itemCount += 1
-        buckets[i].items.push({
-          id: e.id,
-          title: e.name,
-          price: e.amount,
-          currency: '',
-        })
+        buckets[i].items.push({ id: e.id, title: e.name, price: e.amount, currency: '' })
       }
     } else if (e.interval === 'week') {
       for (let i = 0; i < daysInPeriod; i += 7) {
         buckets[i].amount += e.amount
         buckets[i].itemCount += 1
-        buckets[i].items.push({
-          id: e.id,
-          title: e.name,
-          price: e.amount,
-          currency: '',
-        })
+        buckets[i].items.push({ id: e.id, title: e.name, price: e.amount, currency: '' })
       }
     } else {
       const entries = getFixedExpenseEntries([e], period)
       for (const { expense: fixed, dueAt } of entries) {
-        const index = Math.min(daysInPeriod - 1, Math.floor((dueAt - startMs) / msPerDay))
-        buckets[index].amount += fixed.amount
-        buckets[index].itemCount += 1
-        buckets[index].items.push({
-          id: fixed.id,
-          title: fixed.name,
-          price: fixed.amount,
-          currency: '',
-        })
+        addToBucket(buckets, startMs, daysInPeriod, dueAt, fixed.id, fixed.name, fixed.amount, '')
       }
     }
   }
@@ -283,7 +319,12 @@ export function summarizeBudgetPeriod(
   const boughtInPeriod = items.filter(
     (i) => i.status === 'bought' && inPeriod(i.boughtAt, period) && i.price != null,
   )
-  const spent = boughtInPeriod.reduce((sum, i) => sum + (i.price ?? 0), 0)
+  const wishlistSpent = boughtInPeriod.reduce((sum, i) => sum + (i.price ?? 0), 0)
+
+  const adhocExpenses = getAdHocInPeriod(settings.adHocExpenses ?? [], period)
+  const adhocSpent = adhocExpenses.reduce((sum, e) => sum + e.amount, 0)
+
+  const recurringActuals = getRecurringActualsInPeriod(settings.recurringActuals ?? [], period)
 
   const fixedExpenses = [...(settings.fixedExpenses ?? [])].sort(
     (a, b) => a.sortOrder - b.sortOrder || a.createdAt - b.createdAt,
@@ -291,10 +332,26 @@ export function summarizeBudgetPeriod(
 
   let fixed = 0
   let fixedActual = 0
+  let budgeted = 0
+  let budgetedActual = 0
+
   for (const expense of fixedExpenses) {
-    fixed += getFixedExpensePeriodTotal(expense, period)
-    fixedActual += getFixedExpenseAccrued(expense, period, counting)
+    const e = normalizeFixedExpense(expense)
+    const periodTotal = getFixedExpensePeriodTotal(e, period)
+    if (e.kind === 'budgeted') {
+      budgeted += periodTotal
+      budgetedActual += sumRecurringActuals(
+        getRecurringActualsInPeriod(recurringActuals, period, e.id),
+      )
+    } else {
+      fixed += periodTotal
+      fixedActual += getFixedExpenseAccrued(e, period, counting)
+    }
   }
+
+  const recurringCommitted = fixed + budgeted
+  const recurringCommittedActual = fixedActual + budgetedActual
+  const spent = wishlistSpent + adhocSpent
 
   const fixedEntries = getFixedExpenseEntries(fixedExpenses, period)
 
@@ -304,10 +361,16 @@ export function summarizeBudgetPeriod(
     : 0
   const unpricedActive = period.isCurrent ? active.filter((i) => i.price == null).length : 0
 
-  const projectedRemaining = budget - spent - fixed - planned
-  const actualRemaining = budget - spent - fixedActual
+  const projectedRemaining = budget - spent - recurringCommitted - planned
+  const actualRemaining = budget - spent - recurringCommittedActual
   const remaining = projectedRemaining
-  const dailySpend = getDailySpending(items, period, fixedExpenses)
+  const dailySpend = getDailySpending(
+    items,
+    period,
+    fixedExpenses,
+    adhocExpenses,
+    recurringActuals,
+  )
   const maxDailySpend = Math.max(...dailySpend.map((d) => d.amount), 1)
 
   const affordable = period.isCurrent
@@ -323,10 +386,18 @@ export function summarizeBudgetPeriod(
   return {
     period,
     budget,
+    wishlistSpent,
+    adhocSpent,
     spent,
     fixed,
     fixedActual,
+    budgeted,
+    budgetedActual,
+    recurringCommitted,
+    recurringCommittedActual,
     fixedEntries,
+    adhocExpenses,
+    recurringActuals,
     planned,
     remaining,
     actualRemaining,

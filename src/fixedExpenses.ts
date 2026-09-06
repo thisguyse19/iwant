@@ -1,4 +1,11 @@
-import type { FixedExpense, FixedExpenseCounting, FixedExpenseInterval } from './types'
+import type {
+  AdHocExpense,
+  FixedExpense,
+  FixedExpenseCounting,
+  FixedExpenseInterval,
+  RecurringExpenseActual,
+  RecurringExpenseKind,
+} from './types'
 import { formatPrice } from './utils'
 
 export interface FixedExpensePeriodContext {
@@ -10,6 +17,11 @@ export interface FixedExpensePeriodContext {
 }
 
 export const FIXED_INTERVALS: FixedExpenseInterval[] = ['day', 'week', 'month', 'year']
+
+export const RECURRING_KIND_LABELS: Record<RecurringExpenseKind, string> = {
+  fixed: 'Fixed',
+  budgeted: 'Budgeted',
+}
 
 export const FIXED_INTERVAL_LABELS: Record<FixedExpenseInterval, string> = {
   day: 'per day',
@@ -25,12 +37,42 @@ export const FIXED_INTERVAL_SHORT: Record<FixedExpenseInterval, string> = {
   year: 'yr',
 }
 
-export function normalizeFixedExpense(expense: FixedExpense): FixedExpense & { interval: FixedExpenseInterval } {
+export function normalizeFixedExpense(
+  expense: FixedExpense,
+): FixedExpense & { interval: FixedExpenseInterval; kind: RecurringExpenseKind } {
   return {
     ...expense,
     interval: expense.interval ?? 'month',
+    kind: expense.kind ?? 'fixed',
     dayOfMonth: expense.dayOfMonth ?? 1,
   }
+}
+
+export function inExpensePeriod(ts: number, period: FixedExpensePeriodContext): boolean {
+  return ts >= period.startMs && ts < period.endMs
+}
+
+export function getAdHocInPeriod(
+  expenses: AdHocExpense[],
+  period: FixedExpensePeriodContext,
+): AdHocExpense[] {
+  return expenses
+    .filter((e) => inExpensePeriod(e.spentAt, period))
+    .sort((a, b) => b.spentAt - a.spentAt)
+}
+
+export function getRecurringActualsInPeriod(
+  actuals: RecurringExpenseActual[],
+  period: FixedExpensePeriodContext,
+  expenseId?: string,
+): RecurringExpenseActual[] {
+  return actuals
+    .filter((a) => inExpensePeriod(a.spentAt, period) && (expenseId == null || a.expenseId === expenseId))
+    .sort((a, b) => b.spentAt - a.spentAt)
+}
+
+export function sumRecurringActuals(actuals: RecurringExpenseActual[]): number {
+  return actuals.reduce((sum, a) => sum + a.amount, 0)
 }
 
 export function getFixedExpensePeriodTotal(expense: FixedExpense, period: FixedExpensePeriodContext): number {
@@ -95,6 +137,8 @@ export function getFixedExpenseAccrued(
   now = Date.now(),
 ): number {
   const e = normalizeFixedExpense(expense)
+  if (e.kind === 'budgeted') return 0
+
   const total = getFixedExpensePeriodTotal(e, period)
 
   if (!period.isCurrent || now >= period.endMs) return total
@@ -120,7 +164,7 @@ export function getFixedExpenseAccrued(
 
 export function formatFixedRate(expense: FixedExpense, currency: string): string {
   const e = normalizeFixedExpense(expense)
-  const short = FIXED_INTERVAL_SHORT[e.interval as FixedExpenseInterval]
+  const short = FIXED_INTERVAL_SHORT[e.interval]
   const formatted = formatPrice(e.amount, currency)
   return `${formatted}/${short}`
 }
@@ -129,11 +173,16 @@ export function formatFixedExpenseMeta(
   expense: FixedExpense,
   periodTotal: number,
   currency: string,
+  actualSpent = 0,
 ): string {
   const e = normalizeFixedExpense(expense)
   const rate = formatFixedRate(e, currency)
-  const total = `${formatPrice(periodTotal, currency)} this period`
 
+  if (e.kind === 'budgeted') {
+    return `${rate}. ${formatPrice(actualSpent, currency)} of ${formatPrice(periodTotal, currency)}`
+  }
+
+  const total = `${formatPrice(periodTotal, currency)} this period`
   if (e.interval === 'month' || e.interval === 'year') {
     return `${rate}, due day ${e.dayOfMonth}. ${total}`
   }

@@ -68,15 +68,36 @@ export interface SearchSuggestion {
 
 export type FixedExpenseInterval = 'day' | 'week' | 'month' | 'year'
 
+/** Fixed = known bill (Netflix). Budgeted = allowance you log actuals against (food). */
+export type RecurringExpenseKind = 'fixed' | 'budgeted'
+
 export interface FixedExpense {
   id: string
   name: string
   amount: number
   /** How often this amount recurs */
   interval?: FixedExpenseInterval
+  /** Fixed bill or budgeted allowance */
+  kind?: RecurringExpenseKind
   /** Day of month the expense is due (1–28), for month/year intervals */
   dayOfMonth: number
   sortOrder: number
+  createdAt: number
+}
+
+export interface AdHocExpense {
+  id: string
+  name: string
+  amount: number
+  spentAt: number
+  createdAt: number
+}
+
+export interface RecurringExpenseActual {
+  id: string
+  expenseId: string
+  amount: number
+  spentAt: number
   createdAt: number
 }
 
@@ -89,6 +110,8 @@ export interface AppSettings {
   /** Per-period overrides keyed by YYYY-MM */
   monthBudgets?: Record<string, number>
   fixedExpenses?: FixedExpense[]
+  adHocExpenses?: AdHocExpense[]
+  recurringActuals?: RecurringExpenseActual[]
   /** Spread monthly fixed costs daily, or deduct full amount at period start */
   fixedExpenseCounting?: FixedExpenseCounting
   /** Default view on the budget hero card */
