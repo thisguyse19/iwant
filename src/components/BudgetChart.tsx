@@ -122,7 +122,7 @@ export function BudgetChart({
             return (
               <div
                 key={point.day}
-                className={`budget-chart-bar-col ${isHeld ? 'held' : ''}`}
+                className={`budget-chart-bar-col haptic-skip ${isHeld ? 'held' : ''}`}
                 onPointerDown={(e) => {
                   if (e.pointerType === 'mouse' && e.button !== 0) return
                   e.currentTarget.setPointerCapture(e.pointerId)

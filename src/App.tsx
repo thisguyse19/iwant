@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { TabBar } from './components/TabBar'
 import { AppProvider, useApp } from './store'
 import { ExitAnimationProvider } from './exitAnimation'
@@ -11,6 +11,7 @@ import { ItemOverviewSheet } from './screens/ItemOverviewSheet'
 import { ItemEditSheet } from './screens/ItemEditSheet'
 import { BoughtDateSheet } from './screens/BoughtDateSheet'
 import { useRegisterSW } from 'virtual:pwa-register/react'
+import { installGlobalHaptics, refreshHapticOverlays } from './haptics'
 import { setHapticEnabled } from './utils'
 import './styles/global.css'
 
@@ -19,11 +20,20 @@ export type Tab = 'wishlist' | 'baskets' | 'budget' | 'settings'
 function AppMain() {
   const [tab, setTab] = useState<Tab>('wishlist')
   const { setAddOpen, loading, setViewingBasket, setBasketCreatePending, clearSelection, settings } = useApp()
+  const shellRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     document.documentElement.dataset.accent = settings.accentStyle ?? 'slate'
     setHapticEnabled(settings.hapticFeedback !== false)
+    const shell = shellRef.current
+    if (shell) refreshHapticOverlays(shell)
   }, [settings.accentStyle, settings.hapticFeedback])
+
+  useEffect(() => {
+    const shell = shellRef.current
+    if (!shell || loading) return
+    return installGlobalHaptics(shell)
+  }, [loading])
 
   const {
     needRefresh: [needRefresh],
@@ -48,6 +58,7 @@ function AppMain() {
 
   return (
     <div
+      ref={shellRef}
       className="app-shell"
       onContextMenu={(e) => {
         const target = e.target as HTMLElement

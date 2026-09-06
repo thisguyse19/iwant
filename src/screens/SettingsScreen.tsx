@@ -3,6 +3,7 @@ import { useApp } from '../store'
 import * as db from '../db'
 import { CURRENCIES, type AccentStyle, type BudgetHeroView, type FixedExpenseCounting } from '../types'
 import { ScreenChrome } from '../components/ScreenChrome'
+import { triggerHaptic } from '../haptics'
 import './SettingsScreen.css'
 
 const ACCENT_OPTIONS: Array<{ id: AccentStyle; label: string; swatch?: string; pride?: boolean }> = [
@@ -146,7 +147,11 @@ export function SettingsScreen() {
             type="checkbox"
             className="settings-toggle"
             checked={settings.hapticFeedback !== false}
-            onChange={(e) => updateSettings({ hapticFeedback: e.target.checked })}
+            onChange={(e) => {
+              const enabled = e.target.checked
+              updateSettings({ hapticFeedback: enabled })
+              if (enabled) triggerHaptic('light')
+            }}
           />
         </label>
       </div>

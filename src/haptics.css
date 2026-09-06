@@ -1,0 +1,32 @@
+.haptic-overlay-host {
+  position: relative;
+}
+
+.haptic-switch-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0.001;
+  border: none;
+  cursor: inherit;
+  z-index: 5;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.haptic-ios-fallback {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0.001;
+  pointer-events: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  z-index: -1;
+}

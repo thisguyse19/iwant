@@ -122,7 +122,7 @@ export function Sheet({
         aria-labelledby="sheet-title"
       >
         <div
-          className="sheet-drag-zone"
+          className="sheet-drag-zone haptic-skip"
           onTouchStart={(e) => onDragStart(e.touches[0].clientY)}
           onTouchMove={(e) => {
             e.preventDefault()

@@ -1,3 +1,7 @@
+import { setHapticEnabled, triggerHaptic } from './haptics'
+
+export { setHapticEnabled }
+
 const CURRENCY_LOCALES: Record<string, string> = {
   GBP: 'en-GB',
   USD: 'en-US',
@@ -139,30 +143,20 @@ export function detectClipboardContent(text: string): {
   return { title: trimmed }
 }
 
-let hapticEnabled = true
-
-export function setHapticEnabled(enabled: boolean) {
-  hapticEnabled = enabled
-}
-
-export function vibrate(ms = 10) {
-  if (!hapticEnabled) return
-  if (navigator.vibrate) navigator.vibrate(ms)
+export function vibrate(_ms = 10) {
+  triggerHaptic('light')
 }
 
 export function vibrateTap() {
-  if (!hapticEnabled) return
-  vibrate(8)
+  triggerHaptic('light')
 }
 
 /** Short knock — delete, remove */
 export function vibrateRemove() {
-  if (!hapticEnabled) return
-  if (navigator.vibrate) navigator.vibrate(16)
+  triggerHaptic('medium')
 }
 
 /** Softer double tap — marked bought */
 export function vibrateBought() {
-  if (!hapticEnabled) return
-  if (navigator.vibrate) navigator.vibrate([10, 36, 14])
+  triggerHaptic('success')
 }
