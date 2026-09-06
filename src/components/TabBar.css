@@ -1,5 +1,4 @@
-/* Liquid Glass tab bar — Apple navigation layer
-   Refs: Adopting Liquid Glass, WWDC25 284, TabView floating pill behavior */
+/* Liquid Glass tab bar — Apple regular material, navigation layer only */
 
 .tab-bar-dock {
   position: fixed;
@@ -16,19 +15,19 @@
   pointer-events: none;
 }
 
-/* Scroll-edge legibility veil (UIScrollEdgeElementContainerInteraction equivalent) */
+/* Scroll-edge legibility veil — environmental tint, not bright wash */
 .tab-bar-scroll-edge {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: calc(168px + var(--safe-bottom));
+  height: calc(176px + var(--safe-bottom));
   pointer-events: none;
   background: var(--liquid-glass-scroll-edge);
-  backdrop-filter: blur(28px) saturate(160%) brightness(1.02);
-  -webkit-backdrop-filter: blur(28px) saturate(160%) brightness(1.02);
-  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.25) 30%, black 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.25) 30%, black 100%);
+  backdrop-filter: blur(24px) saturate(165%);
+  -webkit-backdrop-filter: blur(24px) saturate(165%);
+  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.18) 34%, black 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.18) 34%, black 100%);
   z-index: -1;
 }
 
@@ -64,11 +63,13 @@
 }
 
 .liquid-glass-surface {
-  background: var(--liquid-glass-bg);
+  background:
+    linear-gradient(180deg, var(--liquid-glass-border-inner) 0%, transparent 18%),
+    var(--liquid-glass-bg);
   backdrop-filter: var(--liquid-glass-blur);
   -webkit-backdrop-filter: var(--liquid-glass-blur);
   border: 0.5px solid var(--liquid-glass-border);
-  box-shadow: var(--liquid-glass-shadow), var(--liquid-glass-depth), var(--liquid-glass-ambient);
+  box-shadow: var(--liquid-glass-shadow), var(--liquid-glass-depth);
 }
 
 .tab-bar-liquid {
@@ -86,7 +87,7 @@
   border-radius: inherit;
   backdrop-filter: var(--liquid-glass-blur-secondary);
   -webkit-backdrop-filter: var(--liquid-glass-blur-secondary);
-  opacity: 0.55;
+  opacity: 0.35;
   pointer-events: none;
   z-index: 0;
 }
@@ -101,40 +102,48 @@
   z-index: 1;
 }
 
+.tab-bar-frost {
+  position: absolute;
+  inset: 0;
+  background: var(--liquid-glass-frost);
+  opacity: 0.92;
+}
+
 .tab-bar-lens {
   position: absolute;
   inset: 0;
   background: var(--liquid-glass-lens);
-  opacity: 1;
+  opacity: 0.75;
 }
 
 .tab-bar-tint {
   position: absolute;
   inset: 0;
   background: var(--liquid-glass-tint);
-  mix-blend-mode: soft-light;
+  mix-blend-mode: multiply;
+  opacity: 0.85;
 }
 
 .tab-bar-specular {
   position: absolute;
   inset: 0;
   background: var(--liquid-glass-specular);
-  opacity: 0.92;
+  opacity: 0.55;
 }
 
 .tab-bar-caustic {
   position: absolute;
   inset: 0;
   background: var(--liquid-glass-caustic);
-  opacity: 0.85;
-  mix-blend-mode: screen;
+  opacity: 0.45;
+  mix-blend-mode: soft-light;
 }
 
 .tab-bar-refraction {
   position: absolute;
   inset: 0;
   background: var(--liquid-glass-refraction);
-  opacity: 0.9;
+  opacity: 0.65;
   mix-blend-mode: overlay;
 }
 
@@ -143,14 +152,14 @@
   inset: 0;
   border-radius: inherit;
   background: var(--liquid-glass-rim);
-  opacity: 0.7;
+  opacity: 0.5;
   mix-blend-mode: overlay;
 }
 
 .tab-bar-noise {
   position: absolute;
   inset: 0;
-  opacity: 0.055;
+  opacity: 0.04;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 96px 96px;
 }
@@ -158,29 +167,29 @@
 .tab-bar-edge-line {
   position: absolute;
   top: 0.5px;
-  left: 10%;
-  right: 10%;
+  left: 12%;
+  right: 12%;
   height: 0.5px;
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.92) 18%,
-    rgba(255, 255, 255, 1) 50%,
-    rgba(255, 255, 255, 0.92) 82%,
+    rgba(255, 255, 255, 0.48) 22%,
+    rgba(255, 255, 255, 0.62) 50%,
+    rgba(255, 255, 255, 0.48) 78%,
     transparent
   );
-  opacity: 0.82;
+  opacity: 0.55;
 }
 
 .tab-bar-bottom-glow {
   position: absolute;
-  left: 15%;
-  right: 15%;
-  bottom: -8px;
-  height: 12px;
-  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.35) 0%, transparent 70%);
-  filter: blur(6px);
-  opacity: 0.6;
+  left: 18%;
+  right: 18%;
+  bottom: -6px;
+  height: 10px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.08) 0%, transparent 72%);
+  filter: blur(5px);
+  opacity: 0.45;
   pointer-events: none;
 }
 
@@ -223,17 +232,18 @@
   inset: 0;
   border-radius: inherit;
   background: var(--liquid-glass-lens);
-  opacity: 0.95;
+  opacity: 0.55;
 }
 
 .tab-indicator-glass::after {
   content: '';
   position: absolute;
   top: 0.5px;
-  left: 12%;
-  right: 12%;
+  left: 14%;
+  right: 14%;
   height: 0.5px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  opacity: 0.5;
 }
 
 .tab-liquid-item {
@@ -244,11 +254,12 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
-  padding: 5px 2px 4px;
+  gap: 2px;
+  padding: 6px 2px 5px;
   min-width: 0;
+  min-height: 44px;
   color: var(--tab-inactive);
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 500;
   letter-spacing: 0.01em;
   line-height: 1.1;
@@ -259,8 +270,8 @@
 }
 
 .tab-liquid-item svg {
-  width: 23px;
-  height: 23px;
+  width: 24px;
+  height: 24px;
   transition: transform 0.38s var(--spring), color 0.34s var(--spring);
 }
 
@@ -317,9 +328,9 @@
   position: absolute;
   right: 0;
   bottom: calc(100% + 12px);
-  min-width: 216px;
-  padding: 6px;
-  border-radius: 20px;
+  min-width: 220px;
+  padding: 7px;
+  border-radius: 22px;
   z-index: 60;
 }
 
@@ -381,13 +392,17 @@
 }
 
 @media (prefers-color-scheme: dark) {
+  .tab-bar-tint {
+    mix-blend-mode: soft-light;
+  }
+
   .tab-bar-edge-line,
   .tab-indicator-glass::after {
-    opacity: 0.5;
+    opacity: 0.35;
   }
 
   .tab-bar-bottom-glow {
-    opacity: 0.25;
+    opacity: 0.3;
   }
 }
 
@@ -420,6 +435,7 @@
     opacity: 0.9;
   }
 
+  .tab-bar-frost,
   .tab-bar-lens,
   .tab-bar-caustic,
   .tab-bar-refraction,

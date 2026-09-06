@@ -52,8 +52,8 @@
   inset: 0;
   opacity: var(--nav-reveal);
   background: var(--nav-chrome-bg);
-  backdrop-filter: blur(40px) saturate(180%);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  backdrop-filter: var(--liquid-glass-blur);
+  -webkit-backdrop-filter: var(--liquid-glass-blur);
   border-bottom: 0.5px solid color-mix(in srgb, var(--border-subtle) calc(var(--nav-reveal) * 100%), transparent);
   pointer-events: none;
 }

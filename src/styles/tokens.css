@@ -25,83 +25,86 @@
   --radius-xl: 20px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  /* iOS 26 floating tab bar layout — per Apple navigation-layer guidance */
+  /* iOS 26 floating tab bar — regular material tier, Apple HIG sizing */
   --tab-bar-h-inset: 20px;
-  --tab-bar-float: 10px;
-  --tab-bar-pill-h: 54px;
-  --tab-bar-action-size: 54px;
+  --tab-bar-float: 12px;
+  --tab-bar-pill-h: 58px;
+  --tab-bar-action-size: 58px;
   --tab-bar-gap: 10px;
-  --tab-bar-pad: 5px;
-  --tab-bar-radius: 27px;
+  --tab-bar-pad: 6px;
+  --tab-bar-radius: 29px;
   --tab-bar-clearance: calc(var(--tab-bar-float) + var(--tab-bar-pill-h) + 20px);
   --tab-height: var(--tab-bar-clearance);
   --tab-inactive: rgba(60, 60, 67, 0.55);
   --tab-active: var(--accent);
-  --nav-chrome-bg: rgba(255, 255, 255, 0.72);
+  --nav-chrome-bg: rgba(249, 249, 251, 0.76);
   --spring: cubic-bezier(0.32, 0.72, 0, 1);
-  --liquid-glass-bg: rgba(255, 255, 255, 0.14);
-  --liquid-glass-tint: rgba(255, 255, 255, 0.22);
-  --liquid-glass-border: rgba(255, 255, 255, 0.72);
-  --liquid-glass-border-outer: rgba(255, 255, 255, 0.28);
-  --liquid-glass-blur: blur(88px) saturate(280%) brightness(1.14) contrast(1.06);
-  --liquid-glass-blur-secondary: blur(44px) saturate(220%) brightness(1.08);
-  --liquid-glass-blur-indicator: blur(32px) saturate(240%) brightness(1.12);
+  /* Regular material — dense frost, environmental tint, no artificial brightness */
+  --liquid-glass-bg: rgba(242, 242, 247, 0.58);
+  --liquid-glass-frost: rgba(235, 235, 240, 0.42);
+  --liquid-glass-tint: rgba(120, 120, 128, 0.08);
+  --liquid-glass-border: rgba(0, 0, 0, 0.06);
+  --liquid-glass-border-inner: rgba(255, 255, 255, 0.42);
+  --liquid-glass-border-outer: rgba(0, 0, 0, 0.04);
+  --liquid-glass-blur: blur(30px) saturate(185%);
+  --liquid-glass-blur-secondary: blur(18px) saturate(165%);
+  --liquid-glass-blur-indicator: blur(22px) saturate(190%);
   --liquid-glass-shadow:
-    0 0.5px 0 rgba(255, 255, 255, 1) inset,
-    0 2px 0 rgba(255, 255, 255, 0.55) inset,
-    0 -1px 0 rgba(0, 0, 0, 0.03) inset,
-    0 0 0 0.5px rgba(255, 255, 255, 0.35),
-    0 12px 48px rgba(0, 0, 0, 0.11),
-    0 4px 16px rgba(0, 0, 0, 0.06);
-  --liquid-glass-depth: 0 24px 72px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.07);
-  --liquid-glass-ambient: 0 0 100px rgba(255, 255, 255, 0.45), 0 0 40px rgba(255, 255, 255, 0.2);
-  --liquid-glass-halo: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 0 32px rgba(255, 255, 255, 0.22);
+    0 0.5px 0 rgba(255, 255, 255, 0.55) inset,
+    0 -0.5px 0 rgba(0, 0, 0, 0.04) inset,
+    0 0 0 0.5px var(--liquid-glass-border),
+    0 10px 36px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.05);
+  --liquid-glass-depth: 0 18px 48px rgba(0, 0, 0, 0.1), 0 6px 16px rgba(0, 0, 0, 0.06);
+  --liquid-glass-ambient: 0 0 0 0 transparent;
+  --liquid-glass-halo: 0 0 0 0.5px rgba(0, 0, 0, 0.04), 0 0 20px rgba(0, 0, 0, 0.04);
   --liquid-glass-lens: radial-gradient(
-    ellipse 160% 100% at 50% -30%,
-    rgba(255, 255, 255, 0.72) 0%,
-    rgba(255, 255, 255, 0.22) 32%,
-    rgba(255, 255, 255, 0.04) 55%,
-    rgba(255, 255, 255, 0) 72%
+    ellipse 140% 90% at 50% -20%,
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(255, 255, 255, 0.1) 28%,
+    rgba(255, 255, 255, 0.02) 52%,
+    rgba(255, 255, 255, 0) 70%
   );
   --liquid-glass-specular: linear-gradient(
-    172deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(255, 255, 255, 0.38) 18%,
-    rgba(255, 255, 255, 0.08) 42%,
-    rgba(255, 255, 255, 0) 58%
+    175deg,
+    rgba(255, 255, 255, 0.42) 0%,
+    rgba(255, 255, 255, 0.14) 16%,
+    rgba(255, 255, 255, 0.03) 38%,
+    rgba(255, 255, 255, 0) 55%
   );
   --liquid-glass-rim: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.88) 0%,
-    rgba(255, 255, 255, 0.22) 38%,
-    rgba(255, 255, 255, 0.04) 68%,
-    rgba(0, 0, 0, 0.08) 100%
+    rgba(255, 255, 255, 0.38) 0%,
+    rgba(255, 255, 255, 0.08) 36%,
+    rgba(0, 0, 0, 0.02) 72%,
+    rgba(0, 0, 0, 0.06) 100%
   );
   --liquid-glass-caustic: radial-gradient(
-    circle at 82% 12%,
-    rgba(255, 255, 255, 0.5) 0%,
-    rgba(200, 220, 255, 0.12) 28%,
-    rgba(255, 255, 255, 0) 48%
+    circle at 78% 18%,
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(200, 210, 230, 0.06) 30%,
+    rgba(255, 255, 255, 0) 52%
   );
   --liquid-glass-refraction: radial-gradient(
-    ellipse 80% 50% at 30% 100%,
-    rgba(255, 255, 255, 0.15) 0%,
-    rgba(255, 255, 255, 0) 70%
+    ellipse 90% 55% at 28% 105%,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(120, 120, 128, 0.04) 40%,
+    rgba(255, 255, 255, 0) 72%
   );
   --liquid-glass-scroll-edge: linear-gradient(
     to bottom,
     rgba(245, 245, 247, 0) 0%,
-    rgba(245, 245, 247, 0.28) 40%,
-    rgba(245, 245, 247, 0.58) 72%,
-    rgba(245, 245, 247, 0.82) 100%
+    rgba(245, 245, 247, 0.22) 42%,
+    rgba(245, 245, 247, 0.48) 76%,
+    rgba(245, 245, 247, 0.68) 100%
   );
-  --liquid-glass-indicator: rgba(255, 255, 255, 0.68);
-  --liquid-glass-indicator-border: rgba(255, 255, 255, 0.92);
+  --liquid-glass-indicator: rgba(255, 255, 255, 0.52);
+  --liquid-glass-indicator-border: rgba(255, 255, 255, 0.62);
   --liquid-glass-indicator-shadow:
-    0 0.5px 0 rgba(255, 255, 255, 1) inset,
-    0 2px 4px rgba(0, 0, 0, 0.05),
-    0 0 0 0.5px rgba(255, 255, 255, 0.5),
-    0 4px 12px rgba(0, 0, 0, 0.06);
+    0 0.5px 0 rgba(255, 255, 255, 0.7) inset,
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 0 0 0.5px rgba(0, 0, 0, 0.04),
+    0 3px 10px rgba(0, 0, 0, 0.05);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -121,70 +124,72 @@
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.5);
     --tab-inactive: rgba(235, 235, 245, 0.5);
-    --nav-chrome-bg: rgba(28, 28, 30, 0.78);
-    --liquid-glass-bg: rgba(38, 38, 40, 0.22);
-    --liquid-glass-tint: rgba(120, 120, 128, 0.24);
-    --liquid-glass-border: rgba(255, 255, 255, 0.28);
-    --liquid-glass-border-outer: rgba(255, 255, 255, 0.1);
-    --liquid-glass-blur: blur(88px) saturate(260%) brightness(0.9) contrast(1.08);
-    --liquid-glass-blur-secondary: blur(44px) saturate(200%) brightness(0.92);
-    --liquid-glass-blur-indicator: blur(32px) saturate(220%) brightness(0.88);
+    --nav-chrome-bg: rgba(28, 28, 30, 0.82);
+    --liquid-glass-bg: rgba(36, 36, 38, 0.62);
+    --liquid-glass-frost: rgba(44, 44, 46, 0.48);
+    --liquid-glass-tint: rgba(120, 120, 128, 0.14);
+    --liquid-glass-border: rgba(255, 255, 255, 0.1);
+    --liquid-glass-border-inner: rgba(255, 255, 255, 0.16);
+    --liquid-glass-border-outer: rgba(255, 255, 255, 0.05);
+    --liquid-glass-blur: blur(30px) saturate(175%);
+    --liquid-glass-blur-secondary: blur(18px) saturate(155%);
+    --liquid-glass-blur-indicator: blur(22px) saturate(170%);
     --liquid-glass-shadow:
-      0 0.5px 0 rgba(255, 255, 255, 0.28) inset,
-      0 2px 0 rgba(255, 255, 255, 0.1) inset,
-      0 -1px 0 rgba(0, 0, 0, 0.32) inset,
-      0 0 0 0.5px rgba(255, 255, 255, 0.12),
-      0 12px 52px rgba(0, 0, 0, 0.55),
-      0 4px 18px rgba(0, 0, 0, 0.35);
-    --liquid-glass-depth: 0 24px 72px rgba(0, 0, 0, 0.48), 0 8px 28px rgba(0, 0, 0, 0.32);
-    --liquid-glass-ambient: 0 0 100px rgba(255, 255, 255, 0.08), 0 0 40px rgba(255, 255, 255, 0.04);
-    --liquid-glass-halo: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 32px rgba(255, 255, 255, 0.06);
+      0 0.5px 0 rgba(255, 255, 255, 0.14) inset,
+      0 -0.5px 0 rgba(0, 0, 0, 0.28) inset,
+      0 0 0 0.5px var(--liquid-glass-border),
+      0 10px 40px rgba(0, 0, 0, 0.42),
+      0 2px 10px rgba(0, 0, 0, 0.28);
+    --liquid-glass-depth: 0 18px 52px rgba(0, 0, 0, 0.38), 0 6px 18px rgba(0, 0, 0, 0.24);
+    --liquid-glass-ambient: 0 0 0 0 transparent;
+    --liquid-glass-halo: 0 0 0 0.5px rgba(255, 255, 255, 0.06), 0 0 20px rgba(0, 0, 0, 0.2);
     --liquid-glass-lens: radial-gradient(
-      ellipse 160% 100% at 50% -30%,
-      rgba(255, 255, 255, 0.28) 0%,
-      rgba(255, 255, 255, 0.08) 32%,
-      rgba(255, 255, 255, 0.02) 55%,
-      rgba(255, 255, 255, 0) 72%
+      ellipse 140% 90% at 50% -20%,
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0.05) 28%,
+      rgba(255, 255, 255, 0.01) 52%,
+      rgba(255, 255, 255, 0) 70%
     );
     --liquid-glass-specular: linear-gradient(
-      172deg,
-      rgba(255, 255, 255, 0.32) 0%,
-      rgba(255, 255, 255, 0.1) 18%,
-      rgba(255, 255, 255, 0.02) 42%,
-      rgba(255, 255, 255, 0) 58%
+      175deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.06) 16%,
+      rgba(255, 255, 255, 0.01) 38%,
+      rgba(255, 255, 255, 0) 55%
     );
     --liquid-glass-rim: linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.28) 0%,
-      rgba(255, 255, 255, 0.08) 38%,
-      rgba(255, 255, 255, 0.02) 68%,
-      rgba(0, 0, 0, 0.32) 100%
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0.04) 36%,
+      rgba(0, 0, 0, 0.08) 72%,
+      rgba(0, 0, 0, 0.22) 100%
     );
     --liquid-glass-caustic: radial-gradient(
-      circle at 82% 12%,
-      rgba(255, 255, 255, 0.16) 0%,
-      rgba(180, 200, 255, 0.06) 28%,
-      rgba(255, 255, 255, 0) 48%
+      circle at 78% 18%,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(160, 175, 220, 0.04) 30%,
+      rgba(255, 255, 255, 0) 52%
     );
     --liquid-glass-refraction: radial-gradient(
-      ellipse 80% 50% at 30% 100%,
-      rgba(255, 255, 255, 0.06) 0%,
-      rgba(255, 255, 255, 0) 70%
+      ellipse 90% 55% at 28% 105%,
+      rgba(255, 255, 255, 0.05) 0%,
+      rgba(80, 80, 90, 0.06) 40%,
+      rgba(255, 255, 255, 0) 72%
     );
     --liquid-glass-scroll-edge: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0.32) 40%,
-      rgba(0, 0, 0, 0.55) 72%,
-      rgba(0, 0, 0, 0.75) 100%
+      rgba(0, 0, 0, 0.24) 42%,
+      rgba(0, 0, 0, 0.44) 76%,
+      rgba(0, 0, 0, 0.62) 100%
     );
-    --liquid-glass-indicator: rgba(255, 255, 255, 0.18);
-    --liquid-glass-indicator-border: rgba(255, 255, 255, 0.28);
+    --liquid-glass-indicator: rgba(72, 72, 74, 0.55);
+    --liquid-glass-indicator-border: rgba(255, 255, 255, 0.14);
     --liquid-glass-indicator-shadow:
-      0 0.5px 0 rgba(255, 255, 255, 0.22) inset,
-      0 2px 6px rgba(0, 0, 0, 0.42),
-      0 0 0 0.5px rgba(255, 255, 255, 0.12),
-      0 4px 14px rgba(0, 0, 0, 0.32);
+      0 0.5px 0 rgba(255, 255, 255, 0.12) inset,
+      0 1px 4px rgba(0, 0, 0, 0.32),
+      0 0 0 0.5px rgba(255, 255, 255, 0.08),
+      0 3px 10px rgba(0, 0, 0, 0.24);
   }
 }
 

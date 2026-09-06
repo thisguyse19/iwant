@@ -20,6 +20,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 function GlassLayers({ compact = false }: { compact?: boolean }) {
   return (
     <>
+      <div className="tab-bar-frost" />
       <div className="tab-bar-lens" />
       <div className="tab-bar-tint" />
       <div className="tab-bar-specular" />
