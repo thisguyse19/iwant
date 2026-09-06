@@ -5,42 +5,25 @@ import type { GlassConfig } from '@ybouane/liquidglass'
  * Avoid high blurAmount / tintStrength (reads as frosted plastic).
  */
 export const TAB_PILL_GLASS: Partial<GlassConfig> = {
-  blurAmount: 0.1,
+  blurAmount: 0.08,
   refraction: 0.84,
   chromAberration: 0.1,
-  edgeHighlight: 0.24,
-  specular: 0.08,
-  fresnel: 0.96,
-  distortion: 0.024,
+  edgeHighlight: 0.12,
+  specular: 0.02,
+  fresnel: 0.94,
+  distortion: 0.022,
   cornerRadius: 31,
-  zRadius: 30,
-  opacity: 1,
-  saturation: 0.1,
+  zRadius: 22,
+  opacity: 0.82,
+  saturation: 0.08,
   tintStrength: 0,
-  brightness: -0.1,
-  shadowOpacity: 0.28,
+  brightness: -0.12,
+  shadowOpacity: 0.24,
   shadowSpread: 14,
   shadowOffsetY: 3,
   floating: false,
   button: false,
   bevelMode: 0,
-}
-
-export const TAB_INDICATOR_GLASS: Partial<GlassConfig> = {
-  ...TAB_PILL_GLASS,
-  button: true,
-  blurAmount: 0.08,
-  refraction: 0.88,
-  chromAberration: 0.12,
-  edgeHighlight: 0.28,
-  specular: 0.14,
-  fresnel: 0.98,
-  distortion: 0.028,
-  zRadius: 22,
-  brightness: -0.06,
-  shadowOpacity: 0.2,
-  shadowSpread: 6,
-  shadowOffsetY: 1,
 }
 
 export const TAB_ACTION_GLASS: Partial<GlassConfig> = {

@@ -63,6 +63,7 @@
   z-index: 50;
   padding: 0;
   pointer-events: none;
+  overflow: hidden;
 }
 
 .tab-bar-liquid {
@@ -98,14 +99,6 @@
   pointer-events: none;
 }
 
-.tab-indicator-glass-surface {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  overflow: hidden;
-}
-
 .tab-indicator-glass {
   position: absolute;
   inset: 0;
@@ -116,7 +109,6 @@
   -webkit-backdrop-filter: var(--liquid-glass-blur-indicator);
   border: 0.5px solid var(--liquid-glass-indicator-border);
   box-shadow: var(--liquid-glass-indicator-shadow);
-  isolation: isolate;
 }
 
 .tab-indicator-glass::before {
@@ -124,44 +116,25 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: var(--liquid-glass-lens);
-  opacity: 0.72;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.03) 22%,
+    transparent 42%
+  );
   pointer-events: none;
-}
-
-.tab-indicator-glass::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background:
-    var(--liquid-glass-specular),
-    var(--liquid-glass-caustic);
-  opacity: 0.58;
-  mix-blend-mode: soft-light;
-  pointer-events: none;
-}
-
-.app-shell.liquid-glass-active .tab-indicator-glass-surface {
-  z-index: 1;
 }
 
 .app-shell.liquid-glass-active .tab-indicator-glass {
-  z-index: 2;
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border-color: transparent;
-  box-shadow: none;
+  background: rgba(0, 0, 0, 0.36);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: var(--liquid-glass-indicator-shadow);
 }
 
 .app-shell.liquid-glass-active .tab-indicator-glass::before {
-  opacity: 0.38;
-  background: var(--liquid-glass-lens);
-}
-
-.app-shell.liquid-glass-active .tab-indicator-glass::after {
-  opacity: 0.45;
+  opacity: 0.65;
 }
 
 .tab-liquid-item {
@@ -349,13 +322,13 @@
 
 @media (prefers-color-scheme: dark) {
   .tab-indicator-glass {
-    background: rgba(72, 72, 74, 0.28);
-    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(0, 0, 0, 0.42);
+    border-color: rgba(255, 255, 255, 0.08);
   }
 
   .app-shell.liquid-glass-active .tab-indicator-glass {
-    background: transparent;
-    border-color: transparent;
+    background: rgba(0, 0, 0, 0.48);
+    border-color: rgba(255, 255, 255, 0.08);
   }
 }
 
