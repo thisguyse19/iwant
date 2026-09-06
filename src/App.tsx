@@ -9,6 +9,7 @@ import { SettingsScreen } from './screens/SettingsScreen'
 import { AddSheet } from './screens/AddSheet'
 import { ItemOverviewSheet } from './screens/ItemOverviewSheet'
 import { ItemEditSheet } from './screens/ItemEditSheet'
+import { BoughtDateSheet } from './screens/BoughtDateSheet'
 import { useApp } from './store'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import './styles/global.css'
@@ -66,6 +67,7 @@ function AppMain({ shellRef }: { shellRef: RefObject<HTMLDivElement | null> }) {
       <AddSheet />
       <ItemOverviewSheet />
       <ItemEditSheet />
+      <BoughtDateSheet />
 
       {needRefresh && (
         <div className="update-banner">

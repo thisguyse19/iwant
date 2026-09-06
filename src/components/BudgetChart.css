@@ -62,6 +62,18 @@
   flex-direction: column;
   align-items: center;
   height: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+
+.budget-chart-bar-col.held {
+  z-index: 2;
+}
+
+.budget-chart-bar.held {
+  opacity: 1;
+  transform: scaleX(1.35);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
 .budget-chart-bar-track {
@@ -114,4 +126,74 @@
   font-size: 13px;
   color: var(--text-secondary);
   text-align: center;
+}
+
+.budget-chart-hint {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.budget-chart-callout {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 0;
+  z-index: 3;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+  border: 0.5px solid var(--border-subtle);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(12px);
+}
+
+.budget-chart-callout-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.budget-chart-callout-amount {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 8px;
+}
+
+.budget-chart-callout-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 72px;
+  overflow: auto;
+}
+
+.budget-chart-callout-items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.budget-chart-callout-item-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.budget-chart-callout-item-price {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.budget-chart-callout-empty {
+  font-size: 12px;
+  color: var(--text-secondary);
 }

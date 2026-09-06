@@ -23,6 +23,48 @@ export function daysSince(timestamp: number): number {
   return Math.floor((Date.now() - timestamp) / (1000 * 60 * 60 * 24))
 }
 
+export function startOfDayMs(timestamp: number): number {
+  const d = new Date(timestamp)
+  d.setHours(0, 0, 0, 0)
+  return d.getTime()
+}
+
+export function endOfDayMs(timestamp: number): number {
+  const d = new Date(timestamp)
+  d.setHours(12, 0, 0, 0)
+  return d.getTime()
+}
+
+export function dateInputValue(timestamp: number): string {
+  const d = new Date(timestamp)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+export function formatBoughtDate(timestamp: number): string {
+  const now = new Date()
+  const date = new Date(timestamp)
+  const todayStart = startOfDayMs(now.getTime())
+  const dateStart = startOfDayMs(timestamp)
+
+  if (dateStart === todayStart) return 'Bought today'
+  if (dateStart === todayStart - 86400000) return 'Bought yesterday'
+
+  const sameYear = date.getFullYear() === now.getFullYear()
+  return `Bought ${date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    ...(sameYear ? {} : { year: 'numeric' }),
+  })}`
+}
+
+export function formatChartDayLabel(periodStartMs: number, day: number): string {
+  const d = new Date(periodStartMs + (day - 1) * 86400000)
+  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
 export function detectClipboardContent(text: string): {
   title?: string
   link?: string

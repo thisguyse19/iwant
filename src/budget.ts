@@ -22,6 +22,8 @@ export interface DailySpend {
   day: number
   amount: number
   label: string
+  itemCount: number
+  items: Array<{ id: string; title: string; price?: number; currency: string }>
 }
 
 export interface BudgetPeriodSummary {
@@ -146,6 +148,8 @@ export function getDailySpending(
     day: i + 1,
     amount: 0,
     label: String(i + 1),
+    itemCount: 0,
+    items: [] as DailySpend['items'],
   }))
 
   for (const item of items) {
@@ -153,6 +157,13 @@ export function getDailySpending(
     if (item.boughtAt < startMs || item.boughtAt >= endMs) continue
     const index = Math.min(daysInPeriod - 1, Math.floor((item.boughtAt - startMs) / msPerDay))
     buckets[index].amount += item.price
+    buckets[index].itemCount += 1
+    buckets[index].items.push({
+      id: item.id,
+      title: item.title,
+      price: item.price,
+      currency: item.currency,
+    })
   }
 
   return buckets

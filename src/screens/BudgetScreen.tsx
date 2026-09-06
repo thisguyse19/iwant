@@ -12,13 +12,14 @@ import './BudgetScreen.css'
 type BudgetScope = 'month' | 'default'
 
 export function BudgetScreen() {
-  const { settings, updateSettings, setViewingItem, updateItem, removeItem } = useApp()
+  const { settings, updateSettings, setViewingItem, requestMarkBought, removeItem } = useApp()
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth)
   const summary = useBudgetPeriod(selectedMonth)
   const [editOpen, setEditOpen] = useState(false)
   const [budgetInput, setBudgetInput] = useState('')
   const [budgetScope, setBudgetScope] = useState<BudgetScope>('month')
   const [resetDayInput, setResetDayInput] = useState('1')
+  const [heldChartDay, setHeldChartDay] = useState<number | null>(null)
 
   const monthOptions = useMemo(() => getRecentMonths(8), [])
   const canGoForward = compareMonths(selectedMonth, getCurrentMonth()) < 0
@@ -142,6 +143,18 @@ export function BudgetScreen() {
 
   const hasMonthOverride = settings.monthBudgets?.[summary.period.key] != null
 
+  const msPerDay = 86400000
+  const visibleBoughtItems = heldChartDay != null
+    ? summary.boughtItems.filter((item) => {
+        if (item.boughtAt == null) return false
+        const day = Math.min(
+          summary.period.daysInPeriod,
+          Math.floor((item.boughtAt - summary.period.startMs) / msPerDay) + 1,
+        )
+        return day === heldChartDay
+      })
+    : summary.boughtItems
+
   return (
     <>
       <ScreenChrome
@@ -250,25 +263,30 @@ export function BudgetScreen() {
           maxAmount={summary.maxDailySpend}
           budget={summary.budget}
           currency={summary.currency}
+          periodStartMs={summary.period.startMs}
           currentDay={summary.period.dayIndex}
           isCurrentPeriod={summary.period.isCurrent}
+          onDayHold={setHeldChartDay}
         />
 
-        {summary.boughtItems.length > 0 && (
+        {visibleBoughtItems.length > 0 && (
           <section className="budget-section">
-            <h2 className="section-label">Spent this period</h2>
+            <h2 className="section-label">
+              {heldChartDay != null ? 'Purchases that day' : 'Spent this period'}
+            </h2>
             <div className="item-list budget-spent-list">
-              {summary.boughtItems.slice(0, 12).map((item) => (
+              {visibleBoughtItems.slice(0, 12).map((item) => (
                 <ItemRow
                   key={item.id}
                   item={item}
                   onTap={() => setViewingItem(item)}
+                  showBoughtDate
                 />
               ))}
             </div>
-            {summary.boughtItems.length > 12 && (
+            {visibleBoughtItems.length > 12 && (
               <p className="budget-more-note">
-                +{summary.boughtItems.length - 12} more purchase{summary.boughtItems.length - 12 > 1 ? 's' : ''}
+                +{visibleBoughtItems.length - 12} more purchase{visibleBoughtItems.length - 12 > 1 ? 's' : ''}
               </p>
             )}
           </section>
@@ -283,7 +301,7 @@ export function BudgetScreen() {
                   key={item.id}
                   item={item}
                   onTap={() => setViewingItem(item)}
-                  onMarkBought={() => updateItem(item.id, { status: 'bought' })}
+                  onMarkBought={() => requestMarkBought(item)}
                   onRemove={() => removeItem(item.id)}
                 />
               ))}

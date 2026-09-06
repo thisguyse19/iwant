@@ -18,7 +18,8 @@ export function BasketDetailScreen() {
     setViewingItem,
     setAddOpen,
     updateItem,
-    markBasketBought,
+    requestMarkBought,
+    requestMarkBasketBought,
     removeBasket,
     removeItem,
     items,
@@ -53,14 +54,16 @@ export function BasketDetailScreen() {
 
   if (!viewingBasket) return null
 
-  const handleMarkBought = async (id: string) => {
+  const handleMarkBought = (id: string) => {
+    const item = basketItems.find((i) => i.id === id)
+    if (!item) return
     vibrate()
-    await updateItem(id, { status: 'bought' })
+    requestMarkBought(item)
   }
 
-  const handleMarkAllBought = async () => {
+  const handleMarkAllBought = () => {
     vibrate()
-    await markBasketBought(viewingBasket.id)
+    requestMarkBasketBought(viewingBasket.id, viewingBasket.name)
     setViewingBasket(null)
   }
 

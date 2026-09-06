@@ -22,7 +22,7 @@ export function WishlistScreen() {
     setCategoryFilter,
     setAddOpen,
     setViewingItem,
-    updateItem,
+    requestMarkBought,
     removeItem,
     selectionMode,
     selectedIds,
@@ -40,9 +40,9 @@ export function WishlistScreen() {
     return () => clearSelection()
   }, [clearSelection])
 
-  const handleMarkBought = async (id: string) => {
+  const handleMarkBought = (item: WishlistItem) => {
     vibrate()
-    await updateItem(id, { status: 'bought' })
+    requestMarkBought(item)
   }
 
   const toggleSelectionMode = () => {
@@ -132,7 +132,7 @@ export function WishlistScreen() {
               selected={selectedIds.has(item.id)}
               onToggleSelect={() => toggleSelected(item.id)}
               onTap={() => handleRowTap(item)}
-              onMarkBought={() => handleMarkBought(item.id)}
+              onMarkBought={() => handleMarkBought(item)}
               onRemove={() => removeItem(item.id)}
             />
           ))
