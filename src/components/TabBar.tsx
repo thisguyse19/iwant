@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { Tab } from '../App'
+import { useLiquidGlass } from '../liquidGlass/LiquidGlassProvider'
+import { ADD_MENU_GLASS, setGlassConfig, TAB_ACTION_GLASS, TAB_PILL_GLASS } from '../liquidGlass/config'
 import './TabBar.css'
 
 interface TabBarProps {
@@ -18,10 +20,14 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 ]
 
 export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps) {
+  const pillGlassRef = useRef<HTMLDivElement>(null)
+  const actionGlassRef = useRef<HTMLDivElement>(null)
+  const menuGlassRef = useRef<HTMLDivElement>(null)
   const navRef = useRef<HTMLElement>(null)
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const [indicator, setIndicator] = useState({ x: 0, width: 0 })
   const [menuOpen, setMenuOpen] = useState(false)
+  const { markChanged } = useLiquidGlass()
 
   const activeIndex = TABS.findIndex((t) => t.id === active)
 
@@ -33,6 +39,21 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
       width: tab.offsetWidth,
     })
   }, [active, activeIndex])
+
+  useLayoutEffect(() => {
+    const pillGlass = pillGlassRef.current
+    const actionGlass = actionGlassRef.current
+    const menuGlass = menuGlassRef.current
+    if (pillGlass) setGlassConfig(pillGlass, TAB_PILL_GLASS)
+    if (actionGlass) setGlassConfig(actionGlass, TAB_ACTION_GLASS)
+    if (menuGlass) setGlassConfig(menuGlass, ADD_MENU_GLASS)
+  }, [])
+
+  useLayoutEffect(() => {
+    if (menuOpen) {
+      markChanged(menuGlassRef.current ?? undefined)
+    }
+  }, [menuOpen, markChanged])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -59,7 +80,11 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
     <>
       <div className="tab-bar-scroll-edge" aria-hidden="true" />
 
-      <div className="tab-bar-glass-surface glass-surface" aria-hidden="true" />
+      <div
+        ref={pillGlassRef}
+        className="tab-bar-glass-surface glass-surface liquid-glass-panel"
+        aria-hidden="true"
+      />
 
       <nav className="tab-bar-liquid" ref={navRef} aria-label="Main navigation">
         <div className="tab-bar-liquid-content">
@@ -89,7 +114,11 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
         </div>
       </nav>
 
-      <div className="tab-action-glass-surface glass-surface" aria-hidden="true" />
+      <div
+        ref={actionGlassRef}
+        className="tab-action-glass-surface glass-surface liquid-glass-panel"
+        aria-hidden="true"
+      />
 
       <button
         type="button"
@@ -116,8 +145,14 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
         </svg>
       </button>
 
+      <div
+        ref={menuGlassRef}
+        className={`add-menu-glass-surface glass-surface liquid-glass-panel ${menuOpen ? 'is-open' : ''}`}
+        aria-hidden={!menuOpen}
+      />
+
       {menuOpen && (
-        <div className="add-menu glass-surface" role="menu">
+        <div className="add-menu" role="menu">
           <button type="button" className="add-menu-item" role="menuitem" onClick={handleAddItem}>
             <span className="add-menu-icon" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">

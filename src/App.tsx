@@ -1,6 +1,7 @@
-import { useRef, useState, type RefObject } from 'react'
+import { useRef, useState, useEffect, type RefObject } from 'react'
 import { TabBar } from './components/TabBar'
 import { AppProvider } from './store'
+import { LiquidGlassProvider, useLiquidGlass } from './liquidGlass/LiquidGlassProvider'
 import { WishlistScreen } from './screens/WishlistScreen'
 import { BasketsScreen } from './screens/BasketsScreen'
 import { BudgetScreen } from './screens/BudgetScreen'
@@ -16,12 +17,17 @@ export type Tab = 'wishlist' | 'baskets' | 'budget' | 'settings'
 
 function AppMain({ shellRef }: { shellRef: RefObject<HTMLDivElement | null> }) {
   const [tab, setTab] = useState<Tab>('wishlist')
+  const { refresh } = useLiquidGlass()
   const { setAddOpen, loading, setViewingBasket, setBasketCreatePending, clearSelection } = useApp()
 
   const {
     needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW()
+
+  useEffect(() => {
+    if (!loading) void refresh()
+  }, [loading, refresh])
 
   if (loading) {
     return (
@@ -76,7 +82,11 @@ function AppMain({ shellRef }: { shellRef: RefObject<HTMLDivElement | null> }) {
 function AppContent() {
   const shellRef = useRef<HTMLDivElement>(null)
 
-  return <AppMain shellRef={shellRef} />
+  return (
+    <LiquidGlassProvider shellRef={shellRef}>
+      <AppMain shellRef={shellRef} />
+    </LiquidGlassProvider>
+  )
 }
 
 export default function App() {
