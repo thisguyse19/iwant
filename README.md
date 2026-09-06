@@ -24,4 +24,10 @@ npm run build
 npm run preview
 ```
 
-Install the PWA from your browser for the best native-like experience.
+## Deploy (GitHub Pages)
+
+Pushes to `main` run the GitHub Actions workflow, which builds the app and deploys the `dist` folder.
+
+**One-time setup:** In your repo → Settings → Pages → Build and deployment → Source, choose **GitHub Actions** (not “Deploy from branch”).
+
+The app is served at `https://<username>.github.io/iwant/`.

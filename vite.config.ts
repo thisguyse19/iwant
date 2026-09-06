@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  base: '/iwant/',
   plugins: [
     react(),
     VitePWA({
@@ -16,7 +17,8 @@ export default defineConfig({
         background_color: '#f5f5f7',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
+        start_url: '/iwant/',
+        scope: '/iwant/',
         icons: [
           {
             src: 'pwa-192.png',
