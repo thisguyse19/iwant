@@ -4,9 +4,10 @@ import { useApp, useBasketItems, useListTotal, useSelectedTotal } from '../store
 import { ItemRow } from '../components/ItemRow'
 import { SelectionBar } from '../components/SelectionBar'
 import { ScreenChrome } from '../components/ScreenChrome'
-import { CATEGORIES, type CategoryFilter } from '../types'
-import { formatPrice } from '../utils'
-import { vibrate } from '../utils'
+import { CATEGORIES, type CategoryFilter, type WishlistItem } from '../types'
+import { basketDetailEmptyCopy } from '../copy'
+import { useExitAnimation } from '../exitAnimation'
+import { formatPrice, vibrateRemove, vibrateTap } from '../utils'
 import '../components/ItemRow.css'
 import './WishlistScreen.css'
 import './BasketDetailScreen.css'
@@ -30,6 +31,7 @@ export function BasketDetailScreen() {
     selectAll,
     clearSelection,
   } = useApp()
+  const { augmentItems, getExitKind, completeExit, stageExit } = useExitAnimation()
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
 
   useEffect(() => {
@@ -46,6 +48,11 @@ export function BasketDetailScreen() {
     if (categoryFilter === 'all') return activeItems
     return activeItems.filter((item) => item.category === categoryFilter)
   }, [activeItems, categoryFilter])
+  const displayItems = useMemo(() => augmentItems(filtered), [augmentItems, filtered])
+  const emptyCopy = useMemo(
+    () => basketDetailEmptyCopy(categoryFilter === 'all'),
+    [categoryFilter],
+  )
   const listTotal = useListTotal(filtered)
   const selectionTotal = useSelectedTotal(selectedIds)
   const unassigned = items.filter(
@@ -54,27 +61,29 @@ export function BasketDetailScreen() {
 
   if (!viewingBasket) return null
 
-  const handleMarkBought = (id: string) => {
-    const item = basketItems.find((i) => i.id === id)
-    if (!item) return
-    vibrate()
+  const handleMarkBought = (item: WishlistItem) => {
+    vibrateTap()
     requestMarkBought(item)
   }
 
+  const handleRemove = (item: WishlistItem) => {
+    stageExit(item, 'removed', () => removeItem(item.id))
+  }
+
   const handleMarkAllBought = () => {
-    vibrate()
+    vibrateTap()
     requestMarkBasketBought(viewingBasket.id, viewingBasket.name)
     setViewingBasket(null)
   }
 
   const handleDelete = async () => {
     if (!window.confirm(`Delete "${viewingBasket.name}"? Items will be kept.`)) return
-    vibrate(20)
+    vibrateRemove()
     await removeBasket(viewingBasket.id)
   }
 
   const addExisting = async (itemId: string) => {
-    vibrate()
+    vibrateTap()
     await updateItem(itemId, { basketId: viewingBasket.id })
   }
 
@@ -146,15 +155,15 @@ export function BasketDetailScreen() {
       )}
 
       <div className="item-list">
-        {filtered.length === 0 ? (
+        {filtered.length === 0 && displayItems.length === 0 ? (
           <div className="empty-state item-list-empty">
-            <p>{categoryFilter === 'all' ? 'No items in this basket yet.' : 'Nothing in this category.'}</p>
+            <p>{emptyCopy.primary}</p>
             <button type="button" className="text-btn" onClick={() => setAddOpen(true, viewingBasket.id)}>
               Add something
             </button>
           </div>
         ) : (
-          filtered.map((item) => (
+          displayItems.map((item) => (
             <ItemRow
               key={item.id}
               item={item}
@@ -162,8 +171,10 @@ export function BasketDetailScreen() {
               selected={selectedIds.has(item.id)}
               onToggleSelect={() => toggleSelected(item.id)}
               onTap={() => !selectionMode && setViewingItem(item)}
-              onMarkBought={() => handleMarkBought(item.id)}
-              onRemove={() => removeItem(item.id)}
+              onMarkBought={() => handleMarkBought(item)}
+              onRemove={() => handleRemove(item)}
+              exiting={getExitKind(item.id)}
+              onExitComplete={() => completeExit(item.id)}
             />
           ))
         )}

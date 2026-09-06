@@ -4,7 +4,7 @@ import { Sheet } from '../components/Sheet'
 import { SearchAutocomplete } from '../components/SearchAutocomplete'
 import { CategoryPicker } from '../components/CategoryPicker'
 import type { CategoryId, Priority, SearchSuggestion } from '../types'
-import { detectClipboardContent, vibrate } from '../utils'
+import { detectClipboardContent, vibrateTap } from '../utils'
 import { faviconFromUrl } from '../search'
 
 export function AddSheet() {
@@ -72,7 +72,7 @@ export function AddSheet() {
   const handleSave = async () => {
     if (!title.trim() || saving) return
     setSaving(true)
-    vibrate()
+    vibrateTap()
     const parsedPrice = price ? parseFloat(price) : undefined
     await addItem({
       title: title.trim(),

@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import {
   useFilteredItems,
   useApp,
@@ -11,8 +11,9 @@ import { ItemRow } from '../components/ItemRow'
 import { SelectionBar } from '../components/SelectionBar'
 import { ScreenChrome } from '../components/ScreenChrome'
 import { CATEGORIES, type CategoryFilter, type WishlistItem } from '../types'
-import { formatPrice } from '../utils'
-import { vibrate } from '../utils'
+import { wishlistEmptyCopy } from '../copy'
+import { useExitAnimation } from '../exitAnimation'
+import { formatPrice, vibrateTap } from '../utils'
 import '../components/ItemRow.css'
 import './WishlistScreen.css'
 
@@ -31,18 +32,25 @@ export function WishlistScreen() {
     selectAll,
     clearSelection,
   } = useApp()
+  const { augmentItems, getExitKind, completeExit, stageExit } = useExitAnimation()
   const filtered = useFilteredItems()
   const activeItems = useActiveItems()
   const listTotal = useListTotal(filtered)
   const selectionTotal = useSelectedTotal(selectedIds)
+  const displayItems = useMemo(() => augmentItems(filtered), [augmentItems, filtered])
+  const emptyCopy = useMemo(() => wishlistEmptyCopy(categoryFilter), [categoryFilter])
 
   useEffect(() => {
     return () => clearSelection()
   }, [clearSelection])
 
   const handleMarkBought = (item: WishlistItem) => {
-    vibrate()
+    vibrateTap()
     requestMarkBought(item)
+  }
+
+  const handleRemove = (item: WishlistItem) => {
+    stageExit(item, 'removed', () => removeItem(item.id))
   }
 
   const toggleSelectionMode = () => {
@@ -116,15 +124,18 @@ export function WishlistScreen() {
       )}
 
       <div className="item-list">
-        {filtered.length === 0 ? (
+        {filtered.length === 0 && displayItems.length === 0 ? (
           <div className="empty-state item-list-empty">
-            <p>{categoryFilter === 'all' ? 'Nothing on your list.' : 'Nothing in this category.'}</p>
+            <p>{emptyCopy.primary}</p>
+            {emptyCopy.secondary && (
+              <p className="empty-state-secondary">{emptyCopy.secondary}</p>
+            )}
             <button type="button" className="text-btn" onClick={() => setAddOpen(true)}>
               Add something
             </button>
           </div>
         ) : (
-          filtered.map((item) => (
+          displayItems.map((item) => (
             <ItemRow
               key={item.id}
               item={item}
@@ -133,7 +144,9 @@ export function WishlistScreen() {
               onToggleSelect={() => toggleSelected(item.id)}
               onTap={() => handleRowTap(item)}
               onMarkBought={() => handleMarkBought(item)}
-              onRemove={() => removeItem(item.id)}
+              onRemove={() => handleRemove(item)}
+              exiting={getExitKind(item.id)}
+              onExitComplete={() => completeExit(item.id)}
             />
           ))
         )}

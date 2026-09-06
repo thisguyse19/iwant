@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
-import { dateInputValue, endOfDayMs, vibrate } from '../utils'
+import { stageBoughtFromPrompt, useExitAnimation } from '../exitAnimation'
+import { dateInputValue, endOfDayMs } from '../utils'
 import './BoughtDateSheet.css'
 
 export function BoughtDateSheet() {
-  const { boughtPrompt, confirmMarkBought, cancelMarkBought } = useApp()
+  const { boughtPrompt, confirmMarkBought, cancelMarkBought, items } = useApp()
+  const { stageExit } = useExitAnimation()
   const [customDate, setCustomDate] = useState('')
 
   const today = useMemo(() => dateInputValue(Date.now()), [])
@@ -17,8 +19,17 @@ export function BoughtDateSheet() {
   if (!boughtPrompt) return null
 
   const confirm = (boughtAt: number) => {
-    vibrate()
-    void confirmMarkBought(boughtAt)
+    const prompt = boughtPrompt
+    cancelMarkBought()
+    const staged = stageBoughtFromPrompt(
+      stageExit,
+      items,
+      prompt,
+      () => confirmMarkBought(boughtAt, prompt),
+    )
+    if (!staged) {
+      void confirmMarkBought(boughtAt, prompt)
+    }
   }
 
   return (

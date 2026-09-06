@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
 import { compareMonths, getCurrentMonth, getRecentMonths, shiftMonth } from '../budget'
+import { budgetNoBudgetCopy, withinReachEmptyLine, withinReachLine } from '../copy'
+import { useExitAnimation, useBudgetPulse } from '../exitAnimation'
 import { useApp, useBudgetPeriod } from '../store'
 import { ItemRow } from '../components/ItemRow'
 import { BudgetChart } from '../components/BudgetChart'
 import { Sheet } from '../components/Sheet'
 import { ScreenChrome } from '../components/ScreenChrome'
-import { formatPrice } from '../utils'
+import { formatPrice, vibrateTap } from '../utils'
 import '../components/ItemRow.css'
 import './BudgetScreen.css'
 
@@ -13,6 +15,8 @@ type BudgetScope = 'month' | 'default'
 
 export function BudgetScreen() {
   const { settings, updateSettings, setViewingItem, requestMarkBought, removeItem } = useApp()
+  const { augmentItems, getExitKind, completeExit, stageExit } = useExitAnimation()
+  const budgetPulse = useBudgetPulse()
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth)
   const summary = useBudgetPeriod(selectedMonth)
   const [editOpen, setEditOpen] = useState(false)
@@ -155,6 +159,17 @@ export function BudgetScreen() {
       })
     : summary.boughtItems
 
+  const affordableDisplay = useMemo(
+    () => augmentItems(summary.affordable),
+    [augmentItems, summary.affordable],
+  )
+  const reachLine = withinReachLine(summary.affordable.length)
+  const reachEmptyLine = withinReachEmptyLine(
+    summary.hasBudget,
+    summary.affordable.length,
+    summary.remaining,
+  )
+
   return (
     <>
       <ScreenChrome
@@ -167,7 +182,7 @@ export function BudgetScreen() {
         }
         toolbar={monthToolbar}
       >
-        <section className="budget-hero-card" aria-label="Budget summary">
+        <section className={`budget-hero-card ${budgetPulse ? 'budget-hero-pulse' : ''}`} aria-label="Budget summary">
           <div className="budget-hero-top">
             <div>
               <p className="budget-hero-period">{summary.period.label}</p>
@@ -180,6 +195,12 @@ export function BudgetScreen() {
                   : '—'}
               </p>
               <p className="budget-hero-label">{heroLabel}</p>
+              {summary.period.isCurrent && reachLine && (
+                <p className="budget-hero-reach">{reachLine}</p>
+              )}
+              {summary.period.isCurrent && reachEmptyLine && (
+                <p className="budget-hero-reach muted">{reachEmptyLine}</p>
+              )}
             </div>
             {summary.period.isCurrent && summary.hasBudget && (
               <div className="budget-hero-ring" aria-hidden="true">
@@ -292,17 +313,22 @@ export function BudgetScreen() {
           </section>
         )}
 
-        {summary.affordable.length > 0 && (
+        {affordableDisplay.length > 0 && (
           <section className="budget-section">
-            <h2 className="section-label">Affordable now</h2>
+            <h2 className="section-label">Within reach</h2>
             <div className="item-list">
-              {summary.affordable.map((item) => (
+              {affordableDisplay.map((item) => (
                 <ItemRow
                   key={item.id}
                   item={item}
                   onTap={() => setViewingItem(item)}
-                  onMarkBought={() => requestMarkBought(item)}
-                  onRemove={() => removeItem(item.id)}
+                  onMarkBought={() => {
+                    vibrateTap()
+                    requestMarkBought(item)
+                  }}
+                  onRemove={() => stageExit(item, 'removed', () => removeItem(item.id))}
+                  exiting={getExitKind(item.id)}
+                  onExitComplete={() => completeExit(item.id)}
                 />
               ))}
             </div>
@@ -311,7 +337,7 @@ export function BudgetScreen() {
 
         {!summary.hasBudget && (
           <div className="budget-empty-cta">
-            <p>Set a monthly budget to track spending, see charts, and know what you can still afford.</p>
+            <p>{budgetNoBudgetCopy()}</p>
             <button type="button" className="primary-btn" onClick={openEdit}>
               Set budget
             </button>

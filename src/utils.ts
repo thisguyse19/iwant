@@ -85,3 +85,17 @@ export function detectClipboardContent(text: string): {
 export function vibrate(ms = 10) {
   if (navigator.vibrate) navigator.vibrate(ms)
 }
+
+export function vibrateTap() {
+  vibrate(8)
+}
+
+/** Short knock — delete, remove */
+export function vibrateRemove() {
+  if (navigator.vibrate) navigator.vibrate(16)
+}
+
+/** Softer double tap — marked bought */
+export function vibrateBought() {
+  if (navigator.vibrate) navigator.vibrate([10, 36, 14])
+}

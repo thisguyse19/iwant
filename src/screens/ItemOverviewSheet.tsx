@@ -1,7 +1,7 @@
 import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
 import { getCategory } from '../types'
-import { daysSince, formatBoughtDate, formatPriceOptional, vibrate } from '../utils'
+import { daysSince, formatBoughtDate, formatPriceOptional, vibrateRemove, vibrateTap } from '../utils'
 
 export function ItemOverviewSheet() {
   const { viewingItem, setViewingItem, openEdit, requestMarkBought, removeItem, baskets } = useApp()
@@ -10,14 +10,14 @@ export function ItemOverviewSheet() {
 
   const handleBought = () => {
     if (!viewingItem) return
-    vibrate()
+    vibrateTap()
     requestMarkBought(viewingItem)
     close()
   }
 
   const handleDelete = async () => {
     if (!viewingItem) return
-    vibrate(20)
+    vibrateRemove()
     await removeItem(viewingItem.id)
   }
 

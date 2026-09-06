@@ -1,6 +1,42 @@
 .item-row-swipe {
   position: relative;
   overflow: hidden;
+  max-height: 88px;
+  transition:
+    max-height 0.32s var(--spring),
+    opacity 0.28s var(--spring);
+}
+
+.item-row-swipe.is-entering {
+  animation: itemRowEnter 0.38s var(--spring) both;
+}
+
+.item-row-swipe.is-exiting-bought,
+.item-row-swipe.is-exiting-removed {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.item-row-swipe.is-exiting-bought .item-row-main {
+  background: color-mix(in srgb, var(--positive) 8%, var(--bg-list));
+}
+
+.item-row-swipe.is-exiting-removed .item-row {
+  transform: translateX(-6px);
+  opacity: 0.5;
+  transition: transform 0.28s var(--spring), opacity 0.24s var(--spring);
+}
+
+@keyframes itemRowEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .item-row-swipe .item-row {

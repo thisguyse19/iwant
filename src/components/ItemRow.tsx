@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type TransitionEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type TransitionEvent } from 'react'
 import { getCategory, PRIORITY_PILL, type WishlistItem } from '../types'
 import { formatPriceOptional, formatBoughtDate } from '../utils'
 import './CategoryPicker.css'
@@ -12,11 +12,15 @@ interface ItemRowProps {
   selected?: boolean
   onToggleSelect?: () => void
   showBoughtDate?: boolean
+  exiting?: 'bought' | 'removed' | null
+  onExitComplete?: () => void
 }
 
 const ACTION_WIDTH = 68
 const AXIS_LOCK_PX = 10
 const OPEN_RATIO = 0.45
+const EXIT_MS = 320
+const NEW_ITEM_MS = 4000
 
 export function ItemRow({
   item,
@@ -27,15 +31,20 @@ export function ItemRow({
   selected = false,
   onToggleSelect,
   showBoughtDate = false,
+  exiting = null,
+  onExitComplete,
 }: ItemRowProps) {
   const category = getCategory(item.category)
   const priorityPill = item.priority === 'high' ? PRIORITY_PILL.high : null
   const isActive = item.status === 'queued' || item.status === 'ready'
   const hasSwipe = isActive && (onMarkBought || onRemove) && !selectable
+  const isNew = Date.now() - item.createdAt < NEW_ITEM_MS
 
   const [open, setOpen] = useState(false)
+  const [exitActive, setExitActive] = useState(false)
   const offsetRef = useRef(0)
   const contentRef = useRef<HTMLDivElement>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef({
     startX: 0,
     startY: 0,
@@ -132,7 +141,9 @@ export function ItemRow({
     onTap()
   }
 
-  const onTransitionEnd = (e: TransitionEvent<HTMLDivElement>) => {
+  const completedExitRef = useRef(false)
+
+  const onSwipeTransitionEnd = (e: TransitionEvent<HTMLDivElement>) => {
     if (e.propertyName !== 'transform') return
     const target = offsetRef.current >= maxOffset * OPEN_RATIO ? maxOffset : 0
     if (Math.abs(offsetRef.current - target) > 0.5) {
@@ -140,8 +151,42 @@ export function ItemRow({
     }
   }
 
+  const onRootTransitionEnd = (e: TransitionEvent<HTMLDivElement>) => {
+    if (e.target !== rootRef.current || !exitActive) return
+    if (e.propertyName !== 'max-height' && e.propertyName !== 'opacity') return
+    if (completedExitRef.current) return
+    completedExitRef.current = true
+    onExitComplete?.()
+  }
+
+  useEffect(() => {
+    if (!exiting) {
+      setExitActive(false)
+      completedExitRef.current = false
+      return
+    }
+    completedExitRef.current = false
+    const frame = requestAnimationFrame(() => setExitActive(true))
+    const timer = window.setTimeout(() => {
+      if (!completedExitRef.current) {
+        completedExitRef.current = true
+        onExitComplete?.()
+      }
+    }, EXIT_MS + 40)
+    return () => {
+      cancelAnimationFrame(frame)
+      clearTimeout(timer)
+    }
+  }, [exiting, onExitComplete])
+
+  const exitClass = exitActive && exiting ? `is-exiting-${exiting}` : ''
+
   return (
-    <div className={`item-row-swipe ${open ? 'open' : ''} ${selected ? 'selected' : ''}`}>
+    <div
+      ref={rootRef}
+      className={`item-row-swipe ${open ? 'open' : ''} ${selected ? 'selected' : ''} ${exitClass} ${isNew ? 'is-entering' : ''}`}
+      onTransitionEnd={onRootTransitionEnd}
+    >
       {hasSwipe && (
         <div className="item-row-actions" style={{ width: maxOffset }}>
           {onMarkBought && (
@@ -176,7 +221,7 @@ export function ItemRow({
       <div
         ref={contentRef}
         className="item-row"
-        onTransitionEnd={onTransitionEnd}
+        onTransitionEnd={onSwipeTransitionEnd}
         onTouchStart={(e) => onGestureStart(e.touches[0].clientX, e.touches[0].clientY)}
         onTouchMove={(e) => {
           onGestureMove(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault())
