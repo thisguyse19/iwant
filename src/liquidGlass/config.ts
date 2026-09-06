@@ -44,10 +44,12 @@ export const ADD_MENU_GLASS: Partial<GlassConfig> = {
 }
 
 export function setGlassConfig(el: HTMLElement, config: Partial<GlassConfig>) {
-  const rect = el.getBoundingClientRect()
-  const radius = Math.min(config.cornerRadius ?? 29, rect.height / 2, rect.width / 2)
+  const height = el.offsetHeight
+  const width = el.offsetWidth
+  const maxRadius = Math.min(height / 2, width / 2)
+  const radius = Math.min(config.cornerRadius ?? 29, maxRadius)
   el.dataset.config = JSON.stringify({
     ...config,
-    cornerRadius: Math.round(radius),
+    cornerRadius: Math.max(1, Math.round(radius)),
   })
 }
