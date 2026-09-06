@@ -32,6 +32,68 @@ export function formatPrice(amount: number, currency: string): string {
   }).format(amount)
 }
 
+export type HeroPriceParts = {
+  leading: string
+  major: string
+  minor: string | null
+  trailing: string
+}
+
+/** Split a price for hero display — always shows cents (except JPY). */
+export function formatHeroPriceParts(amount: number, currency: string): HeroPriceParts {
+  if (currency === 'JPY') {
+    const parts = new Intl.NumberFormat(currencyLocale(currency), {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: 0,
+    }).formatToParts(Math.abs(amount))
+    return buildHeroPriceParts(parts, null)
+  }
+
+  const parts = new Intl.NumberFormat(currencyLocale(currency), {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).formatToParts(Math.abs(amount))
+
+  const minor = parts.find((p) => p.type === 'fraction')?.value ?? '00'
+  return buildHeroPriceParts(parts, minor)
+}
+
+function buildHeroPriceParts(parts: Intl.NumberFormatPart[], minor: string | null): HeroPriceParts {
+  const leading: string[] = []
+  const trailing: string[] = []
+  let major = ''
+  let seenInteger = false
+
+  for (const part of parts) {
+    switch (part.type) {
+      case 'currency':
+        if (!seenInteger) leading.push(part.value)
+        else trailing.push(part.value)
+        break
+      case 'minusSign':
+        leading.unshift(part.value)
+        break
+      case 'integer':
+      case 'group':
+        major += part.value
+        seenInteger = true
+        break
+      default:
+        break
+    }
+  }
+
+  return {
+    leading: leading.join(''),
+    major,
+    minor,
+    trailing: trailing.join(''),
+  }
+}
+
 export function formatPriceOptional(amount?: number, currency?: string): string {
   if (amount == null) return '—'
   return formatPrice(amount, currency ?? 'GBP')

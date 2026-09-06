@@ -33,7 +33,7 @@ import type {
   RecurringExpenseKind,
 } from '../types'
 import { AmountInput } from '../components/AmountInput'
-import { dateInputValue, formatPrice, vibrateTap } from '../utils'
+import { dateInputValue, formatHeroPriceParts, formatPrice, vibrateTap } from '../utils'
 import '../components/ItemRow.css'
 import './BudgetScreen.css'
 
@@ -69,6 +69,34 @@ const HERO_VIEWS: Array<{ id: BudgetHeroView; label: string; short: string }> = 
   { id: 'spent', label: 'Spent', short: 'Spent' },
   { id: 'budget', label: 'Budget cap', short: 'Budget' },
 ]
+
+function BudgetHeroAmount({
+  amount,
+  currency,
+  over,
+}: {
+  amount: number
+  currency: string
+  over?: boolean
+}) {
+  const parts = formatHeroPriceParts(amount, currency)
+  const ariaLabel = formatPrice(amount, currency)
+
+  return (
+    <p
+      className="budget-hero-amount"
+      style={{ color: over ? 'var(--destructive)' : undefined }}
+      aria-label={ariaLabel}
+    >
+      {parts.leading && <span className="budget-hero-amount-symbol">{parts.leading}</span>}
+      <span className="budget-hero-amount-major">{parts.major}</span>
+      {parts.minor != null && (
+        <span className="budget-hero-amount-cents" aria-hidden="true">.{parts.minor}</span>
+      )}
+      {parts.trailing && <span className="budget-hero-amount-symbol">{parts.trailing}</span>}
+    </p>
+  )
+}
 
 function heroViewData(
   view: BudgetHeroView,
@@ -541,34 +569,31 @@ export function BudgetScreen() {
         toolbar={monthToolbar}
       >
         <section className={`budget-hero-card ${budgetPulse ? 'budget-hero-pulse' : ''}`} aria-label="Budget summary">
+          <div className="budget-hero-view-tabs" role="tablist" aria-label="Budget view">
+            {HERO_VIEWS.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                role="tab"
+                aria-selected={heroView === v.id}
+                className={`budget-hero-view-tab ${heroView === v.id ? 'active' : ''}`}
+                onClick={() => {
+                  vibrateTap()
+                  void updateSettings({ budgetHeroView: v.id })
+                }}
+              >
+                {v.short}
+              </button>
+            ))}
+          </div>
+
           <div className="budget-hero-top">
             <div className="budget-hero-main">
-              <div className="budget-hero-view-tabs" role="tablist" aria-label="Budget view">
-                {HERO_VIEWS.map((v) => (
-                  <button
-                    key={v.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={heroView === v.id}
-                    className={`budget-hero-view-tab ${heroView === v.id ? 'active' : ''}`}
-                    onClick={() => {
-                      vibrateTap()
-                      void updateSettings({ budgetHeroView: v.id })
-                    }}
-                  >
-                    {v.short}
-                  </button>
-                ))}
-              </div>
-
-              <p
-                className="budget-hero-amount"
-                style={{ color: hero.over ? 'var(--destructive)' : undefined }}
-              >
-                {summary.hasBudget || summary.spent > 0 || heroView === 'budget'
-                  ? formatPrice(hero.amount, summary.currency)
-                  : '—'}
-              </p>
+              {summary.hasBudget || summary.spent > 0 || heroView === 'budget' ? (
+                <BudgetHeroAmount amount={hero.amount} currency={summary.currency} over={hero.over} />
+              ) : (
+                <p className="budget-hero-amount">—</p>
+              )}
               <p className="budget-hero-label">{hero.label}</p>
               {summary.period.isCurrent && heroView === 'freeplay' && summary.hasBudget && summary.budgetedVariance !== 0 && (
                 <p className="budget-hero-reach muted">

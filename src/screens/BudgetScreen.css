@@ -99,31 +99,30 @@
 
 .budget-hero-view-tabs {
   display: flex;
-  gap: 4px;
-  margin: 0 0 10px;
+  gap: 3px;
+  margin: 0 0 12px;
   padding: 3px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  width: 100%;
+  box-sizing: border-box;
   background: color-mix(in srgb, var(--bg-elevated) 70%, var(--accent) 6%);
   border-radius: var(--radius-sm);
   border: 0.5px solid var(--border-subtle);
 }
 
-.budget-hero-view-tabs::-webkit-scrollbar {
-  display: none;
-}
-
 .budget-hero-view-tab {
-  flex: 0 0 auto;
-  min-width: 3.6rem;
-  padding: 5px 10px;
-  font-size: 11px;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 6px 4px;
+  font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--text-tertiary);
   border-radius: 7px;
-  touch-action: pan-x;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  touch-action: manipulation;
   transition: background 0.2s var(--spring), color 0.2s var(--spring);
 }
 
@@ -145,9 +144,33 @@
 }
 
 .budget-hero-amount {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: nowrap;
   font-size: 40px;
   font-weight: 600;
-  line-height: 1.05;
+  line-height: 1;
+}
+
+.budget-hero-amount-symbol {
+  font-size: 0.68em;
+  font-weight: 600;
+  line-height: 1;
+  margin-top: 0.2em;
+  margin-right: 0.04em;
+}
+
+.budget-hero-amount-major {
+  line-height: 1;
+}
+
+.budget-hero-amount-cents {
+  font-size: 0.5em;
+  font-weight: 600;
+  line-height: 1;
+  margin-top: 0.24em;
+  margin-left: 0.04em;
+  letter-spacing: 0.02em;
 }
 
 .budget-hero-label {
