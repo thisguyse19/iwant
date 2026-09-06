@@ -6,8 +6,10 @@ import {
   FIXED_INTERVALS,
   RECURRING_KIND_LABELS,
   formatBudgetUnitIntervalLabel,
+  formatBudgetCatchUpHint,
   formatFixedExpenseMeta,
   formatFixedRate,
+  getBudgetCatchUpState,
   getBudgetedExpenseSpent,
   getBudgetSpendUnits,
   getFixedExpensePeriodTotal,
@@ -510,6 +512,13 @@ export function BudgetScreen() {
   const logSheetAllowance = logExpenseNormalized
     ? getFixedExpensePeriodTotal(logExpenseNormalized, summary.period)
     : 0
+  const logSheetCatchUp = logExpenseNormalized
+    ? getBudgetCatchUpState(logExpenseNormalized, summary.period, settings.recurringActuals ?? [])
+    : null
+  const logSheetCatchUpHint = logExpenseNormalized && logSheetCatchUp
+    ? formatBudgetCatchUpHint(logSheetCatchUp, logExpenseNormalized, summary.currency)
+    : null
+  const logProgressPct = logSheetAllowance > 0 ? (logSheetSpent / logSheetAllowance) * 100 : 0
   const logSelectedUnit = logDraft ? logSheetUnits.find((u) => u.key === logDraft.unitKey) : null
 
   return (
@@ -759,10 +768,19 @@ export function BudgetScreen() {
                 const periodUnits = e.kind === 'budgeted'
                   ? getBudgetSpendUnits(e, summary.period, settings.recurringActuals ?? [])
                   : []
+                const catchUp = e.kind === 'budgeted'
+                  ? getBudgetCatchUpState(e, summary.period, settings.recurringActuals ?? [])
+                  : null
+                const catchUpHint = catchUp
+                  ? formatBudgetCatchUpHint(catchUp, e, summary.currency)
+                  : null
 
                 if (e.kind === 'budgeted') {
                   return (
-                    <div key={expense.id} className="budget-budgeted-card">
+                    <div
+                      key={expense.id}
+                      className={`budget-budgeted-card ${catchUp?.isOver ? 'budget-budgeted-over' : ''}`}
+                    >
                       <div className="budget-budgeted-main">
                         <div className="budget-fixed-body">
                           <div className="budget-fixed-name-row">
@@ -776,12 +794,20 @@ export function BudgetScreen() {
                           </div>
                         </div>
                         <div className="budget-fixed-amount-col">
-                          <span className="budget-fixed-amount">
+                          <span
+                            className="budget-fixed-amount"
+                            style={{ color: catchUp?.isOver ? 'var(--destructive)' : undefined }}
+                          >
                             {formatPrice(displayAmount, summary.currency)}
                           </span>
                           <span className="budget-fixed-rate">{formatFixedRate(e, summary.currency)}</span>
                         </div>
                       </div>
+                      {catchUpHint && (
+                        <p className="budget-catch-up-banner" role="status">
+                          {catchUpHint}
+                        </p>
+                      )}
                       <div className="budget-budgeted-actions">
                         <button
                           type="button"
@@ -806,6 +832,8 @@ export function BudgetScreen() {
                                 {unit.label}
                                 {unit.isOverride ? (
                                   <span className="budget-log-preview-tag">logged</span>
+                                ) : unit.isCatchUpDefault ? (
+                                  <span className="budget-log-preview-tag catch-up">catch-up</span>
                                 ) : (
                                   <span className="budget-log-preview-tag muted">default</span>
                                 )}
@@ -1097,14 +1125,22 @@ export function BudgetScreen() {
                 <span>Allowance</span>
                 <span>{formatPrice(logSheetAllowance, summary.currency)}</span>
               </div>
-              <div className="budget-log-progress" aria-hidden="true">
+              <div
+                className={`budget-log-progress ${logSheetCatchUp?.isOver ? 'over' : ''}`}
+                aria-hidden="true"
+              >
                 <div
                   className="budget-log-progress-fill"
                   style={{
-                    width: `${logSheetAllowance > 0 ? Math.min(100, (logSheetSpent / logSheetAllowance) * 100) : 0}%`,
+                    width: `${Math.min(100, logProgressPct)}%`,
                   }}
                 />
               </div>
+              {logSheetCatchUpHint && (
+                <p className="budget-catch-up-banner budget-catch-up-banner-sheet" role="status">
+                  {logSheetCatchUpHint}
+                </p>
+              )}
             </div>
 
             {logSheetUnits.length > 0 ? (
@@ -1130,7 +1166,11 @@ export function BudgetScreen() {
                       >
                         <span className="budget-log-unit-chip-label">{unit.label}</span>
                         <span className="budget-log-unit-chip-meta">
-                          {unit.isOverride ? 'Logged' : formatPrice(unit.defaultAmount, summary.currency)}
+                          {unit.isOverride
+                            ? 'Logged'
+                            : unit.isCatchUpDefault
+                              ? `Catch-up ${formatPrice(unit.defaultAmount, summary.currency)}`
+                              : formatPrice(unit.defaultAmount, summary.currency)}
                         </span>
                       </button>
                     ))}
