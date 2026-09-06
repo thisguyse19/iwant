@@ -36,7 +36,7 @@
   --tab-bar-clearance: calc(var(--tab-bar-float) + var(--tab-bar-pill-h) + 24px);
   --screen-bottom-inset: calc(var(--tab-bar-clearance) + var(--safe-bottom));
   --tab-height: var(--tab-bar-clearance);
-  --tab-inactive: rgba(60, 60, 67, 0.55);
+  --tab-inactive: #000000;
   --tab-active: var(--accent);
   --nav-chrome-bg: rgba(249, 249, 251, 0.76);
   --spring: cubic-bezier(0.32, 0.72, 0, 1);
@@ -99,13 +99,14 @@
     rgba(245, 245, 247, 0.48) 76%,
     rgba(245, 245, 247, 0.68) 100%
   );
-  --liquid-glass-indicator: rgba(255, 255, 255, 0.52);
-  --liquid-glass-indicator-border: rgba(255, 255, 255, 0.62);
+  --liquid-glass-indicator: rgba(255, 255, 255, 0.16);
+  --liquid-glass-indicator-border: rgba(255, 255, 255, 0.42);
   --liquid-glass-indicator-shadow:
-    0 0.5px 0 rgba(255, 255, 255, 0.7) inset,
-    0 1px 3px rgba(0, 0, 0, 0.06),
-    0 0 0 0.5px rgba(0, 0, 0, 0.04),
-    0 3px 10px rgba(0, 0, 0, 0.05);
+    0 0.5px 0 rgba(255, 255, 255, 0.55) inset,
+    0 -0.5px 0 rgba(0, 0, 0, 0.05) inset,
+    0 1px 4px rgba(0, 0, 0, 0.08),
+    0 0 0 0.5px rgba(0, 0, 0, 0.05),
+    0 4px 14px rgba(0, 0, 0, 0.06);
 }
 
 @media (prefers-color-scheme: dark) {
