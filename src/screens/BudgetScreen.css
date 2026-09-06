@@ -1,5 +1,4 @@
-/* Budget screen: floating summary above tab bar (portaled to body) */
-.screen-budget {
+.screen-budget .screen-scroll {
   padding-bottom: calc(var(--tab-bar-clearance) + var(--safe-bottom) + 180px);
 }
 

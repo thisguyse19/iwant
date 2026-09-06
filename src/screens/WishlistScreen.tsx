@@ -9,6 +9,7 @@ import {
 } from '../store'
 import { ItemRow } from '../components/ItemRow'
 import { SelectionBar } from '../components/SelectionBar'
+import { ScreenChrome } from '../components/ScreenChrome'
 import { CATEGORIES, type CategoryFilter, type WishlistItem } from '../types'
 import { formatPrice } from '../utils'
 import { vibrate } from '../utils'
@@ -57,52 +58,49 @@ export function WishlistScreen() {
     setViewingItem(item)
   }
 
-  return (
-    <div className="screen screen-enter">
-      <header className="screen-header screen-header-row">
-        <div>
-          <h1 className="screen-title">Want</h1>
-          {activeItems.length > 0 && (
-            <p className="header-subtitle">
-              {activeItems.length} on your list
-            </p>
-          )}
-        </div>
-        {filtered.length > 0 && (
-          <button
-            type="button"
-            className={`select-toggle ${selectionMode ? 'active' : ''}`}
-            onClick={toggleSelectionMode}
-          >
-            {selectionMode ? 'Done' : 'Select'}
-          </button>
-        )}
-      </header>
-
-      <div className="category-filter-row" role="group" aria-label="Filter by category">
+  const categoryToolbar = (
+    <div className="category-filter-row" role="group" aria-label="Filter by category">
+      <button
+        type="button"
+        className={`filter-chip ${categoryFilter === 'all' ? 'active' : ''}`}
+        onClick={() => setCategoryFilter('all')}
+      >
+        All
+      </button>
+      {CATEGORIES.map((cat) => (
         <button
+          key={cat.id}
           type="button"
-          className={`filter-chip ${categoryFilter === 'all' ? 'active' : ''}`}
-          onClick={() => setCategoryFilter('all')}
+          className={`filter-chip ${categoryFilter === cat.id ? 'active' : ''}`}
+          style={{
+            '--chip-color': cat.color,
+            '--chip-bg': cat.bg,
+          } as CSSProperties}
+          onClick={() => setCategoryFilter(cat.id as CategoryFilter)}
         >
-          All
+          {cat.label}
         </button>
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat.id}
-            type="button"
-            className={`filter-chip ${categoryFilter === cat.id ? 'active' : ''}`}
-            style={{
-              '--chip-color': cat.color,
-              '--chip-bg': cat.bg,
-            } as CSSProperties}
-            onClick={() => setCategoryFilter(cat.id as CategoryFilter)}
-          >
-            {cat.label}
-          </button>
-        ))}
-      </div>
+      ))}
+    </div>
+  )
 
+  const selectAction = filtered.length > 0 ? (
+    <button
+      type="button"
+      className={`select-toggle ${selectionMode ? 'active' : ''}`}
+      onClick={toggleSelectionMode}
+    >
+      {selectionMode ? 'Done' : 'Select'}
+    </button>
+  ) : null
+
+  return (
+    <ScreenChrome
+      title="Want"
+      subtitle={activeItems.length > 0 ? `${activeItems.length} on your list` : undefined}
+      trailing={selectAction}
+      toolbar={categoryToolbar}
+    >
       {filtered.length > 0 && !selectionMode && (
         <div className="total-bar">
           <span className="total-bar-label">
@@ -152,6 +150,6 @@ export function WishlistScreen() {
           onSelectAll={() => selectAll(filtered.map((i) => i.id))}
         />
       )}
-    </div>
+    </ScreenChrome>
   )
 }

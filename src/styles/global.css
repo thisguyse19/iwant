@@ -64,25 +64,19 @@ a {
   position: relative;
 }
 
-.screen {
+.screen,
+.screen-layout {
   flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Legacy full-screen scroll (loading state) */
+.screen:not(.screen-layout) {
   overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  /* Content extends beneath floating Liquid Glass tab bar (Apple navigation layer) */
   padding: calc(12px + var(--safe-top)) 16px calc(20px + var(--safe-bottom));
-  scroll-padding-bottom: calc(var(--tab-bar-clearance) + var(--safe-bottom));
-}
-
-.screen-header {
-  margin-bottom: 16px;
-}
-
-.screen-title {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
 }
 
 .glass-bar {

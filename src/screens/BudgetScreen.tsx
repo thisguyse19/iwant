@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useApp, useBudgetSummary } from '../store'
 import { ItemRow } from '../components/ItemRow'
 import { Sheet } from '../components/Sheet'
+import { ScreenChrome } from '../components/ScreenChrome'
 import { formatPrice } from '../utils'
 import '../components/ItemRow.css'
 import './BudgetScreen.css'
@@ -59,61 +60,55 @@ export function BudgetScreen() {
 
   return (
     <>
-      <div className="screen screen-budget screen-enter">
-        <header className="screen-header">
-          <h1 className="screen-title">Budget</h1>
-        </header>
-
-        <div className="budget-scroll">
-          {summary.hasBudget && (
-            <div className="budget-stats">
-              <div className="budget-stat-row">
-                <span>On your list</span>
-                <span>{formatPrice(summary.listTotal, settings.currency)}</span>
-              </div>
-              {summary.unpriced > 0 && (
-                <p className="warning-text">
-                  {summary.unpriced} item{summary.unpriced > 1 ? 's' : ''} without a price
-                </p>
-              )}
+      <ScreenChrome title="Budget" className="screen-budget">
+        {summary.hasBudget && (
+          <div className="budget-stats">
+            <div className="budget-stat-row">
+              <span>On your list</span>
+              <span>{formatPrice(summary.listTotal, settings.currency)}</span>
             </div>
-          )}
+            {summary.unpriced > 0 && (
+              <p className="warning-text">
+                {summary.unpriced} item{summary.unpriced > 1 ? 's' : ''} without a price
+              </p>
+            )}
+          </div>
+        )}
 
-          {summary.affordable.length > 0 && (
-            <section className="budget-section">
-              <h2 className="section-label">Affordable now</h2>
-              <div className="item-list">
-                {summary.affordable.map((item) => (
-                  <ItemRow
-                    key={item.id}
-                    item={item}
-                    onTap={() => setViewingItem(item)}
-                    onMarkBought={() => updateItem(item.id, { status: 'bought' })}
-                    onRemove={() => removeItem(item.id)}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
+        {summary.affordable.length > 0 && (
+          <section className="budget-section">
+            <h2 className="section-label">Affordable now</h2>
+            <div className="item-list">
+              {summary.affordable.map((item) => (
+                <ItemRow
+                  key={item.id}
+                  item={item}
+                  onTap={() => setViewingItem(item)}
+                  onMarkBought={() => updateItem(item.id, { status: 'bought' })}
+                  onRemove={() => removeItem(item.id)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
-          {summary.active.length > 0 && summary.affordable.length === 0 && summary.hasBudget && (
-            <section className="budget-section">
-              <h2 className="section-label">Your list</h2>
-              <div className="item-list">
-                {summary.active.map((item) => (
-                  <ItemRow
-                    key={item.id}
-                    item={item}
-                    onTap={() => setViewingItem(item)}
-                    onMarkBought={() => updateItem(item.id, { status: 'bought' })}
-                    onRemove={() => removeItem(item.id)}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-      </div>
+        {summary.active.length > 0 && summary.affordable.length === 0 && summary.hasBudget && (
+          <section className="budget-section">
+            <h2 className="section-label">Your list</h2>
+            <div className="item-list">
+              {summary.active.map((item) => (
+                <ItemRow
+                  key={item.id}
+                  item={item}
+                  onTap={() => setViewingItem(item)}
+                  onMarkBought={() => updateItem(item.id, { status: 'bought' })}
+                  onRemove={() => removeItem(item.id)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+      </ScreenChrome>
 
       {createPortal(dock, document.body)}
 

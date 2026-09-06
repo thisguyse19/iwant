@@ -1,18 +1,3 @@
-.screen-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 17px;
-  color: var(--accent);
-  font-weight: 400;
-  padding: 4px 0;
-  margin-bottom: 4px;
-}
-
-.screen-back:active {
-  opacity: 0.6;
-}
-
 .basket-add-section {
   margin-top: 24px;
 }

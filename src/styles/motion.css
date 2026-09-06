@@ -15,17 +15,14 @@
   }
 }
 
-.screen-header {
+.screen-sticky-chrome {
   animation: fadeSlideDown 0.38s var(--spring) both;
 }
 
-.screen-header + *,
-.screen-header ~ .category-filter-row {
-  animation: fadeSlideUp 0.4s var(--spring) 0.04s both;
-}
-
-.item-list {
-  animation: fadeSlideUp 0.44s var(--spring) 0.08s both;
+.screen-sticky-toolbar,
+.screen-body > .item-list,
+.screen-body > .total-bar {
+  animation: fadeSlideUp 0.44s var(--spring) 0.06s both;
 }
 
 .total-bar {
@@ -198,10 +195,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .screen-enter,
-  .screen-header,
-  .screen-header + *,
-  .screen-header ~ .category-filter-row,
-  .item-list,
+  .screen-sticky-chrome,
+  .screen-sticky-toolbar,
+  .screen-body > .item-list,
+  .screen-body > .total-bar,
   .total-bar,
   .item-row-swipe,
   .empty-state,

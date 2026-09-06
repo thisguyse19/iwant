@@ -37,6 +37,7 @@
   --tab-height: var(--tab-bar-clearance);
   --tab-inactive: rgba(60, 60, 67, 0.55);
   --tab-active: var(--accent);
+  --nav-chrome-bg: rgba(255, 255, 255, 0.72);
   --spring: cubic-bezier(0.32, 0.72, 0, 1);
   --liquid-glass-bg: rgba(255, 255, 255, 0.14);
   --liquid-glass-tint: rgba(255, 255, 255, 0.22);
@@ -120,6 +121,7 @@
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.5);
     --tab-inactive: rgba(235, 235, 245, 0.5);
+    --nav-chrome-bg: rgba(28, 28, 30, 0.78);
     --liquid-glass-bg: rgba(38, 38, 40, 0.22);
     --liquid-glass-tint: rgba(120, 120, 128, 0.24);
     --liquid-glass-border: rgba(255, 255, 255, 0.28);

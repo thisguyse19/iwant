@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useApp, useBasketItems, useListTotal } from '../store'
 import { BasketDetailScreen } from './BasketDetailScreen'
+import { ScreenChrome } from '../components/ScreenChrome'
 import { formatPrice } from '../utils'
 import './BasketsScreen.css'
 
@@ -40,12 +41,10 @@ function BasketsList() {
   }
 
   return (
-    <div className="screen screen-enter">
-      <header className="screen-header">
-        <h1 className="screen-title">Baskets</h1>
-        <p className="header-subtitle">Group items to buy together</p>
-      </header>
-
+    <ScreenChrome
+      title="Baskets"
+      subtitle="Group items to buy together"
+    >
       {baskets.length === 0 && !creating ? (
         <div className="empty-state">
           <p>No baskets yet.</p>
@@ -94,7 +93,7 @@ function BasketsList() {
           New basket
         </button>
       )}
-    </div>
+    </ScreenChrome>
   )
 }
 

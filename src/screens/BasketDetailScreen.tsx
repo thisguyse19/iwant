@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useApp, useBasketItems, useListTotal, useSelectedTotal } from '../store'
 import { ItemRow } from '../components/ItemRow'
 import { SelectionBar } from '../components/SelectionBar'
+import { ScreenChrome } from '../components/ScreenChrome'
 import { CATEGORIES, type CategoryFilter } from '../types'
 import { formatPrice } from '../utils'
 import { vibrate } from '../utils'
@@ -82,59 +83,51 @@ export function BasketDetailScreen() {
     }
   }
 
-  return (
-    <div className="screen basket-detail-screen screen-enter">
-      <button type="button" className="screen-back" onClick={() => setViewingBasket(null)}>
-        <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden="true">
-          <path d="M10 2L2 10l8 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        Baskets
+  const categoryToolbar = (
+    <div className="category-filter-row" role="group" aria-label="Filter by category">
+      <button
+        type="button"
+        className={`filter-chip ${categoryFilter === 'all' ? 'active' : ''}`}
+        onClick={() => setCategoryFilter('all')}
+      >
+        All
       </button>
-
-      <header className="screen-header screen-header-row">
-        <div>
-          <h1 className="screen-title">{viewingBasket.name}</h1>
-          {activeItems.length > 0 && (
-            <p className="header-subtitle">
-              {activeItems.length} in this basket
-            </p>
-          )}
-        </div>
-        {filtered.length > 0 && (
-          <button
-            type="button"
-            className={`select-toggle ${selectionMode ? 'active' : ''}`}
-            onClick={toggleSelectionMode}
-          >
-            {selectionMode ? 'Done' : 'Select'}
-          </button>
-        )}
-      </header>
-
-      <div className="category-filter-row" role="group" aria-label="Filter by category">
+      {CATEGORIES.map((cat) => (
         <button
+          key={cat.id}
           type="button"
-          className={`filter-chip ${categoryFilter === 'all' ? 'active' : ''}`}
-          onClick={() => setCategoryFilter('all')}
+          className={`filter-chip ${categoryFilter === cat.id ? 'active' : ''}`}
+          style={{
+            '--chip-color': cat.color,
+            '--chip-bg': cat.bg,
+          } as CSSProperties}
+          onClick={() => setCategoryFilter(cat.id as CategoryFilter)}
         >
-          All
+          {cat.label}
         </button>
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat.id}
-            type="button"
-            className={`filter-chip ${categoryFilter === cat.id ? 'active' : ''}`}
-            style={{
-              '--chip-color': cat.color,
-              '--chip-bg': cat.bg,
-            } as CSSProperties}
-            onClick={() => setCategoryFilter(cat.id as CategoryFilter)}
-          >
-            {cat.label}
-          </button>
-        ))}
-      </div>
+      ))}
+    </div>
+  )
 
+  const selectAction = filtered.length > 0 ? (
+    <button
+      type="button"
+      className={`select-toggle ${selectionMode ? 'active' : ''}`}
+      onClick={toggleSelectionMode}
+    >
+      {selectionMode ? 'Done' : 'Select'}
+    </button>
+  ) : null
+
+  return (
+    <ScreenChrome
+      className="basket-detail-screen"
+      title={viewingBasket.name}
+      subtitle={activeItems.length > 0 ? `${activeItems.length} in this basket` : undefined}
+      back={{ label: 'Baskets', onClick: () => setViewingBasket(null) }}
+      trailing={selectAction}
+      toolbar={categoryToolbar}
+    >
       {filtered.length > 0 && !selectionMode && (
         <div className="total-bar">
           <span className="total-bar-label">
@@ -212,6 +205,6 @@ export function BasketDetailScreen() {
           onSelectAll={() => selectAll(filtered.map((i) => i.id))}
         />
       )}
-    </div>
+    </ScreenChrome>
   )
 }

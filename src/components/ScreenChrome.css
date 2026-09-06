@@ -1,0 +1,196 @@
+/* iOS large-title navigation: sticky chrome collapses on scroll (UINavigationBar pattern) */
+
+.screen-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.screen-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 16px calc(20px + var(--safe-bottom));
+  scroll-padding-bottom: calc(var(--tab-bar-clearance) + var(--safe-bottom));
+}
+
+.screen-sticky-chrome {
+  --nav-collapse: 0;
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  margin: 0 -16px 12px;
+  padding: 0 16px;
+  padding-top: var(--safe-top);
+}
+
+.screen-sticky-blur {
+  position: absolute;
+  inset: 0;
+  opacity: var(--nav-collapse);
+  background: var(--nav-chrome-bg);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border-bottom: 0.5px solid var(--border-subtle);
+  pointer-events: none;
+}
+
+.screen-sticky-edge {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 0;
+  height: 0.5px;
+  opacity: calc(var(--nav-collapse) * 0.7);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.screen-sticky-row-compact {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(80px, 1fr) auto minmax(80px, 1fr);
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  opacity: var(--nav-collapse);
+  pointer-events: none;
+}
+
+.screen-sticky-chrome[data-collapsed] .screen-sticky-row-compact {
+  pointer-events: auto;
+}
+
+.screen-sticky-side {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.screen-sticky-side:first-child {
+  justify-content: flex-start;
+}
+
+.screen-sticky-trailing {
+  justify-content: flex-end;
+}
+
+.screen-sticky-title-compact {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.screen-sticky-large {
+  position: relative;
+  z-index: 1;
+  padding-top: 4px;
+  opacity: calc(1 - var(--nav-collapse));
+  max-height: calc(96px * (1 - var(--nav-collapse) * 0.95) + 0.01px);
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.screen-sticky-chrome[data-collapsed] .screen-sticky-large {
+  pointer-events: none;
+}
+
+.screen-sticky-large-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.screen-sticky-title-large {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+}
+
+.screen-sticky-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.screen-sticky-trailing-large {
+  flex-shrink: 0;
+  margin-top: 10px;
+}
+
+.screen-nav-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 17px;
+  color: var(--accent);
+  font-weight: 400;
+  padding: 4px 0;
+  max-width: 100%;
+  white-space: nowrap;
+  transition: opacity 0.2s var(--spring);
+}
+
+.screen-nav-back span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.screen-nav-back-large {
+  margin-bottom: 2px;
+}
+
+.screen-nav-back:active {
+  opacity: 0.55;
+}
+
+.screen-sticky-toolbar {
+  position: relative;
+  z-index: 1;
+  padding-top: 10px;
+  padding-bottom: 8px;
+}
+
+.screen-body {
+  min-height: 0;
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .screen-sticky-blur {
+    background: var(--bg-glass);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-sticky-blur {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .screen-sticky-blur {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--bg-base);
+  }
+}

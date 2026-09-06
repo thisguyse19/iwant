@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../store'
 import * as db from '../db'
 import { CURRENCIES } from '../types'
+import { ScreenChrome } from '../components/ScreenChrome'
 
 export function SettingsScreen() {
   const { exportData, importData, settings, updateSettings } = useApp()
@@ -38,11 +39,7 @@ export function SettingsScreen() {
   }
 
   return (
-    <div className="screen screen-enter">
-      <header className="screen-header">
-        <h1 className="screen-title">Settings</h1>
-      </header>
-
+    <ScreenChrome title="Settings">
       <div className="settings-group">
         <div className="settings-row" style={{ cursor: 'default' }}>
           <span>Currency</span>
@@ -82,6 +79,6 @@ export function SettingsScreen() {
       <p className="settings-note">
         Everything stays on this device. No account, no sync. Works offline once installed.
       </p>
-    </div>
+    </ScreenChrome>
   )
 }
