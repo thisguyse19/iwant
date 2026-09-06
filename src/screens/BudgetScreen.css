@@ -77,11 +77,11 @@
 
 .budget-hero-card {
   padding: 18px 16px 16px;
-  background: var(--bg-card);
+  background: color-mix(in srgb, var(--bg-card) 88%, var(--accent) 4%);
   border-radius: var(--radius-lg);
   border: 0.5px solid var(--border-subtle);
   margin-bottom: 16px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-list);
 }
 
 .budget-hero-top {
@@ -92,15 +92,14 @@
 }
 
 .budget-hero-period {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   margin-bottom: 4px;
 }
 
 .budget-hero-amount {
+  font-family: var(--font-display);
   font-size: 40px;
   font-weight: 700;
   letter-spacing: -0.03em;
