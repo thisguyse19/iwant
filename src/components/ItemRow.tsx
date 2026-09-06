@@ -38,7 +38,6 @@ export function ItemRow({
   const { settings } = useApp()
   const category = getCategory(item.category)
   const showImages = settings.showWishlistImages !== false
-  const showStripes = settings.showCategoryStripes !== false
   const priorityPill = item.priority === 'high' ? PRIORITY_PILL.high : null
   const isActive = item.status === 'queued' || item.status === 'ready'
   const hasSwipe = isActive && (onMarkBought || onRemove) && !selectable
@@ -224,8 +223,7 @@ export function ItemRow({
 
       <div
         ref={contentRef}
-        className={`item-row ${showStripes && category ? 'item-row-striped' : ''}`}
-        style={showStripes && category ? { '--row-stripe': category.color } as React.CSSProperties : undefined}
+        className="item-row"
         onTransitionEnd={onSwipeTransitionEnd}
         onTouchStart={(e) => onGestureStart(e.touches[0].clientX, e.touches[0].clientY)}
         onTouchMove={(e) => {

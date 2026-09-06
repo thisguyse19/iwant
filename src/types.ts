@@ -97,7 +97,6 @@ export interface AppSettings {
   budgetResetDay: number
   accentStyle?: AccentStyle
   showWishlistImages?: boolean
-  showCategoryStripes?: boolean
   hapticFeedback?: boolean
 }
 

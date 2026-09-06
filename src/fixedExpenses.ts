@@ -135,20 +135,7 @@ export function formatFixedExpenseMeta(
   const total = `${formatPrice(periodTotal, currency)} this period`
 
   if (e.interval === 'month' || e.interval === 'year') {
-    return `${rate} · Due day ${e.dayOfMonth} · ${total}`
+    return `${rate}, due day ${e.dayOfMonth}. ${total}`
   }
-  return `${rate} · ${total}`
-}
-
-export function fixedIntervalAccent(interval: FixedExpenseInterval): string {
-  switch (interval) {
-    case 'day':
-      return 'var(--interval-day)'
-    case 'week':
-      return 'var(--interval-week)'
-    case 'month':
-      return 'var(--interval-month)'
-    case 'year':
-      return 'var(--interval-year)'
-  }
+  return `${rate}. ${total}`
 }

@@ -4,7 +4,6 @@ import { budgetNoBudgetCopy, withinReachEmptyLine, withinReachLine } from '../co
 import {
   FIXED_INTERVAL_LABELS,
   FIXED_INTERVALS,
-  fixedIntervalAccent,
   formatFixedExpenseMeta,
   formatFixedRate,
   getFixedExpensePeriodTotal,
@@ -88,13 +87,13 @@ function heroViewData(
     case 'spent':
       return {
         amount: summary.spent,
-        label: `${summary.spentCount} bought · ${formatPrice(summary.fixedActual, currency)} fixed so far`,
+        label: `${summary.spentCount} bought, ${formatPrice(summary.fixedActual, currency)} fixed`,
         over: false,
       }
     case 'budget':
       return {
         amount: summary.budget,
-        label: `${formatPrice(summary.spent + summary.fixedActual, currency)} committed so far`,
+        label: `${formatPrice(summary.spent + summary.fixedActual, currency)} used`,
         over: false,
       }
   }
@@ -368,7 +367,7 @@ export function BudgetScreen() {
               <p className="budget-hero-label">{hero.label}</p>
               {summary.period.isCurrent && heroView === 'actual' && settings.fixedExpenseCounting === 'accrue' && summary.fixed > summary.fixedActual && (
                 <p className="budget-hero-reach muted">
-                  {formatPrice(summary.fixed - summary.fixedActual, summary.currency)} fixed costs still to accrue
+                  {formatPrice(summary.fixed - summary.fixedActual, summary.currency)} more fixed this period
                 </p>
               )}
               {summary.period.isCurrent && reachLine && heroView === 'projected' && (
@@ -425,7 +424,7 @@ export function BudgetScreen() {
           )}
 
           <div className="budget-stat-grid">
-            <div className="budget-stat-cell budget-stat-budget">
+            <div className="budget-stat-cell">
               <span className="budget-stat-label">Budget</span>
               <span className="budget-stat-value">
                 {summary.hasBudget ? formatPrice(summary.budget, summary.currency) : '—'}
@@ -434,30 +433,30 @@ export function BudgetScreen() {
                 <span className="budget-stat-note">This month only</span>
               )}
             </div>
-            <div className="budget-stat-cell budget-stat-spent">
+            <div className="budget-stat-cell">
               <span className="budget-stat-label">Spent</span>
               <span className="budget-stat-value">{formatPrice(summary.spent, summary.currency)}</span>
               <span className="budget-stat-note">{summary.spentCount} bought</span>
             </div>
             {(summary.fixed > 0 || fixedTemplates.length > 0) && (
-              <div className="budget-stat-cell budget-stat-fixed">
+              <div className="budget-stat-cell">
                 <span className="budget-stat-label">Fixed</span>
                 <span className="budget-stat-value">{formatPrice(summary.fixed, summary.currency)}</span>
                 <span className="budget-stat-note">
                   {summary.period.isCurrent && settings.fixedExpenseCounting === 'accrue'
-                    ? `${formatPrice(summary.fixedActual, summary.currency)} accrued`
+                    ? `${formatPrice(summary.fixedActual, summary.currency)} so far`
                     : `${summary.fixedCount || fixedTemplates.length} in period`}
                 </span>
               </div>
             )}
             {summary.period.isCurrent && (
               <>
-                <div className="budget-stat-cell budget-stat-planned">
+                <div className="budget-stat-cell">
                   <span className="budget-stat-label">On list</span>
                   <span className="budget-stat-value">{formatPrice(summary.planned, summary.currency)}</span>
                   <span className="budget-stat-note">{summary.plannedCount} planned</span>
                 </div>
-                <div className="budget-stat-cell budget-stat-days">
+                <div className="budget-stat-cell">
                   <span className="budget-stat-label">Days left</span>
                   <span className="budget-stat-value">{summary.period.daysRemaining}</span>
                   <span className="budget-stat-note">in period</span>
@@ -486,14 +485,14 @@ export function BudgetScreen() {
 
         <section className="budget-section">
           <div className="budget-fixed-header">
-            <h2 className="section-label section-label-accent">Fixed expenses</h2>
+            <h2 className="section-label">Fixed expenses</h2>
             <button type="button" className="budget-fixed-add" onClick={openFixedAdd}>
               Add
             </button>
           </div>
           {fixedTemplates.length === 0 ? (
             <p className="budget-fixed-empty">
-              Rent, subscriptions, daily coffee — anything recurring, at any interval.
+              Rent, subscriptions, bills. Add anything that repeats.
             </p>
           ) : (
             <div className="budget-fixed-list">
@@ -507,11 +506,6 @@ export function BudgetScreen() {
                     className="budget-fixed-row"
                     onClick={() => openFixedEdit(expense)}
                   >
-                    <span
-                      className="budget-fixed-interval"
-                      style={{ background: fixedIntervalAccent(e.interval) }}
-                      aria-hidden="true"
-                    />
                     <div className="budget-fixed-body">
                       <div className="budget-fixed-name">{e.name}</div>
                       <div className="budget-fixed-meta">
@@ -531,7 +525,7 @@ export function BudgetScreen() {
           )}
           {summary.fixed > 0 && (
             <p className="budget-fixed-period-note">
-              {formatPrice(summary.fixed, summary.currency)} total fixed costs this period.
+              {formatPrice(summary.fixed, summary.currency)} in fixed costs this period.
             </p>
           )}
         </section>
@@ -718,8 +712,8 @@ export function BudgetScreen() {
                 />
                 <p className="budget-field-hint">
                   {fixedDraft.interval === 'year'
-                    ? 'Annual charge on this day each year.'
-                    : 'Counts once per calendar month when that day falls in your budget period.'}
+                    ? 'Once a year on this day.'
+                    : 'Once a month on this day.'}
                 </p>
               </div>
             )}

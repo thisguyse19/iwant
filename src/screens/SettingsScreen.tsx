@@ -62,7 +62,7 @@ export function SettingsScreen() {
         <div className="settings-row settings-row-stack">
           <span>Fixed expense counting</span>
           <p className="settings-row-hint">
-            How monthly costs affect actual budget left.
+            Used for the actual left number on the budget card.
           </p>
           <div className="settings-segmented" role="radiogroup" aria-label="Fixed expense counting">
             <button
@@ -121,16 +121,6 @@ export function SettingsScreen() {
             ))}
           </div>
         </div>
-
-        <label className="settings-row settings-toggle-row">
-          <span>Category colour stripes</span>
-          <input
-            type="checkbox"
-            className="settings-toggle"
-            checked={settings.showCategoryStripes !== false}
-            onChange={(e) => updateSettings({ showCategoryStripes: e.target.checked })}
-          />
-        </label>
 
         <label className="settings-row settings-toggle-row">
           <span>Show wishlist thumbnails</span>
