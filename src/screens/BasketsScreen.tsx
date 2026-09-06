@@ -1,9 +1,20 @@
 import { useState } from 'react'
 import { useApp, useBasketItems, useListTotal } from '../store'
+import { BasketDetailScreen } from './BasketDetailScreen'
 import { formatPrice } from '../utils'
 import './BasketsScreen.css'
 
 export function BasketsScreen() {
+  const { viewingBasket } = useApp()
+
+  if (viewingBasket) {
+    return <BasketDetailScreen />
+  }
+
+  return <BasketsList />
+}
+
+function BasketsList() {
   const { baskets, items, addBasket, setViewingBasket } = useApp()
   const [creating, setCreating] = useState(false)
   const [name, setName] = useState('')

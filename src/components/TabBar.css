@@ -1,4 +1,4 @@
-.tab-bar {
+.tab-bar-dock {
   position: fixed;
   bottom: 0;
   left: 50%;
@@ -7,62 +7,116 @@
   max-width: 520px;
   display: flex;
   align-items: flex-end;
-  justify-content: space-around;
-  padding: 6px 12px calc(6px + var(--safe-bottom));
-  z-index: 40;
+  gap: 10px;
+  padding: 0 16px calc(10px + var(--safe-bottom));
+  z-index: 50;
+  pointer-events: none;
 }
 
-.tab-item {
+.tab-bar-liquid,
+.tab-action-liquid {
+  pointer-events: auto;
+}
+
+.tab-bar-liquid {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  min-height: 56px;
+  padding: 4px;
+  border-radius: 28px;
+  background: var(--liquid-glass-bg);
+  backdrop-filter: var(--liquid-glass-blur);
+  -webkit-backdrop-filter: var(--liquid-glass-blur);
+  border: 0.5px solid var(--liquid-glass-border);
+  box-shadow: var(--liquid-glass-shadow);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .tab-bar-liquid,
+  .tab-action-liquid {
+    background: var(--bg-card);
+  }
+}
+
+.tab-indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  border-radius: 22px;
+  background: var(--liquid-glass-indicator);
+  box-shadow: var(--liquid-glass-indicator-shadow);
+  transition: transform 0.38s var(--spring), width 0.38s var(--spring);
+  z-index: 0;
+}
+
+.tab-liquid-item {
+  position: relative;
+  z-index: 1;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 2px;
-  padding: 4px 8px;
+  padding: 6px 4px;
+  min-width: 0;
   color: var(--text-tertiary);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 500;
-  transition: color 0.2s var(--spring), transform 0.2s var(--spring);
-  min-width: 48px;
+  letter-spacing: -0.01em;
+  transition: color 0.28s var(--spring), transform 0.2s var(--spring);
 }
 
-.tab-item svg {
-  transition: transform 0.25s var(--spring);
+.tab-liquid-item svg {
+  transition: transform 0.32s var(--spring), color 0.28s var(--spring);
 }
 
-.tab-item.active {
+.tab-liquid-item.active {
   color: var(--accent);
+  font-weight: 600;
 }
 
-.tab-item.active svg {
-  transform: scale(1.05);
+.tab-liquid-item.active svg {
+  transform: scale(1.06);
 }
 
-.tab-item:active {
-  transform: scale(0.92);
+.tab-liquid-item:active {
+  transform: scale(0.94);
 }
 
-.tab-add {
+.tab-action-liquid {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
-  margin-bottom: 2px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  box-shadow: var(--shadow-md);
-  transition: transform 0.2s var(--spring), background 0.15s;
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  color: var(--accent);
+  background: var(--liquid-glass-bg);
+  backdrop-filter: var(--liquid-glass-blur);
+  -webkit-backdrop-filter: var(--liquid-glass-blur);
+  border: 0.5px solid var(--liquid-glass-border);
+  box-shadow: var(--liquid-glass-shadow);
+  transition: transform 0.28s var(--spring), background 0.2s var(--spring), box-shadow 0.28s var(--spring);
 }
 
-.tab-add:active {
-  transform: scale(0.92);
-  background: var(--accent-pressed);
+.tab-action-liquid:active {
+  transform: scale(0.9);
+  background: var(--liquid-glass-indicator);
+  box-shadow: var(--liquid-glass-indicator-shadow);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tab-item:active,
-  .tab-add:active {
+  .tab-indicator {
+    transition: none;
+  }
+
+  .tab-liquid-item:active,
+  .tab-action-liquid:active {
     transform: none;
   }
 }

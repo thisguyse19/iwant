@@ -68,8 +68,8 @@ a {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: calc(12px + var(--safe-top)) 16px calc(var(--tab-height) + var(--safe-bottom) + 8px);
-  scroll-padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 8px);
+  padding: calc(12px + var(--safe-top)) 16px calc(var(--tab-height) + var(--safe-bottom) + 16px);
+  scroll-padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 16px);
 }
 
 .screen-header {

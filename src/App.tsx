@@ -8,7 +8,6 @@ import { SettingsScreen } from './screens/SettingsScreen'
 import { AddSheet } from './screens/AddSheet'
 import { ItemOverviewSheet } from './screens/ItemOverviewSheet'
 import { ItemEditSheet } from './screens/ItemEditSheet'
-import { BasketDetailScreen } from './screens/BasketDetailScreen'
 import { useApp } from './store'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import './styles/global.css'
@@ -17,7 +16,7 @@ export type Tab = 'wishlist' | 'baskets' | 'budget' | 'settings'
 
 function AppContent() {
   const [tab, setTab] = useState<Tab>('wishlist')
-  const { setAddOpen, loading, viewingBasket } = useApp()
+  const { setAddOpen, loading, setViewingBasket } = useApp()
 
   const {
     needRefresh: [needRefresh],
@@ -34,17 +33,6 @@ function AppContent() {
     )
   }
 
-  if (viewingBasket) {
-    return (
-      <div className="app-shell">
-        <BasketDetailScreen />
-        <AddSheet />
-        <ItemOverviewSheet />
-        <ItemEditSheet />
-      </div>
-    )
-  }
-
   return (
     <div className="app-shell">
       {tab === 'wishlist' && <WishlistScreen />}
@@ -54,7 +42,10 @@ function AppContent() {
 
       <TabBar
         active={tab}
-        onChange={setTab}
+        onChange={(next) => {
+          if (next !== 'baskets') setViewingBasket(null)
+          setTab(next)
+        }}
         onAdd={() => setAddOpen(true)}
       />
 

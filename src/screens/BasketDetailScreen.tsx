@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import type { CSSProperties } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useApp, useBasketItems, useListTotal } from '../store'
 import { ItemRow } from '../components/ItemRow'
+import { CATEGORIES, type CategoryFilter } from '../types'
 import { formatPrice } from '../utils'
 import { vibrate } from '../utils'
 import '../components/ItemRow.css'
-import '../screens/WishlistScreen.css'
+import './WishlistScreen.css'
 import './BasketDetailScreen.css'
 
 export function BasketDetailScreen() {
@@ -19,35 +21,37 @@ export function BasketDetailScreen() {
     removeItem,
     items,
   } = useApp()
-  const [closing, setClosing] = useState(false)
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
 
   useEffect(() => {
-    setClosing(false)
+    setCategoryFilter('all')
   }, [viewingBasket?.id])
 
-  if (!viewingBasket) return null
-
-  const basketItems = useBasketItems(viewingBasket.id)
-  const activeItems = basketItems.filter((i) => i.status === 'queued' || i.status === 'ready')
-  const total = useListTotal(activeItems)
+  const basketItems = useBasketItems(viewingBasket?.id ?? '')
+  const activeItems = useMemo(
+    () => basketItems.filter((i) => i.status === 'queued' || i.status === 'ready'),
+    [basketItems],
+  )
+  const filtered = useMemo(() => {
+    if (categoryFilter === 'all') return activeItems
+    return activeItems.filter((item) => item.category === categoryFilter)
+  }, [activeItems, categoryFilter])
+  const listTotal = useListTotal(filtered)
   const unassigned = items.filter(
     (i) => !i.basketId && (i.status === 'queued' || i.status === 'ready'),
   )
 
-  const close = () => {
-    setClosing(true)
-    window.setTimeout(() => setViewingBasket(null), 240)
-  }
+  if (!viewingBasket) return null
 
-  const addExisting = async (itemId: string) => {
+  const handleMarkBought = async (id: string) => {
     vibrate()
-    await updateItem(itemId, { basketId: viewingBasket.id })
+    await updateItem(id, { status: 'bought' })
   }
 
   const handleMarkAllBought = async () => {
     vibrate()
     await markBasketBought(viewingBasket.id)
-    close()
+    setViewingBasket(null)
   }
 
   const handleDelete = async () => {
@@ -56,82 +60,115 @@ export function BasketDetailScreen() {
     await removeBasket(viewingBasket.id)
   }
 
-  const subtitle =
-    activeItems.length === 0
-      ? 'Empty basket'
-      : total.pricedCount > 0
-        ? `${activeItems.length} item${activeItems.length !== 1 ? 's' : ''} · ${formatPrice(total.total, total.currency)}`
-        : `${activeItems.length} item${activeItems.length !== 1 ? 's' : ''}`
+  const addExisting = async (itemId: string) => {
+    vibrate()
+    await updateItem(itemId, { basketId: viewingBasket.id })
+  }
 
   return (
-    <div className={`basket-overlay ${closing ? 'basket-overlay-closing' : ''}`}>
-      <div className="screen basket-screen">
-        <button type="button" className="screen-back" onClick={close}>
-          <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden="true">
-            <path d="M10 2L2 10l8 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Baskets
+    <div className="screen basket-detail-screen">
+      <button type="button" className="screen-back" onClick={() => setViewingBasket(null)}>
+        <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden="true">
+          <path d="M10 2L2 10l8 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Baskets
+      </button>
+
+      <header className="screen-header">
+        <h1 className="screen-title">{viewingBasket.name}</h1>
+        {activeItems.length > 0 && (
+          <p className="header-subtitle">
+            {activeItems.length} in this basket
+          </p>
+        )}
+      </header>
+
+      <div className="category-filter-row" role="group" aria-label="Filter by category">
+        <button
+          type="button"
+          className={`filter-chip ${categoryFilter === 'all' ? 'active' : ''}`}
+          onClick={() => setCategoryFilter('all')}
+        >
+          All
         </button>
-
-        <header className="screen-header screen-header-row">
-          <div>
-            <h1 className="screen-title">{viewingBasket.name}</h1>
-            <p className="header-subtitle">{subtitle}</p>
-          </div>
-          <button type="button" className="text-btn" onClick={() => setAddOpen(true, viewingBasket.id)}>
-            Add
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat.id}
+            type="button"
+            className={`filter-chip ${categoryFilter === cat.id ? 'active' : ''}`}
+            style={{
+              '--chip-color': cat.color,
+              '--chip-bg': cat.bg,
+            } as CSSProperties}
+            onClick={() => setCategoryFilter(cat.id as CategoryFilter)}
+          >
+            {cat.label}
           </button>
-        </header>
+        ))}
+      </div>
 
-        {activeItems.length === 0 ? (
-          <div className="empty-state">
-            <p>No items in this basket yet.</p>
+      {filtered.length > 0 && (
+        <div className="total-bar">
+          <span className="total-bar-label">
+            {listTotal.count} item{listTotal.count !== 1 ? 's' : ''}
+            {listTotal.unpriced > 0 && ` · ${listTotal.unpriced} unpriced`}
+          </span>
+          <span className="total-bar-amount">
+            {listTotal.pricedCount > 0
+              ? formatPrice(listTotal.total, listTotal.currency)
+              : '—'}
+          </span>
+        </div>
+      )}
+
+      <div className="item-list">
+        {filtered.length === 0 ? (
+          <div className="empty-state item-list-empty">
+            <p>{categoryFilter === 'all' ? 'No items in this basket yet.' : 'Nothing in this category.'}</p>
             <button type="button" className="text-btn" onClick={() => setAddOpen(true, viewingBasket.id)}>
               Add something
             </button>
           </div>
         ) : (
-          <div className="item-list">
-            {activeItems.map((item) => (
-              <ItemRow
+          filtered.map((item) => (
+            <ItemRow
+              key={item.id}
+              item={item}
+              onTap={() => setViewingItem(item)}
+              onMarkBought={() => handleMarkBought(item.id)}
+              onRemove={() => removeItem(item.id)}
+            />
+          ))
+        )}
+      </div>
+
+      {unassigned.length > 0 && (
+        <section className="basket-add-section">
+          <h2 className="section-label">Add from your list</h2>
+          <div className="basket-add-existing">
+            {unassigned.slice(0, 6).map((item) => (
+              <button
                 key={item.id}
-                item={item}
-                onTap={() => setViewingItem(item)}
-                onMarkBought={() => updateItem(item.id, { status: 'bought' })}
-                onRemove={() => removeItem(item.id)}
-              />
+                type="button"
+                className="basket-add-existing-btn"
+                onClick={() => addExisting(item.id)}
+              >
+                + {item.title}
+              </button>
             ))}
           </div>
-        )}
+        </section>
+      )}
 
-        {unassigned.length > 0 && (
-          <section className="basket-add-section">
-            <h2 className="section-label">Add from your list</h2>
-            <div className="basket-add-existing">
-              {unassigned.slice(0, 6).map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className="basket-add-existing-btn"
-                  onClick={() => addExisting(item.id)}
-                >
-                  + {item.title}
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {activeItems.length > 0 && (
-          <button type="button" className="primary-btn" onClick={handleMarkAllBought}>
-            Mark basket bought
-          </button>
-        )}
-
-        <button type="button" className="secondary-btn destructive-btn" onClick={handleDelete}>
-          Delete basket
+      {activeItems.length > 0 && (
+        <button type="button" className="primary-btn" onClick={handleMarkAllBought}>
+          Mark basket bought
         </button>
-      </div>
+      )}
+
+      <button type="button" className="secondary-btn destructive-btn" onClick={handleDelete}>
+        Delete basket
+      </button>
     </div>
   )
 }
