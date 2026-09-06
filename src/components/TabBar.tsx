@@ -20,7 +20,9 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 ]
 
 export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps) {
+  const pillGlassRef = useRef<HTMLDivElement>(null)
   const navRef = useRef<HTMLElement>(null)
+  const actionGlassRef = useRef<HTMLDivElement>(null)
   const actionRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
@@ -40,12 +42,12 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
     })
   }, [active, activeIndex])
 
-  useEffect(() => {
-    const nav = navRef.current
-    const action = actionRef.current
+  useLayoutEffect(() => {
+    const pillGlass = pillGlassRef.current
+    const actionGlass = actionGlassRef.current
     const menu = menuRef.current
-    if (nav) setGlassConfig(nav, TAB_PILL_GLASS)
-    if (action) setGlassConfig(action, TAB_ACTION_GLASS)
+    if (pillGlass) setGlassConfig(pillGlass, TAB_PILL_GLASS)
+    if (actionGlass) setGlassConfig(actionGlass, TAB_ACTION_GLASS)
     if (menu) setGlassConfig(menu, ADD_MENU_GLASS)
     void refresh()
   }, [menuOpen, active, refresh])
@@ -75,8 +77,14 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
     <>
       <div className="tab-bar-scroll-edge" aria-hidden="true" />
 
+      <div
+        ref={pillGlassRef}
+        className="tab-bar-glass-surface liquid-glass-panel"
+        aria-hidden="true"
+      />
+
       <nav
-        className="tab-bar-liquid liquid-glass-panel"
+        className="tab-bar-liquid"
         ref={navRef}
         aria-label="Main navigation"
       >
@@ -107,10 +115,16 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
         </div>
       </nav>
 
+      <div
+        ref={actionGlassRef}
+        className="tab-action-glass-surface liquid-glass-panel"
+        aria-hidden="true"
+      />
+
       <button
         type="button"
         ref={actionRef}
-        className={`tab-action-liquid liquid-glass-panel ${menuOpen ? 'open' : ''}`}
+        className={`tab-action-liquid ${menuOpen ? 'open' : ''}`}
         onClick={() => setMenuOpen((v) => !v)}
         aria-label="Add"
         aria-expanded={menuOpen}

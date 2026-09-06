@@ -63,7 +63,9 @@ export function LiquidGlassProvider({
       shell.classList.add('liquid-glass-active')
       setEnabled(true)
       requestAnimationFrame(() => {
-        instanceRef.current?.markChanged()
+        requestAnimationFrame(() => {
+          instanceRef.current?.markChanged()
+        })
       })
     } catch (err) {
       console.warn('LiquidGlass init failed, using CSS fallback', err)
