@@ -18,6 +18,7 @@ export function AddSheet() {
   const [priority, setPriority] = useState<Priority>('medium')
   const [showMore, setShowMore] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [searchFocused, setSearchFocused] = useState(false)
   const searchAnchorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export function AddSheet() {
     setPriority('medium')
     setShowMore(false)
     setSaving(false)
+    setSearchFocused(false)
   }
 
   const handleClose = () => {
@@ -94,6 +96,8 @@ export function AddSheet() {
             placeholder="Running shoes, gym pass…"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => window.setTimeout(() => setSearchFocused(false), 120)}
             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
             autoComplete="off"
           />
@@ -104,6 +108,7 @@ export function AddSheet() {
         <SearchAutocomplete
           query={title}
           visible={addOpen}
+          focused={searchFocused}
           anchorRef={searchAnchorRef}
           onSelect={handleSelectSuggestion}
         />

@@ -1,4 +1,4 @@
-.push-screen {
+.basket-overlay {
   position: fixed;
   inset: 0;
   z-index: 45;
@@ -7,27 +7,18 @@
   left: 0;
   right: 0;
   background: var(--bg-base);
-  animation: pushScreenIn 0.32s var(--spring) both;
+  animation: basketOverlayIn 0.28s var(--spring) both;
 }
 
-.push-screen-closing {
-  animation: pushScreenOut 0.28s var(--spring) both;
+.basket-overlay-closing {
+  animation: basketOverlayOut 0.24s var(--spring) both;
 }
 
-.push-screen-body {
-  height: 100%;
-  padding-top: calc(8px + var(--safe-top));
+.basket-screen {
   padding-bottom: calc(24px + var(--safe-bottom));
 }
 
-.push-screen-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.nav-back-btn {
+.screen-back {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -35,35 +26,24 @@
   color: var(--accent);
   font-weight: 400;
   padding: 4px 0;
-}
-
-.nav-back-btn:active,
-.nav-action-btn:active {
-  opacity: 0.6;
-}
-
-.nav-action-btn {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--accent);
-  padding: 4px 0;
-}
-
-.push-screen .screen-title {
   margin-bottom: 4px;
 }
 
-.push-screen .total-bar {
-  margin-top: 12px;
+.screen-back:active {
+  opacity: 0.6;
 }
 
-.push-screen .item-list {
-  margin-top: 12px;
+.screen-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.push-screen .primary-btn,
-.push-screen .secondary-btn {
-  margin-top: 20px;
+.screen-header-row .text-btn {
+  flex-shrink: 0;
+  padding: 4px 0;
+  margin-top: 6px;
 }
 
 .basket-add-section {
@@ -90,31 +70,36 @@
   opacity: 0.7;
 }
 
-@keyframes pushScreenIn {
+.basket-screen .primary-btn,
+.basket-screen .secondary-btn {
+  margin-top: 20px;
+}
+
+@keyframes basketOverlayIn {
   from {
-    transform: translateX(18%);
     opacity: 0;
+    transform: translateX(12px);
   }
   to {
-    transform: translateX(0);
     opacity: 1;
+    transform: translateX(0);
   }
 }
 
-@keyframes pushScreenOut {
+@keyframes basketOverlayOut {
   from {
-    transform: translateX(0);
     opacity: 1;
+    transform: translateX(0);
   }
   to {
-    transform: translateX(18%);
     opacity: 0;
+    transform: translateX(12px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .push-screen,
-  .push-screen-closing {
+  .basket-overlay,
+  .basket-overlay-closing {
     animation: none;
   }
 }

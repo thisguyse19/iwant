@@ -8,10 +8,17 @@ interface SearchAutocompleteProps {
   query: string
   onSelect: (suggestion: SearchSuggestion) => void
   visible: boolean
+  focused: boolean
   anchorRef: RefObject<HTMLElement | null>
 }
 
-export function SearchAutocomplete({ query, onSelect, visible, anchorRef }: SearchAutocompleteProps) {
+export function SearchAutocomplete({
+  query,
+  onSelect,
+  visible,
+  focused,
+  anchorRef,
+}: SearchAutocompleteProps) {
   const { items } = useApp()
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
   const [loading, setLoading] = useState(false)
@@ -20,8 +27,10 @@ export function SearchAutocomplete({ query, onSelect, visible, anchorRef }: Sear
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const requestId = useRef(0)
 
+  const show = visible && focused && query.trim().length >= 1
+
   useEffect(() => {
-    if (!visible || !anchorRef.current) {
+    if (!show || !anchorRef.current) {
       setPosition(null)
       return
     }
@@ -44,10 +53,10 @@ export function SearchAutocomplete({ query, onSelect, visible, anchorRef }: Sear
       window.removeEventListener('resize', updatePosition)
       window.removeEventListener('scroll', updatePosition, true)
     }
-  }, [visible, anchorRef, query, suggestions.length, loading])
+  }, [show, anchorRef, query, suggestions.length, loading])
 
   useEffect(() => {
-    if (!visible || query.trim().length < 1) {
+    if (!show) {
       setSuggestions([])
       setLoading(false)
       setSearched(false)
@@ -70,9 +79,9 @@ export function SearchAutocomplete({ query, onSelect, visible, anchorRef }: Sear
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [query, visible, items])
+  }, [query, show, items])
 
-  if (!visible || query.trim().length < 1 || !position) return null
+  if (!show || !position) return null
   if (!loading && searched && suggestions.length === 0) return null
 
   return createPortal(
@@ -95,6 +104,7 @@ export function SearchAutocomplete({ query, onSelect, visible, anchorRef }: Sear
               type="button"
               className="search-suggestion"
               role="option"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => onSelect(s)}
             >
               {s.imageUrl ? (

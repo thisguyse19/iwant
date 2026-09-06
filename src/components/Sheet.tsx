@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
 interface SheetProps {
   open: boolean
@@ -105,7 +106,7 @@ export function Sheet({
 
   if (!mounted) return null
 
-  return (
+  return createPortal(
     <>
       <div
         ref={backdropRef}
@@ -147,6 +148,7 @@ export function Sheet({
         </div>
         <div className="sheet-body">{children}</div>
       </div>
-    </>
+    </>,
+    document.body,
   )
 }

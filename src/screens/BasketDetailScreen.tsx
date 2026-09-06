@@ -4,6 +4,7 @@ import { ItemRow } from '../components/ItemRow'
 import { formatPrice } from '../utils'
 import { vibrate } from '../utils'
 import '../components/ItemRow.css'
+import '../screens/WishlistScreen.css'
 import './BasketDetailScreen.css'
 
 export function BasketDetailScreen() {
@@ -34,7 +35,7 @@ export function BasketDetailScreen() {
 
   const close = () => {
     setClosing(true)
-    window.setTimeout(() => setViewingBasket(null), 280)
+    window.setTimeout(() => setViewingBasket(null), 240)
   }
 
   const addExisting = async (itemId: string) => {
@@ -54,33 +55,39 @@ export function BasketDetailScreen() {
     await removeBasket(viewingBasket.id)
   }
 
+  const subtitle =
+    activeItems.length === 0
+      ? 'Empty basket'
+      : total.pricedCount > 0
+        ? `${activeItems.length} item${activeItems.length !== 1 ? 's' : ''} · ${formatPrice(total.total, total.currency)}`
+        : `${activeItems.length} item${activeItems.length !== 1 ? 's' : ''}`
+
   return (
-    <div className={`push-screen ${closing ? 'push-screen-closing' : ''}`}>
-      <div className="screen push-screen-body">
-        <header className="push-screen-nav">
-          <button type="button" className="nav-back-btn" onClick={close} aria-label="Back to baskets">
-            <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden="true">
-              <path d="M10 2L2 10l8 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Baskets
-          </button>
-          <button type="button" className="nav-action-btn" onClick={() => setAddOpen(true, viewingBasket.id)}>
+    <div className={`basket-overlay ${closing ? 'basket-overlay-closing' : ''}`}>
+      <div className="screen basket-screen">
+        <button type="button" className="screen-back" onClick={close}>
+          <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden="true">
+            <path d="M10 2L2 10l8 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Baskets
+        </button>
+
+        <header className="screen-header screen-header-row">
+          <div>
+            <h1 className="screen-title">{viewingBasket.name}</h1>
+            <p className="header-subtitle">{subtitle}</p>
+          </div>
+          <button type="button" className="text-btn" onClick={() => setAddOpen(true, viewingBasket.id)}>
             Add
           </button>
         </header>
 
-        <h1 className="screen-title">{viewingBasket.name}</h1>
-
-        <div className="total-bar">
-          <span className="total-bar-label">Basket total</span>
-          <span className="total-bar-amount">
-            {total.pricedCount > 0 ? formatPrice(total.total, total.currency) : '—'}
-          </span>
-        </div>
-
         {activeItems.length === 0 ? (
           <div className="empty-state">
             <p>No items in this basket yet.</p>
+            <button type="button" className="text-btn" onClick={() => setAddOpen(true, viewingBasket.id)}>
+              Add something
+            </button>
           </div>
         ) : (
           <div className="item-list">

@@ -1,4 +1,4 @@
-/* Budget screen: floating summary above tab bar */
+/* Budget screen: floating summary above tab bar (portaled to body) */
 .screen-budget {
   padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 196px);
 }
@@ -15,7 +15,7 @@
   width: 100%;
   max-width: 520px;
   padding: 0 16px;
-  z-index: 55;
+  z-index: 60;
   pointer-events: none;
 }
 

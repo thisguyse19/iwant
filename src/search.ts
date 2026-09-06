@@ -16,6 +16,19 @@ function faviconFromBrand(title: string): string | undefined {
   return `https://www.google.com/s2/favicons?domain=${brand}.com&sz=64`
 }
 
+function toProductTitle(text: string): string {
+  const minor = new Set(['a', 'an', 'the', 'and', 'or', 'for', 'to', 'in', 'on', 'at', 'by', 'of', 'with'])
+  const words = text.trim().split(/\s+/)
+  return words
+    .map((word, index) => {
+      if (/[A-Z]/.test(word.slice(1))) return word
+      const lower = word.toLowerCase()
+      if (index > 0 && minor.has(lower)) return lower
+      return lower.charAt(0).toUpperCase() + lower.slice(1)
+    })
+    .join(' ')
+}
+
 function localSuggestions(query: string, items: WishlistItem[]): SearchSuggestion[] {
   const q = query.toLowerCase().trim()
   if (!q) return []
@@ -131,10 +144,11 @@ export async function searchSuggestions(
 
       web = phrases.map((phrase) => {
         seen.add(phrase.toLowerCase())
+        const title = toProductTitle(phrase)
         return {
-          title: phrase,
+          title,
           source: 'web' as const,
-          imageUrl: faviconFromBrand(phrase),
+          imageUrl: faviconFromBrand(title),
           link: `https://www.google.com/search?q=${encodeURIComponent(phrase)}`,
         }
       })
