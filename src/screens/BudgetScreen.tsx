@@ -65,6 +65,7 @@ interface LogDraft {
 const HERO_VIEWS: Array<{ id: BudgetHeroView; label: string; short: string }> = [
   { id: 'actual', label: 'Actual left', short: 'Actual' },
   { id: 'projected', label: 'Projected left', short: 'Projected' },
+  { id: 'freeplay', label: 'Freeplay', short: 'Freeplay' },
   { id: 'spent', label: 'Spent', short: 'Spent' },
   { id: 'budget', label: 'Budget cap', short: 'Budget' },
 ]
@@ -88,6 +89,15 @@ function heroViewData(
     }
     if (view === 'budget') {
       return { amount: summary.budget, label: 'Budget for period', over: false }
+    }
+    if (view === 'freeplay') {
+      return {
+        amount: Math.abs(summary.freeplay),
+        label: summary.freeplayOver
+          ? `${formatPrice(Math.abs(summary.freeplay), currency)} over freeplay`
+          : `${formatPrice(summary.freeplay, currency)} freeplay`,
+        over: summary.freeplayOver,
+      }
     }
     const diff = summary.budget - summary.spent - summary.recurringCommitted
     return {
@@ -115,6 +125,14 @@ function heroViewData(
           ? `${formatPrice(Math.abs(summary.projectedRemaining), currency)} over`
           : `${formatPrice(summary.projectedRemaining, currency)} left`,
         over: summary.overBudget,
+      }
+    case 'freeplay':
+      return {
+        amount: Math.abs(summary.freeplay),
+        label: summary.freeplayOver
+          ? `${formatPrice(Math.abs(summary.freeplay), currency)} over freeplay`
+          : `${formatPrice(summary.freeplay, currency)} freeplay`,
+        over: summary.freeplayOver,
       }
     case 'spent':
       return {
@@ -565,6 +583,20 @@ export function BudgetScreen() {
                   : '—'}
               </p>
               <p className="budget-hero-label">{hero.label}</p>
+              {summary.period.isCurrent && heroView === 'freeplay' && summary.hasBudget && (
+                <p className="budget-hero-reach muted">
+                  {formatPrice(summary.budget - summary.budgeted, summary.currency)} pool after{' '}
+                  {formatPrice(summary.budgeted, summary.currency)} budgeted
+                  {summary.budgetedVariance !== 0 && (
+                    <>
+                      {' · '}
+                      {summary.budgetedVariance > 0
+                        ? `${formatPrice(summary.budgetedVariance, summary.currency)} under on budgeted`
+                        : `${formatPrice(Math.abs(summary.budgetedVariance), summary.currency)} over on budgeted`}
+                    </>
+                  )}
+                </p>
+              )}
               {summary.period.isCurrent && heroView === 'actual' && settings.fixedExpenseCounting === 'accrue' && summary.fixed > summary.fixedActual && (
                 <p className="budget-hero-reach muted">
                   {formatPrice(summary.fixed - summary.fixedActual, summary.currency)} more in fixed bills this period
@@ -669,6 +701,18 @@ export function BudgetScreen() {
                 <span className="budget-stat-label">Budgeted</span>
                 <span className="budget-stat-value">{formatPrice(summary.budgetedActual, summary.currency)}</span>
                 <span className="budget-stat-note">of {formatPrice(summary.budgeted, summary.currency)}</span>
+              </div>
+            )}
+            {summary.hasBudget && summary.period.isCurrent && (
+              <div className="budget-stat-cell">
+                <span className="budget-stat-label">Freeplay</span>
+                <span
+                  className="budget-stat-value"
+                  style={{ color: summary.freeplayOver ? 'var(--destructive)' : undefined }}
+                >
+                  {formatPrice(summary.freeplay, summary.currency)}
+                </span>
+                <span className="budget-stat-note">aside from budgeted</span>
               </div>
             )}
             {summary.period.isCurrent && (

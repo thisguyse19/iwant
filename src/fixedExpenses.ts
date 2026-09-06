@@ -427,6 +427,28 @@ export function getBudgetSpendUnits(
   return units
 }
 
+/** Nominal budgeted accrual at base rates for elapsed units (no catch-up). */
+export function getNominalBudgetedAccrued(
+  expense: FixedExpense,
+  period: FixedExpensePeriodContext,
+  now = Date.now(),
+): number {
+  const e = normalizeFixedExpense(expense)
+  if (e.kind !== 'budgeted') return 0
+  return getElapsedBudgetUnitDefs(e, period, now).length * e.amount
+}
+
+export function sumNominalBudgetedAccrued(
+  expenses: FixedExpense[],
+  period: FixedExpensePeriodContext,
+  now = Date.now(),
+): number {
+  return expenses.reduce(
+    (sum, expense) => sum + getNominalBudgetedAccrued(expense, period, now),
+    0,
+  )
+}
+
 export function getBudgetedExpenseSpent(
   expense: FixedExpense,
   period: FixedExpensePeriodContext,

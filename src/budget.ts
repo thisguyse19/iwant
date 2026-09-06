@@ -6,6 +6,7 @@ import {
   getBudgetedExpenseSpent,
   getRecurringActualsInPeriod,
   normalizeFixedExpense,
+  sumNominalBudgetedAccrued,
 } from './fixedExpenses'
 
 export interface MonthRef {
@@ -71,6 +72,11 @@ export interface BudgetPeriodSummary {
   affordable: WishlistItem[]
   active: WishlistItem[]
   currency: string
+  /** Discretionary spend after reserving budgeted allowances and other outflows. */
+  freeplay: number
+  freeplayOver: boolean
+  /** Budgeted spend under/over nominal accrual (positive = under budget on budgeted items). */
+  budgetedVariance: number
 }
 
 const MONTH_NAMES = [
@@ -382,6 +388,10 @@ export function summarizeBudgetPeriod(
     .filter((i) => i.status === 'bought' && inPeriod(i.boughtAt, period))
     .sort((a, b) => (b.boughtAt ?? 0) - (a.boughtAt ?? 0))
 
+  const nominalBudgetedAccrued = sumNominalBudgetedAccrued(fixedExpenses, period)
+  const budgetedVariance = nominalBudgetedAccrued - budgetedActual
+  const freeplay = budget - budgeted - spent - fixedActual - budgetedActual + nominalBudgetedAccrued
+
   return {
     period,
     budget,
@@ -414,5 +424,8 @@ export function summarizeBudgetPeriod(
     affordable,
     active,
     currency,
+    freeplay,
+    freeplayOver: budget > 0 && freeplay < 0,
+    budgetedVariance,
   }
 }

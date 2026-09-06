@@ -105,7 +105,7 @@ export interface RecurringExpenseActual {
 }
 
 export type FixedExpenseCounting = 'accrue' | 'lump'
-export type BudgetHeroView = 'actual' | 'projected' | 'spent' | 'budget'
+export type BudgetHeroView = 'actual' | 'projected' | 'spent' | 'budget' | 'freeplay'
 export type AccentStyle = 'slate' | 'terracotta' | 'forest' | 'pride'
 
 export interface AppSettings {
