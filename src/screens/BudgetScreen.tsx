@@ -6,7 +6,7 @@ import { formatPrice } from '../utils'
 import '../components/ItemRow.css'
 
 export function BudgetScreen() {
-  const { settings, updateSettings, setEditingItem, updateItem } = useApp()
+  const { settings, updateSettings, setViewingItem, updateItem } = useApp()
   const summary = useBudgetSummary()
   const [editOpen, setEditOpen] = useState(false)
   const [budgetInput, setBudgetInput] = useState('')
@@ -91,7 +91,7 @@ export function BudgetScreen() {
               <ItemRow
                 key={item.id}
                 item={item}
-                onTap={() => setEditingItem(item)}
+                onTap={() => setViewingItem(item)}
                 onMarkBought={() => updateItem(item.id, { status: 'bought' })}
               />
             ))}
@@ -107,7 +107,7 @@ export function BudgetScreen() {
               <ItemRow
                 key={item.id}
                 item={item}
-                onTap={() => setEditingItem(item)}
+                onTap={() => setViewingItem(item)}
                 onMarkBought={() => updateItem(item.id, { status: 'bought' })}
               />
             ))}

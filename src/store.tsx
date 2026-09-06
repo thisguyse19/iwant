@@ -17,10 +17,13 @@ interface AppState {
   loading: boolean
   filter: ListFilter
   addOpen: boolean
+  viewingItem: WishlistItem | null
   editingItem: WishlistItem | null
   setFilter: (filter: ListFilter) => void
   setAddOpen: (open: boolean) => void
+  setViewingItem: (item: WishlistItem | null) => void
   setEditingItem: (item: WishlistItem | null) => void
+  openEdit: (item: WishlistItem) => void
   addItem: (data: {
     title: string
     price?: number
@@ -28,6 +31,7 @@ interface AppState {
     priority?: Priority
     link?: string
     notes?: string
+    imageUrl?: string
   }) => Promise<void>
   updateItem: (id: string, patch: Partial<WishlistItem>) => Promise<void>
   removeItem: (id: string) => Promise<void>
@@ -53,18 +57,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<ListFilter>('active')
   const [addOpen, setAddOpen] = useState(false)
+  const [viewingItem, setViewingItem] = useState<WishlistItem | null>(null)
   const [editingItem, setEditingItem] = useState<WishlistItem | null>(null)
 
   const refresh = useCallback(async () => {
     const [loadedItems, loadedSettings] = await Promise.all([db.getAllItems(), db.getSettings()])
-    setItems(sortItems(loadedItems))
+    const sorted = sortItems(loadedItems)
+    setItems(sorted)
     setSettings(loadedSettings)
+    setViewingItem((prev) => (prev ? sorted.find((i) => i.id === prev.id) ?? null : null))
+    setEditingItem((prev) => (prev ? sorted.find((i) => i.id === prev.id) ?? null : null))
     setLoading(false)
   }, [])
 
   useEffect(() => {
     refresh()
   }, [refresh])
+
+  const openEdit = useCallback((item: WishlistItem) => {
+    setViewingItem(null)
+    setEditingItem(item)
+  }, [])
 
   const addItem = useCallback(
     async (data: {
@@ -74,6 +87,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       priority?: Priority
       link?: string
       notes?: string
+      imageUrl?: string
     }) => {
       const now = Date.now()
       const item: WishlistItem = {
@@ -85,6 +99,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         tag: data.tag?.trim() || undefined,
         link: data.link?.trim() || undefined,
         notes: data.notes?.trim() || undefined,
+        imageUrl: data.imageUrl,
         status: 'queued',
         sortOrder: now,
         createdAt: now,
@@ -115,6 +130,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const removeItem = useCallback(
     async (id: string) => {
       await db.deleteItem(id)
+      setViewingItem(null)
+      setEditingItem(null)
       await refresh()
     },
     [refresh],
@@ -147,10 +164,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       loading,
       filter,
       addOpen,
+      viewingItem,
       editingItem,
       setFilter,
       setAddOpen,
+      setViewingItem,
       setEditingItem,
+      openEdit,
       addItem,
       updateItem,
       removeItem,
@@ -165,7 +185,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       loading,
       filter,
       addOpen,
+      viewingItem,
       editingItem,
+      openEdit,
       addItem,
       updateItem,
       removeItem,
@@ -188,13 +210,22 @@ export function useApp() {
 export function useFilteredItems() {
   const { items, filter } = useApp()
   return useMemo(() => {
-    const filtered = items.filter((item) => {
+    return items.filter((item) => {
       if (filter === 'active') return item.status === 'queued' || item.status === 'ready'
       if (filter === 'ready') return item.status === 'ready'
       return item.status === 'bought' || item.status === 'dropped'
     })
-    return filtered
   }, [items, filter])
+}
+
+export function useListTotal(items: WishlistItem[]) {
+  const { settings } = useApp()
+  return useMemo(() => {
+    const priced = items.filter((i) => i.price != null)
+    const total = priced.reduce((sum, i) => sum + (i.price ?? 0), 0)
+    const unpriced = items.length - priced.length
+    return { total, count: items.length, pricedCount: priced.length, unpriced, currency: settings.currency }
+  }, [items, settings.currency])
 }
 
 export function useBudgetSummary() {

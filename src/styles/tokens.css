@@ -24,7 +24,7 @@
   --radius-xl: 20px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --tab-height: 52px;
+  --tab-height: 84px;
   --spring: cubic-bezier(0.32, 0.72, 0, 1);
 }
 

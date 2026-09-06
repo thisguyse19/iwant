@@ -17,7 +17,11 @@ export function ItemRow({ item, onTap, onMarkReady, onMarkBought }: ItemRowProps
   return (
     <div className={`item-row ${item.status === 'ready' ? 'ready' : ''}`}>
       <button type="button" className="item-row-main" onClick={onTap}>
-        <span className={`priority-dot ${item.priority}`} aria-hidden="true" />
+        {item.imageUrl ? (
+          <img src={item.imageUrl} alt="" className="item-thumb" />
+        ) : (
+          <span className={`priority-dot ${item.priority}`} aria-hidden="true" />
+        )}
         <div className="item-content">
           <div className="item-title">{item.title}</div>
           {metaParts.length > 0 && <div className="item-meta">{metaParts.join(' · ')}</div>}

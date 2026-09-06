@@ -40,3 +40,12 @@
   transform: scale(0.95);
   opacity: 0.7;
 }
+
+.item-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--bg-elevated);
+}

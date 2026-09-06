@@ -5,7 +5,8 @@ import { WishlistScreen } from './screens/WishlistScreen'
 import { BudgetScreen } from './screens/BudgetScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { AddSheet } from './screens/AddSheet'
-import { ItemDetailSheet } from './screens/ItemDetailSheet'
+import { ItemOverviewSheet } from './screens/ItemOverviewSheet'
+import { ItemEditSheet } from './screens/ItemEditSheet'
 import { useApp } from './store'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import './styles/global.css'
@@ -44,7 +45,8 @@ function AppContent() {
       />
 
       <AddSheet />
-      <ItemDetailSheet />
+      <ItemOverviewSheet />
+      <ItemEditSheet />
 
       {needRefresh && (
         <div className="update-banner">

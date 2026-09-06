@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
-import type { Priority, WishlistItem } from '../types'
-import { daysSince, formatPriceOptional, vibrate } from '../utils'
+import type { Priority } from '../types'
 
-export function ItemDetailSheet() {
-  const { editingItem, setEditingItem, updateItem, removeItem } = useApp()
+export function ItemEditSheet() {
+  const { editingItem, setEditingItem, updateItem } = useApp()
   const [title, setTitle] = useState('')
   const [price, setPrice] = useState('')
   const [tag, setTag] = useState('')
@@ -39,26 +38,10 @@ export function ItemDetailSheet() {
     close()
   }
 
-  const setStatus = async (status: WishlistItem['status']) => {
-    if (!editingItem) return
-    vibrate()
-    await updateItem(editingItem.id, { status })
-    close()
-  }
-
-  const handleDelete = async () => {
-    if (!editingItem) return
-    vibrate(20)
-    await removeItem(editingItem.id)
-    close()
-  }
-
   if (!editingItem) return null
 
-  const days = daysSince(editingItem.createdAt)
-
   return (
-    <Sheet open={!!editingItem} onClose={close} title={editingItem.title}>
+    <Sheet open={!!editingItem} onClose={close} title={editingItem.title} autoFocus>
       <div className="field">
         <label htmlFor="edit-title">Title</label>
         <input
@@ -109,58 +92,12 @@ export function ItemDetailSheet() {
         <input id="edit-link" type="url" value={link} onChange={(e) => setLink(e.target.value)} />
       </div>
 
-      {link && (
-        <a
-          href={link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-btn"
-          style={{ display: 'inline-block', marginBottom: 12 }}
-        >
-          Open link
-        </a>
-      )}
-
-      <div className="detail-meta-block">
-        <div className="detail-meta-row">
-          <span>On list</span>
-          <span>{days === 0 ? 'Today' : `${days} day${days > 1 ? 's' : ''}`}</span>
-        </div>
-        <div className="detail-meta-row">
-          <span>Current price</span>
-          <span>{formatPriceOptional(editingItem.price, editingItem.currency)}</span>
-        </div>
-        <div className="detail-meta-row">
-          <span>Status</span>
-          <span style={{ textTransform: 'capitalize' }}>{editingItem.status}</span>
-        </div>
-      </div>
-
-      {(editingItem.status === 'queued' || editingItem.status === 'ready') && (
-        <div className="detail-actions">
-          {editingItem.status === 'queued' && (
-            <button type="button" className="secondary-btn" onClick={() => setStatus('ready')}>
-              Ready
-            </button>
-          )}
-          <button type="button" className="primary-btn" onClick={() => setStatus('bought')}>
-            Bought
-          </button>
-        </div>
-      )}
-
-      <button type="button" className="secondary-btn" onClick={save}>
+      <button type="button" className="primary-btn" onClick={save}>
         Save changes
       </button>
 
-      {editingItem.status !== 'dropped' && editingItem.status !== 'bought' && (
-        <button type="button" className="secondary-btn" onClick={() => setStatus('dropped')}>
-          Drop
-        </button>
-      )}
-
-      <button type="button" className="secondary-btn destructive-btn" onClick={handleDelete}>
-        Delete
+      <button type="button" className="secondary-btn" onClick={close}>
+        Cancel
       </button>
     </Sheet>
   )

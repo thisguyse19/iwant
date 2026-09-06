@@ -1,6 +1,7 @@
-import { useFilteredItems, useApp } from '../store'
+import { useFilteredItems, useApp, useListTotal } from '../store'
 import { ItemRow } from '../components/ItemRow'
 import type { ListFilter } from '../types'
+import { formatPrice } from '../utils'
 import { vibrate } from '../utils'
 import '../components/ItemRow.css'
 import './WishlistScreen.css'
@@ -12,8 +13,9 @@ const filters: { id: ListFilter; label: string }[] = [
 ]
 
 export function WishlistScreen() {
-  const { filter, setFilter, setAddOpen, setEditingItem, updateItem, items } = useApp()
+  const { filter, setFilter, setAddOpen, setViewingItem, updateItem, items } = useApp()
   const filtered = useFilteredItems()
+  const listTotal = useListTotal(filtered)
 
   const activeCount = items.filter((i) => i.status === 'queued' || i.status === 'ready').length
   const readyCount = items.filter((i) => i.status === 'ready').length
@@ -54,7 +56,21 @@ export function WishlistScreen() {
         ))}
       </div>
 
-      <div className="item-list" style={{ marginTop: 16 }}>
+      {filtered.length > 0 && (
+        <div className="total-bar">
+          <span className="total-bar-label">
+            {listTotal.count} item{listTotal.count !== 1 ? 's' : ''}
+            {listTotal.unpriced > 0 && ` · ${listTotal.unpriced} unpriced`}
+          </span>
+          <span className="total-bar-amount">
+            {listTotal.pricedCount > 0
+              ? formatPrice(listTotal.total, listTotal.currency)
+              : '—'}
+          </span>
+        </div>
+      )}
+
+      <div className="item-list">
         {filtered.length === 0 ? (
           <div className="empty-state">
             <p>
@@ -73,7 +89,7 @@ export function WishlistScreen() {
             <ItemRow
               key={item.id}
               item={item}
-              onTap={() => setEditingItem(item)}
+              onTap={() => setViewingItem(item)}
               onMarkReady={
                 item.status === 'queued' ? () => handleMarkReady(item.id) : undefined
               }

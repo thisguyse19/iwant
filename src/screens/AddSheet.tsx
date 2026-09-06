@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
-import type { Priority } from '../types'
+import { SearchAutocomplete } from '../components/SearchAutocomplete'
+import type { Priority, SearchSuggestion } from '../types'
 import { detectClipboardContent, vibrate } from '../utils'
 
 export function AddSheet() {
@@ -9,6 +10,8 @@ export function AddSheet() {
   const [title, setTitle] = useState('')
   const [price, setPrice] = useState('')
   const [tag, setTag] = useState('')
+  const [link, setLink] = useState('')
+  const [imageUrl, setImageUrl] = useState<string>()
   const [priority, setPriority] = useState<Priority>('medium')
   const [showMore, setShowMore] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -17,6 +20,8 @@ export function AddSheet() {
     setTitle('')
     setPrice('')
     setTag('')
+    setLink('')
+    setImageUrl(undefined)
     setPriority('medium')
     setShowMore(false)
     setSaving(false)
@@ -32,9 +37,16 @@ export function AddSheet() {
       const text = await navigator.clipboard.readText()
       const detected = detectClipboardContent(text)
       if (detected.title) setTitle(detected.title)
+      if (detected.link) setLink(detected.link)
     } catch {
       // clipboard unavailable
     }
+  }
+
+  const handleSelectSuggestion = (s: SearchSuggestion) => {
+    setTitle(s.title)
+    if (s.link) setLink(s.link)
+    if (s.imageUrl) setImageUrl(s.imageUrl)
   }
 
   const handleSave = async () => {
@@ -46,13 +58,15 @@ export function AddSheet() {
       title: title.trim(),
       price: parsedPrice != null && !isNaN(parsedPrice) ? parsedPrice : undefined,
       tag: tag.trim() || undefined,
+      link: link.trim() || undefined,
+      imageUrl,
       priority,
     })
     handleClose()
   }
 
   return (
-    <Sheet open={addOpen} onClose={handleClose} title="Add to list">
+    <Sheet open={addOpen} onClose={handleClose} title="Add to list" autoFocus>
       <div className="field">
         <label htmlFor="add-title">What is it?</label>
         <div className="field-with-action">
@@ -69,7 +83,18 @@ export function AddSheet() {
             Paste
           </button>
         </div>
+        <SearchAutocomplete
+          query={title}
+          visible={addOpen}
+          onSelect={handleSelectSuggestion}
+        />
       </div>
+
+      {imageUrl && (
+        <div className="item-preview-image">
+          <img src={imageUrl} alt="" />
+        </div>
+      )}
 
       <div className="field-row">
         <div className="field">

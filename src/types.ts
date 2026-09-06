@@ -10,11 +10,19 @@ export interface WishlistItem {
   tag?: string
   notes?: string
   link?: string
+  imageUrl?: string
   status: ItemStatus
   sortOrder: number
   createdAt: number
   updatedAt: number
   boughtAt?: number
+}
+
+export interface SearchSuggestion {
+  title: string
+  description?: string
+  imageUrl?: string
+  link?: string
 }
 
 export interface AppSettings {
@@ -30,6 +38,8 @@ export const PRIORITY_ORDER: Record<Priority, number> = {
   medium: 1,
   low: 2,
 }
+
+export const CURRENCIES = ['GBP', 'USD', 'EUR', 'SGD', 'AUD', 'CAD', 'JPY'] as const
 
 export const DEFAULT_SETTINGS: AppSettings = {
   currency: 'GBP',

@@ -2,6 +2,7 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
   GBP: '£',
   USD: '$',
   EUR: '€',
+  SGD: 'S$',
   AUD: 'A$',
   CAD: 'C$',
   JPY: '¥',

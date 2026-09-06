@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../store'
 import * as db from '../db'
+import { CURRENCIES } from '../types'
 
 export function SettingsScreen() {
   const { exportData, importData, settings, updateSettings } = useApp()
@@ -36,8 +37,6 @@ export function SettingsScreen() {
     e.target.value = ''
   }
 
-  const currencies = ['GBP', 'USD', 'EUR', 'AUD', 'CAD', 'JPY']
-
   return (
     <div className="screen">
       <header className="screen-header">
@@ -53,7 +52,7 @@ export function SettingsScreen() {
             className="settings-row-value"
             style={{ border: 'none', background: 'transparent' }}
           >
-            {currencies.map((c) => (
+            {CURRENCIES.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
