@@ -3,9 +3,9 @@ import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
 import { SearchAutocomplete } from '../components/SearchAutocomplete'
 import { CategoryPicker } from '../components/CategoryPicker'
+import { ProductImagePicker } from '../components/ProductImagePicker'
 import type { CategoryId, Priority, SearchSuggestion } from '../types'
 import { detectClipboardContent, vibrateTap } from '../utils'
-import { faviconFromUrl } from '../search'
 
 export function AddSheet() {
   const { addOpen, addBasketId, setAddOpen, addItem, items, baskets } = useApp()
@@ -48,10 +48,7 @@ export function AddSheet() {
       const text = await navigator.clipboard.readText()
       const detected = detectClipboardContent(text)
       if (detected.title) setTitle(detected.title)
-      if (detected.link) {
-        setLink(detected.link)
-        setImageUrl(faviconFromUrl(detected.link))
-      }
+      if (detected.link) setLink(detected.link)
     } catch {
       // clipboard unavailable
     }
@@ -124,11 +121,7 @@ export function AddSheet() {
         />
       </div>
 
-      {imageUrl && (
-        <div className="item-preview-image">
-          <img src={imageUrl} alt="" />
-        </div>
-      )}
+      <ProductImagePicker title={title} value={imageUrl} onChange={setImageUrl} />
 
       <div className="field">
         <label>Category</label>

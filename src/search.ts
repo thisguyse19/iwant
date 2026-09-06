@@ -10,12 +10,6 @@ export function faviconFromUrl(url: string): string {
   }
 }
 
-function faviconFromBrand(title: string): string | undefined {
-  const brand = title.split(/\s+/)[0]?.toLowerCase().replace(/[^a-z0-9]/g, '')
-  if (!brand || brand.length < 2) return undefined
-  return `https://www.google.com/s2/favicons?domain=${brand}.com&sz=64`
-}
-
 export function toProductTitle(text: string): string {
   const minor = new Set(['a', 'an', 'the', 'and', 'or', 'for', 'to', 'in', 'on', 'at', 'by', 'of', 'with'])
   const words = text.trim().split(/\s+/)
@@ -134,7 +128,6 @@ export async function fetchWebSuggestions(
           return {
             title,
             source: 'web' as const,
-            imageUrl: faviconFromBrand(title),
             link: `https://www.google.com/search?q=${encodeURIComponent(phrase)}`,
           }
         })

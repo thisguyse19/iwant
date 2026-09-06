@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
 import { CategoryPicker } from '../components/CategoryPicker'
+import { ProductImagePicker } from '../components/ProductImagePicker'
 import type { CategoryId, Priority } from '../types'
 
 export function ItemEditSheet() {
@@ -11,6 +12,7 @@ export function ItemEditSheet() {
   const [category, setCategory] = useState<CategoryId | undefined>()
   const [notes, setNotes] = useState('')
   const [link, setLink] = useState('')
+  const [imageUrl, setImageUrl] = useState<string>()
   const [basketId, setBasketId] = useState('')
   const [priority, setPriority] = useState<Priority>('medium')
 
@@ -21,6 +23,7 @@ export function ItemEditSheet() {
     setCategory(editingItem.category)
     setNotes(editingItem.notes ?? '')
     setLink(editingItem.link ?? '')
+    setImageUrl(editingItem.imageUrl)
     setBasketId(editingItem.basketId ?? '')
     setPriority(editingItem.priority)
   }, [editingItem])
@@ -36,6 +39,7 @@ export function ItemEditSheet() {
       category,
       notes: notes.trim() || undefined,
       link: link.trim() || undefined,
+      imageUrl,
       basketId: basketId || undefined,
       priority,
     })
@@ -55,6 +59,8 @@ export function ItemEditSheet() {
           onChange={(e) => setTitle(e.target.value)}
         />
       </div>
+
+      <ProductImagePicker title={title} value={imageUrl} onChange={setImageUrl} />
 
       <div className="field">
         <label>Category</label>
