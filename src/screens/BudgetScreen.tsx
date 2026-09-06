@@ -143,7 +143,9 @@ export function BudgetScreen() {
   const [fixedDraft, setFixedDraft] = useState<FixedExpenseDraft | null>(null)
   const [adhocSheetOpen, setAdhocSheetOpen] = useState(false)
   const [adhocDraft, setAdhocDraft] = useState<AdHocDraft | null>(null)
-  const [actualDraft, setActualDraft] = useState<ActualDraft | null>(null)
+  const [logSheetOpen, setLogSheetOpen] = useState(false)
+  const [logExpense, setLogExpense] = useState<FixedExpense | null>(null)
+  const [logDraft, setLogDraft] = useState<ActualDraft | null>(null)
 
   const fixedTemplates = useMemo(
     () =>
@@ -201,7 +203,6 @@ export function BudgetScreen() {
 
   const openFixedAdd = () => {
     setFixedDraft({ name: '', amount: '', interval: 'month', kind: 'fixed', dayOfMonth: '1' })
-    setActualDraft(null)
     setFixedSheetOpen(true)
   }
 
@@ -215,18 +216,26 @@ export function BudgetScreen() {
       kind: e.kind,
       dayOfMonth: String(e.dayOfMonth),
     })
-    setActualDraft(
-      e.kind === 'budgeted'
-        ? { expenseId: e.id, amount: '', spentAt: dateInputValue(Date.now()) }
-        : null,
-    )
     setFixedSheetOpen(true)
   }
 
   const closeFixedSheet = () => {
     setFixedSheetOpen(false)
     setFixedDraft(null)
-    setActualDraft(null)
+  }
+
+  const openLogSpend = (expense: FixedExpense) => {
+    const e = normalizeFixedExpense(expense)
+    if (e.kind !== 'budgeted') return
+    setLogExpense(expense)
+    setLogDraft({ expenseId: e.id, amount: '', spentAt: dateInputValue(Date.now()) })
+    setLogSheetOpen(true)
+  }
+
+  const closeLogSheet = () => {
+    setLogSheetOpen(false)
+    setLogExpense(null)
+    setLogDraft(null)
   }
 
   const saveFixedExpense = async () => {
@@ -322,20 +331,21 @@ export function BudgetScreen() {
   }
 
   const logRecurringActual = async () => {
-    if (!actualDraft || !fixedDraft?.id) return
-    const amount = parseFloat(actualDraft.amount)
-    const spentAt = new Date(actualDraft.spentAt).getTime()
+    if (!logDraft || !logExpense) return
+    const amount = parseFloat(logDraft.amount)
+    const spentAt = new Date(logDraft.spentAt).getTime()
     if (isNaN(amount) || amount < 0 || isNaN(spentAt)) return
 
     const entry: RecurringExpenseActual = {
       id: crypto.randomUUID(),
-      expenseId: fixedDraft.id,
+      expenseId: logDraft.expenseId,
       amount,
       spentAt,
       createdAt: Date.now(),
     }
     await updateSettings({ recurringActuals: [...(settings.recurringActuals ?? []), entry] })
-    setActualDraft({ expenseId: fixedDraft.id, amount: '', spentAt: dateInputValue(Date.now()) })
+    setLogDraft({ expenseId: logDraft.expenseId, amount: '', spentAt: dateInputValue(Date.now()) })
+    vibrateTap()
   }
 
   const removeRecurringActual = async (id: string) => {
@@ -442,10 +452,14 @@ export function BudgetScreen() {
   const showDueDay =
     fixedDraft?.interval === 'month' || fixedDraft?.interval === 'year'
 
-  const fixedSheetActuals =
-    fixedDraft?.id && fixedDraft.kind === 'budgeted'
-      ? getRecurringActualsInPeriod(settings.recurringActuals ?? [], summary.period, fixedDraft.id)
-      : []
+  const logExpenseNormalized = logExpense ? normalizeFixedExpense(logExpense) : null
+  const logSheetActuals = logExpenseNormalized
+    ? getRecurringActualsInPeriod(settings.recurringActuals ?? [], summary.period, logExpenseNormalized.id)
+    : []
+  const logSheetSpent = sumRecurringActuals(logSheetActuals)
+  const logSheetAllowance = logExpenseNormalized
+    ? getFixedExpensePeriodTotal(logExpenseNormalized, summary.period)
+    : 0
 
   return (
     <>
@@ -689,6 +703,74 @@ export function BudgetScreen() {
                   getRecurringActualsInPeriod(summary.recurringActuals, summary.period, e.id),
                 )
                 const displayAmount = e.kind === 'budgeted' ? actualSpent : periodTotal
+                const periodActuals = e.kind === 'budgeted'
+                  ? getRecurringActualsInPeriod(summary.recurringActuals, summary.period, e.id)
+                  : []
+
+                if (e.kind === 'budgeted') {
+                  return (
+                    <div key={expense.id} className="budget-budgeted-card">
+                      <div className="budget-budgeted-main">
+                        <div className="budget-fixed-body">
+                          <div className="budget-fixed-name-row">
+                            <span className="budget-fixed-name">{e.name}</span>
+                            <span className="budget-kind-pill budget-kind-budgeted">
+                              {RECURRING_KIND_LABELS[e.kind]}
+                            </span>
+                          </div>
+                          <div className="budget-fixed-meta">
+                            {formatFixedExpenseMeta(e, periodTotal, summary.currency, actualSpent)}
+                          </div>
+                        </div>
+                        <div className="budget-fixed-amount-col">
+                          <span className="budget-fixed-amount">
+                            {formatPrice(displayAmount, summary.currency)}
+                          </span>
+                          <span className="budget-fixed-rate">{formatFixedRate(e, summary.currency)}</span>
+                        </div>
+                      </div>
+                      <div className="budget-budgeted-actions">
+                        <button
+                          type="button"
+                          className="budget-log-btn"
+                          onClick={() => openLogSpend(expense)}
+                        >
+                          Log spend
+                        </button>
+                        <button
+                          type="button"
+                          className="budget-budgeted-edit"
+                          onClick={() => openFixedEdit(expense)}
+                        >
+                          Edit
+                        </button>
+                      </div>
+                      {periodActuals.length > 0 && (
+                        <ul className="budget-log-preview">
+                          {periodActuals.slice(0, 3).map((entry) => (
+                            <li key={entry.id} className="budget-log-preview-row">
+                              <span>
+                                {new Date(entry.spentAt).toLocaleDateString(undefined, {
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
+                              </span>
+                              <span className="budget-actual-amount">
+                                {formatPrice(entry.amount, summary.currency)}
+                              </span>
+                            </li>
+                          ))}
+                          {periodActuals.length > 3 && (
+                            <li className="budget-log-preview-more">
+                              +{periodActuals.length - 3} more this period
+                            </li>
+                          )}
+                        </ul>
+                      )}
+                    </div>
+                  )
+                }
+
                 return (
                   <button
                     key={expense.id}
@@ -880,15 +962,6 @@ export function BudgetScreen() {
                     onClick={() => {
                       const next = { ...fixedDraft, kind }
                       setFixedDraft(next)
-                      if (kind === 'budgeted' && fixedDraft.id) {
-                        setActualDraft({
-                          expenseId: fixedDraft.id,
-                          amount: '',
-                          spentAt: dateInputValue(Date.now()),
-                        })
-                      } else if (kind === 'fixed') {
-                        setActualDraft(null)
-                      }
                     }}
                   >
                     {RECURRING_KIND_LABELS[kind]}
@@ -938,57 +1011,6 @@ export function BudgetScreen() {
               </div>
             )}
 
-            {fixedDraft.kind === 'budgeted' && fixedDraft.id && actualDraft && (
-              <div className="budget-actual-log">
-                <p className="budget-actual-log-title">Log actual spend</p>
-                {fixedSheetActuals.length > 0 && (
-                  <ul className="budget-actual-list">
-                    {fixedSheetActuals.map((entry) => (
-                      <li key={entry.id} className="budget-actual-row">
-                        <span>
-                          {new Date(entry.spentAt).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </span>
-                        <span className="budget-actual-amount">
-                          {formatPrice(entry.amount, settings.currency)}
-                        </span>
-                        <button
-                          type="button"
-                          className="budget-actual-remove"
-                          onClick={() => void removeRecurringActual(entry.id)}
-                          aria-label="Remove entry"
-                        >
-                          ×
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <AmountInput
-                  id="actual-amount"
-                  label="Amount"
-                  value={actualDraft.amount}
-                  onChange={(amount) => setActualDraft({ ...actualDraft, amount })}
-                  currency={settings.currency}
-                  compact
-                />
-                <div className="field">
-                  <label htmlFor="actual-date">Date</label>
-                  <input
-                    id="actual-date"
-                    type="date"
-                    value={actualDraft.spentAt}
-                    onChange={(e) => setActualDraft({ ...actualDraft, spentAt: e.target.value })}
-                  />
-                </div>
-                <button type="button" className="secondary-btn" onClick={() => void logRecurringActual()}>
-                  Log spend
-                </button>
-              </div>
-            )}
-
             <button type="button" className="primary-btn" onClick={saveFixedExpense}>
               Save
             </button>
@@ -997,6 +1019,95 @@ export function BudgetScreen() {
               <button type="button" className="secondary-btn budget-destructive-btn" onClick={removeFixedExpense}>
                 Remove
               </button>
+            )}
+          </>
+        )}
+      </Sheet>
+
+      <Sheet
+        open={logSheetOpen}
+        onClose={closeLogSheet}
+        title="Log spend"
+      >
+        {logExpenseNormalized && logDraft && (
+          <>
+            <p className="budget-log-sheet-name">{logExpenseNormalized.name}</p>
+            <div className="budget-log-summary">
+              <div className="budget-log-summary-row">
+                <span>Logged this period</span>
+                <span className="budget-log-summary-amount">
+                  {formatPrice(logSheetSpent, summary.currency)}
+                </span>
+              </div>
+              <div className="budget-log-summary-row">
+                <span>Allowance</span>
+                <span>{formatPrice(logSheetAllowance, summary.currency)}</span>
+              </div>
+              <div className="budget-log-progress" aria-hidden="true">
+                <div
+                  className="budget-log-progress-fill"
+                  style={{
+                    width: `${logSheetAllowance > 0 ? Math.min(100, (logSheetSpent / logSheetAllowance) * 100) : 0}%`,
+                  }}
+                />
+              </div>
+              {logSheetAllowance > logSheetSpent && (
+                <p className="budget-log-summary-note">
+                  {formatPrice(logSheetAllowance - logSheetSpent, summary.currency)} left
+                </p>
+              )}
+            </div>
+
+            <AmountInput
+              id="log-amount"
+              label="Amount"
+              value={logDraft.amount}
+              onChange={(amount) => setLogDraft({ ...logDraft, amount })}
+              currency={settings.currency}
+            />
+
+            <div className="field">
+              <label htmlFor="log-date">Date</label>
+              <input
+                id="log-date"
+                type="date"
+                value={logDraft.spentAt}
+                onChange={(e) => setLogDraft({ ...logDraft, spentAt: e.target.value })}
+              />
+            </div>
+
+            <button type="button" className="primary-btn" onClick={() => void logRecurringActual()}>
+              Log spend
+            </button>
+
+            {logSheetActuals.length > 0 && (
+              <div className="budget-log-history">
+                <p className="budget-log-history-title">This period</p>
+                <ul className="budget-actual-list">
+                  {logSheetActuals.map((entry) => (
+                    <li key={entry.id} className="budget-actual-row">
+                      <span>
+                        {new Date(entry.spentAt).toLocaleDateString(undefined, {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                      <span className="budget-actual-amount">
+                        {formatPrice(entry.amount, settings.currency)}
+                      </span>
+                      <button
+                        type="button"
+                        className="budget-actual-remove"
+                        onClick={() => void removeRecurringActual(entry.id)}
+                        aria-label="Remove entry"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </>
         )}
