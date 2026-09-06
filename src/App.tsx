@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, type RefObject } from 'react'
 import { TabBar } from './components/TabBar'
 import { AppProvider } from './store'
+import { ExitAnimationProvider } from './exitAnimation'
 import { LiquidGlassProvider, useLiquidGlass } from './liquidGlass/LiquidGlassProvider'
 import { WishlistScreen } from './screens/WishlistScreen'
 import { BasketsScreen } from './screens/BasketsScreen'
@@ -94,7 +95,9 @@ function AppContent() {
 export default function App() {
   return (
     <AppProvider>
-      <AppContent />
+      <ExitAnimationProvider>
+        <AppContent />
+      </ExitAnimationProvider>
     </AppProvider>
   )
 }

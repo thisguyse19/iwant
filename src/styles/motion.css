@@ -139,6 +139,13 @@
   animation: fadeIn 0.5s var(--spring) both;
 }
 
+.empty-state-secondary {
+  margin-top: -8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--text-tertiary);
+}
+
 .selection-bar {
   animation: selectionBarIn 0.38s var(--spring) both;
 }
@@ -202,10 +209,20 @@
   .screen-body > .total-bar,
   .total-bar,
   .item-row-swipe,
+  .item-row-swipe.is-entering,
   .empty-state,
   .selection-bar,
   .add-menu,
   .add-menu-backdrop {
+    animation: none;
+  }
+
+  .item-row-swipe.is-exiting-bought,
+  .item-row-swipe.is-exiting-removed {
+    transition: none;
+  }
+
+  .budget-hero-card.budget-hero-pulse .budget-hero-ring {
     animation: none;
   }
 }

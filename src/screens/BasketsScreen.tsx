@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useApp, useBasketItems, useListTotal } from '../store'
 import { BasketDetailScreen } from './BasketDetailScreen'
 import { ScreenChrome } from '../components/ScreenChrome'
+import { basketEmptyCopy } from '../copy'
 import { formatPrice } from '../utils'
 import './BasketsScreen.css'
 
@@ -31,6 +32,7 @@ function BasketsList() {
     (i) => !i.basketId && (i.status === 'queued' || i.status === 'ready'),
   )
   const unassignedTotal = useListTotal(unassigned)
+  const emptyCopy = basketEmptyCopy()
 
   const handleCreate = async () => {
     if (!name.trim()) return
@@ -47,7 +49,8 @@ function BasketsList() {
     >
       {baskets.length === 0 && !creating ? (
         <div className="empty-state">
-          <p>No baskets yet.</p>
+          <p>{emptyCopy.primary}</p>
+          <p className="empty-state-secondary">{emptyCopy.secondary}</p>
           <button type="button" className="text-btn" onClick={() => setCreating(true)}>
             Create a basket
           </button>

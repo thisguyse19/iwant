@@ -114,6 +114,32 @@
   margin-top: 4px;
 }
 
+.budget-hero-reach {
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-top: 6px;
+}
+
+.budget-hero-reach.muted {
+  color: var(--text-tertiary);
+}
+
+.budget-hero-card.budget-hero-pulse .budget-hero-ring {
+  animation: budgetRingPulse 0.52s var(--spring);
+}
+
+@keyframes budgetRingPulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 .budget-hero-ring {
   position: relative;
   width: 64px;

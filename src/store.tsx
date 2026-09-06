@@ -46,7 +46,7 @@ interface AppState {
   setBasketCreatePending: (pending: boolean) => void
   requestMarkBought: (item: WishlistItem) => void
   requestMarkBasketBought: (basketId: string, label: string) => void
-  confirmMarkBought: (boughtAt: number) => Promise<void>
+  confirmMarkBought: (boughtAt: number, prompt?: BoughtPrompt) => Promise<void>
   cancelMarkBought: () => void
   openEdit: (item: WishlistItem) => void
   addItem: (data: {
@@ -303,9 +303,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const confirmMarkBought = useCallback(
-    async (boughtAt: number) => {
-      if (!boughtPrompt) return
-      const prompt = boughtPrompt
+    async (boughtAt: number, promptOverride?: BoughtPrompt) => {
+      const prompt = promptOverride ?? boughtPrompt
+      if (!prompt) return
       setBoughtPrompt(null)
       if (prompt.mode === 'item' && prompt.itemId) {
         await updateItem(prompt.itemId, { status: 'bought', boughtAt })
