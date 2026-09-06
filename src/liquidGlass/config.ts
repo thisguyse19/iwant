@@ -2,20 +2,20 @@ import type { GlassConfig } from '@ybouane/liquidglass'
 
 /** Apple regular-material tab bar pill — biconvex lens with edge refraction */
 export const TAB_PILL_GLASS: Partial<GlassConfig> = {
-  blurAmount: 0.38,
-  refraction: 0.52,
-  chromAberration: 0.04,
-  edgeHighlight: 0.12,
-  specular: 0.16,
-  fresnel: 0.85,
-  distortion: 0.015,
+  blurAmount: 0.36,
+  refraction: 0.48,
+  chromAberration: 0.03,
+  edgeHighlight: 0.1,
+  specular: 0.1,
+  fresnel: 0.82,
+  distortion: 0.012,
   cornerRadius: 29,
-  zRadius: 22,
+  zRadius: 16,
   opacity: 1,
-  saturation: 0.08,
-  tintStrength: 0.1,
-  brightness: -0.1,
-  shadowOpacity: 0.22,
+  saturation: 0.06,
+  tintStrength: 0.08,
+  brightness: -0.16,
+  shadowOpacity: 0.2,
   shadowSpread: 10,
   shadowOffsetY: 2,
   floating: false,
@@ -27,10 +27,10 @@ export const TAB_PILL_GLASS: Partial<GlassConfig> = {
 export const TAB_ACTION_GLASS: Partial<GlassConfig> = {
   ...TAB_PILL_GLASS,
   cornerRadius: 29,
-  zRadius: 20,
+  zRadius: 16,
   button: true,
-  specular: 0.22,
-  refraction: 0.48,
+  specular: 0.14,
+  refraction: 0.44,
 }
 
 /** Floating add menu panel */

@@ -31,9 +31,9 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
   const activeIndex = TABS.findIndex((t) => t.id === active)
 
   useLayoutEffect(() => {
-    const nav = navRef.current
+    const content = navRef.current?.querySelector('.tab-bar-liquid-content')
     const tab = tabRefs.current[activeIndex]
-    if (!nav || !tab || activeIndex < 0) return
+    if (!content || !tab || activeIndex < 0) return
     setIndicator({
       x: tab.offsetLeft,
       width: tab.offsetWidth,
@@ -80,29 +80,31 @@ export function TabBar({ active, onChange, onAddItem, onNewBasket }: TabBarProps
         ref={navRef}
         aria-label="Main navigation"
       >
-        <div
-          className="tab-indicator"
-          style={{
-            width: indicator.width,
-            transform: `translateX(${indicator.x}px)`,
-          }}
-          aria-hidden="true"
-        >
-          <div className="tab-indicator-glass" aria-hidden="true" />
-        </div>
-        {TABS.map((tab, index) => (
-          <button
-            key={tab.id}
-            ref={(el) => { tabRefs.current[index] = el }}
-            type="button"
-            className={`tab-liquid-item ${active === tab.id ? 'active' : ''}`}
-            onClick={() => onChange(tab.id)}
-            aria-current={active === tab.id ? 'page' : undefined}
+        <div className="tab-bar-liquid-content">
+          <div
+            className="tab-indicator"
+            style={{
+              width: indicator.width,
+              transform: `translateX(${indicator.x}px)`,
+            }}
+            aria-hidden="true"
           >
-            <TabIcon name={tab.icon} active={active === tab.id} />
-            <span>{tab.label}</span>
-          </button>
-        ))}
+            <div className="tab-indicator-glass" aria-hidden="true" />
+          </div>
+          {TABS.map((tab, index) => (
+            <button
+              key={tab.id}
+              ref={(el) => { tabRefs.current[index] = el }}
+              type="button"
+              className={`tab-liquid-item ${active === tab.id ? 'active' : ''}`}
+              onClick={() => onChange(tab.id)}
+              aria-current={active === tab.id ? 'page' : undefined}
+            >
+              <TabIcon name={tab.icon} active={active === tab.id} />
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
       </nav>
 
       <button

@@ -50,18 +50,20 @@
 .screen-sticky-blur {
   position: absolute;
   inset: 0;
+  z-index: 0;
   opacity: var(--nav-reveal);
   background: var(--nav-chrome-bg);
   backdrop-filter: var(--liquid-glass-blur);
   -webkit-backdrop-filter: var(--liquid-glass-blur);
   border-bottom: 0.5px solid color-mix(in srgb, var(--border-subtle) calc(var(--nav-reveal) * 100%), transparent);
   pointer-events: none;
-  transition: bottom 0.18s var(--spring);
+  transition: bottom 0.18s var(--spring), opacity 0.18s var(--spring);
 }
 
 .screen-scroll[data-unified-chrome] .screen-sticky-blur {
   border-bottom: none;
   bottom: calc(-1 * var(--toolbar-chrome-height, 0px));
+  opacity: 1;
 }
 
 .screen-scroll[data-unified-chrome] .screen-sticky-edge {
@@ -95,6 +97,32 @@
   opacity: var(--nav-reveal);
   transform: translate3d(0, calc((1 - var(--nav-reveal)) * 4px), 0);
   pointer-events: none;
+}
+
+.screen-sticky-chrome[data-revealed] .screen-sticky-row-compact::before {
+  opacity: 1;
+}
+
+.screen-sticky-row-compact::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  left: -16px;
+  right: -16px;
+  z-index: -1;
+  opacity: var(--nav-reveal);
+  background: var(--nav-chrome-bg);
+  backdrop-filter: var(--liquid-glass-blur);
+  -webkit-backdrop-filter: var(--liquid-glass-blur);
+  pointer-events: none;
+}
+
+.screen-scroll[data-unified-chrome] .screen-sticky-row-compact {
+  opacity: 1;
+}
+
+.screen-scroll[data-unified-chrome] .screen-sticky-row-compact::before {
+  opacity: 1;
 }
 
 .screen-sticky-side {
