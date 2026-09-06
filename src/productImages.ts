@@ -44,6 +44,7 @@ export async function fetchProductImages(
   url.searchParams.set('gsrnamespace', '6')
   url.searchParams.set('gsrlimit', '4')
   url.searchParams.set('prop', 'imageinfo')
+  url.searchParams.set('iiprop', 'url')
   url.searchParams.set('iiurlwidth', '320')
   if (offset > 0) url.searchParams.set('gsroffset', String(offset))
 
