@@ -468,6 +468,8 @@ a {
 
 .field {
   margin-bottom: 16px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .field-search {
@@ -525,12 +527,21 @@ a {
 .field textarea,
 .field select {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: 10px 12px;
   background: var(--bg-elevated);
   border-radius: var(--radius-sm);
   border: 0.5px solid var(--border-subtle);
   font-size: 16px;
   transition: border-color 0.15s;
+}
+
+.field input[type='date'] {
+  display: block;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .field input:focus,

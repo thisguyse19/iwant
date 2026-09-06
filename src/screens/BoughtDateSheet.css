@@ -24,3 +24,20 @@
 .bought-date-chip:active {
   opacity: 0.7;
 }
+
+.bought-date-field {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.bought-date-input {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.bought-date-input::-webkit-date-and-time-value {
+  text-align: left;
+}
