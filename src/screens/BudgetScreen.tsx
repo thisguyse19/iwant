@@ -1,4 +1,4 @@
-import { useMemo, useState, type KeyboardEvent } from 'react'
+import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { compareMonths, getCurrentMonth, getRecentMonths, shiftMonth } from '../budget'
 import { budgetNoBudgetCopy, withinReachEmptyLine, withinReachLine } from '../copy'
 import {
@@ -188,6 +188,8 @@ export function BudgetScreen() {
   const [logSheetOpen, setLogSheetOpen] = useState(false)
   const [logExpense, setLogExpense] = useState<FixedExpense | null>(null)
   const [logDraft, setLogDraft] = useState<LogDraft | null>(null)
+  const [recurringExpanded, setRecurringExpanded] = useState(false)
+  const logSpendSelectRef = useRef<HTMLSelectElement>(null)
 
   const fixedTemplates = useMemo(
     () =>
@@ -196,6 +198,25 @@ export function BudgetScreen() {
       ),
     [settings.fixedExpenses],
   )
+
+  const budgetedRecurring = useMemo(
+    () => fixedTemplates.filter((expense) => normalizeFixedExpense(expense).kind === 'budgeted'),
+    [fixedTemplates],
+  )
+
+  const recurringSummary = useMemo(() => {
+    let total = 0
+    for (const expense of fixedTemplates) {
+      const e = normalizeFixedExpense(expense)
+      const periodTotal = getFixedExpensePeriodTotal(e, summary.period)
+      if (e.kind === 'budgeted') {
+        total += getBudgetedExpenseSpent(e, summary.period, settings.recurringActuals ?? [])
+      } else {
+        total += periodTotal
+      }
+    }
+    return { count: fixedTemplates.length, total }
+  }, [fixedTemplates, summary.period, settings.recurringActuals])
 
   const monthOptions = useMemo(() => getRecentMonths(8), [])
   const canGoForward = compareMonths(selectedMonth, getCurrentMonth()) < 0
@@ -292,6 +313,27 @@ export function BudgetScreen() {
       amount: String(target.amount),
     })
     setLogSheetOpen(true)
+  }
+
+  const openLogSpendPicker = () => {
+    const select = logSpendSelectRef.current
+    if (!select || budgetedRecurring.length === 0) return
+    vibrateTap()
+    if (typeof select.showPicker === 'function') {
+      try {
+        select.showPicker()
+        return
+      } catch {
+        // showPicker can throw if not user-gesture; fall back below
+      }
+    }
+    select.click()
+  }
+
+  const onLogSpendPick = (expenseId: string) => {
+    if (!expenseId) return
+    const expense = budgetedRecurring.find((e) => e.id === expenseId)
+    if (expense) openLogSpend(expense)
   }
 
   const closeLogSheet = () => {
@@ -776,15 +818,81 @@ export function BudgetScreen() {
 
         <section className="budget-section">
           <div className="budget-fixed-header">
-            <h2 className="section-label">Recurring</h2>
-            <button type="button" className="budget-fixed-add haptic-skip" onClick={() => activateBudgetRow(openFixedAdd)}>
-              Add
-            </button>
+            {recurringExpanded ? (
+              <button
+                type="button"
+                className="budget-section-collapse haptic-skip"
+                onClick={() => {
+                  vibrateTap()
+                  setRecurringExpanded(false)
+                }}
+                aria-expanded="true"
+              >
+                <h2 className="section-label">Recurring</h2>
+                <svg className="budget-section-chevron" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                  <path d="M3 9l4-4 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                </svg>
+              </button>
+            ) : (
+              <h2 className="section-label">Recurring</h2>
+            )}
+            <div className="budget-fixed-header-actions">
+              {!recurringExpanded && budgetedRecurring.length > 0 && (
+                <>
+                  <button
+                    type="button"
+                    className="budget-log-spend-picker-btn haptic-skip"
+                    onClick={openLogSpendPicker}
+                  >
+                    Log spend
+                  </button>
+                  <select
+                    ref={logSpendSelectRef}
+                    className="budget-log-select-native"
+                    defaultValue=""
+                    onChange={(e) => {
+                      const id = e.target.value
+                      e.target.value = ''
+                      onLogSpendPick(id)
+                    }}
+                    aria-hidden="true"
+                    tabIndex={-1}
+                  >
+                    <option value="" disabled>Log spend for…</option>
+                    {budgetedRecurring.map((expense) => (
+                      <option key={expense.id} value={expense.id}>{expense.name}</option>
+                    ))}
+                  </select>
+                </>
+              )}
+              <button type="button" className="budget-fixed-add haptic-skip" onClick={() => activateBudgetRow(openFixedAdd)}>
+                Add
+              </button>
+            </div>
           </div>
           {fixedTemplates.length === 0 ? (
             <p className="budget-fixed-empty">
               Fixed bills like Netflix, or budgeted allowances like food. Budgeted amounts accrue by default; log spend to override a day, week, or month.
             </p>
+          ) : !recurringExpanded ? (
+            <div
+              role="button"
+              tabIndex={0}
+              className="budget-recurring-collapsed haptic-skip"
+              onClick={() => activateBudgetRow(() => setRecurringExpanded(true))}
+              onKeyDown={(e) => onBudgetRowKeyDown(e, () => setRecurringExpanded(true))}
+              aria-expanded="false"
+            >
+              <span className="budget-recurring-collapsed-label">
+                {recurringSummary.count} recurring
+              </span>
+              <span className="budget-recurring-collapsed-amount">
+                {formatPrice(recurringSummary.total, summary.currency)}
+              </span>
+              <svg className="budget-section-chevron" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              </svg>
+            </div>
           ) : (
             <div className="budget-fixed-list">
               {fixedTemplates.map((expense) => {
