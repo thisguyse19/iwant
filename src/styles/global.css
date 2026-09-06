@@ -179,6 +179,12 @@ a {
   text-overflow: ellipsis;
 }
 
+.item-bought-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
 .item-meta {
   font-size: 13px;
   color: var(--text-secondary);

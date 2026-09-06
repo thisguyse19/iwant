@@ -9,9 +9,15 @@ import {
 } from 'react'
 import * as db from './db'
 import type { AppSettings, Basket, CategoryFilter, CategoryId, Priority, WishlistItem } from './types'
-import type { MonthRef } from './budget'
-import { summarizeBudgetPeriod } from './budget'
+import { summarizeBudgetPeriod, type MonthRef } from './budget'
 import { PRIORITY_ORDER } from './types'
+
+interface BoughtPrompt {
+  mode: 'item' | 'basket'
+  itemId?: string
+  basketId?: string
+  label: string
+}
 
 interface AppState {
   items: WishlistItem[]
@@ -27,6 +33,7 @@ interface AppState {
   selectionMode: boolean
   selectedIds: Set<string>
   basketCreatePending: boolean
+  boughtPrompt: BoughtPrompt | null
   setCategoryFilter: (filter: CategoryFilter) => void
   setAddOpen: (open: boolean, basketId?: string | null) => void
   setViewingItem: (item: WishlistItem | null) => void
@@ -37,6 +44,10 @@ interface AppState {
   selectAll: (ids: string[]) => void
   clearSelection: () => void
   setBasketCreatePending: (pending: boolean) => void
+  requestMarkBought: (item: WishlistItem) => void
+  requestMarkBasketBought: (basketId: string, label: string) => void
+  confirmMarkBought: (boughtAt: number) => Promise<void>
+  cancelMarkBought: () => void
   openEdit: (item: WishlistItem) => void
   addItem: (data: {
     title: string
@@ -54,7 +65,7 @@ interface AppState {
   addBasket: (name: string) => Promise<Basket>
   updateBasket: (id: string, patch: Partial<Basket>) => Promise<void>
   removeBasket: (id: string) => Promise<void>
-  markBasketBought: (basketId: string) => Promise<void>
+  markBasketBought: (basketId: string, boughtAt?: number) => Promise<void>
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>
   refresh: () => Promise<void>
   exportData: () => Promise<string>
@@ -89,6 +100,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [selectionMode, setSelectionModeState] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [basketCreatePending, setBasketCreatePendingState] = useState(false)
+  const [boughtPrompt, setBoughtPrompt] = useState<BoughtPrompt | null>(null)
 
   const refresh = useCallback(async () => {
     const [loadedItems, loadedBaskets, loadedSettings] = await Promise.all([
@@ -188,11 +200,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async (id: string, patch: Partial<WishlistItem>) => {
       const existing = items.find((i) => i.id === id)
       if (!existing) return
+      let boughtAt = existing.boughtAt
+      if (patch.status === 'bought') {
+        boughtAt = patch.boughtAt ?? Date.now()
+      } else if (patch.status !== undefined) {
+        boughtAt = undefined
+      } else if (patch.boughtAt != null) {
+        boughtAt = patch.boughtAt
+      }
       const updated: WishlistItem = {
         ...existing,
         ...patch,
+        boughtAt,
         updatedAt: Date.now(),
-        boughtAt: patch.status === 'bought' ? Date.now() : existing.boughtAt,
       }
       await db.saveItem(updated)
       await refresh()
@@ -251,7 +271,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const markBasketBought = useCallback(
-    async (basketId: string) => {
+    async (basketId: string, boughtAt?: number) => {
+      const ts = boughtAt ?? Date.now()
       const basketItems = items.filter(
         (i) => i.basketId === basketId && (i.status === 'queued' || i.status === 'ready'),
       )
@@ -259,13 +280,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
         await db.saveItem({
           ...item,
           status: 'bought',
-          boughtAt: Date.now(),
+          boughtAt: ts,
           updatedAt: Date.now(),
         })
       }
       await refresh()
     },
     [items, refresh],
+  )
+
+  const requestMarkBought = useCallback((item: WishlistItem) => {
+    if (item.status === 'bought') return
+    setBoughtPrompt({ mode: 'item', itemId: item.id, label: item.title })
+  }, [])
+
+  const requestMarkBasketBought = useCallback((basketId: string, label: string) => {
+    setBoughtPrompt({ mode: 'basket', basketId, label })
+  }, [])
+
+  const cancelMarkBought = useCallback(() => {
+    setBoughtPrompt(null)
+  }, [])
+
+  const confirmMarkBought = useCallback(
+    async (boughtAt: number) => {
+      if (!boughtPrompt) return
+      const prompt = boughtPrompt
+      setBoughtPrompt(null)
+      if (prompt.mode === 'item' && prompt.itemId) {
+        await updateItem(prompt.itemId, { status: 'bought', boughtAt })
+      } else if (prompt.mode === 'basket' && prompt.basketId) {
+        await markBasketBought(prompt.basketId, boughtAt)
+      }
+    },
+    [boughtPrompt, updateItem, markBasketBought],
   )
 
   const updateSettings = useCallback(
@@ -303,6 +351,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       selectionMode,
       selectedIds,
       basketCreatePending,
+      boughtPrompt,
       setCategoryFilter,
       setAddOpen,
       setViewingItem,
@@ -313,6 +362,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       selectAll,
       clearSelection,
       setBasketCreatePending,
+      requestMarkBought,
+      requestMarkBasketBought,
+      confirmMarkBought,
+      cancelMarkBought,
       openEdit,
       addItem,
       updateItem,
@@ -340,7 +393,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       selectionMode,
       selectedIds,
       basketCreatePending,
+      boughtPrompt,
       setAddOpen,
+      requestMarkBought,
+      requestMarkBasketBought,
+      confirmMarkBought,
+      cancelMarkBought,
       openEdit,
       addItem,
       updateItem,

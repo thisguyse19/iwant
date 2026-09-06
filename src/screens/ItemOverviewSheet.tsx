@@ -1,17 +1,17 @@
 import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
 import { getCategory } from '../types'
-import { daysSince, formatPriceOptional, vibrate } from '../utils'
+import { daysSince, formatBoughtDate, formatPriceOptional, vibrate } from '../utils'
 
 export function ItemOverviewSheet() {
-  const { viewingItem, setViewingItem, openEdit, updateItem, removeItem, baskets } = useApp()
+  const { viewingItem, setViewingItem, openEdit, requestMarkBought, removeItem, baskets } = useApp()
 
   const close = () => setViewingItem(null)
 
-  const handleBought = async () => {
+  const handleBought = () => {
     if (!viewingItem) return
     vibrate()
-    await updateItem(viewingItem.id, { status: 'bought' })
+    requestMarkBought(viewingItem)
     close()
   }
 
@@ -80,6 +80,12 @@ export function ItemOverviewSheet() {
           <span>On list</span>
           <span>{days === 0 ? 'Today' : `${days} day${days > 1 ? 's' : ''}`}</span>
         </div>
+        {viewingItem.status === 'bought' && viewingItem.boughtAt != null && (
+          <div className="detail-meta-row">
+            <span>Purchased</span>
+            <span>{formatBoughtDate(viewingItem.boughtAt)}</span>
+          </div>
+        )}
       </div>
 
       {viewingItem.notes && (

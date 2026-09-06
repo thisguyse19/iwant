@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, type TransitionEvent } from 'react'
 import { getCategory, PRIORITY_PILL, type WishlistItem } from '../types'
-import { formatPriceOptional } from '../utils'
+import { formatPriceOptional, formatBoughtDate } from '../utils'
 import './CategoryPicker.css'
 
 interface ItemRowProps {
@@ -11,6 +11,7 @@ interface ItemRowProps {
   selectable?: boolean
   selected?: boolean
   onToggleSelect?: () => void
+  showBoughtDate?: boolean
 }
 
 const ACTION_WIDTH = 68
@@ -25,6 +26,7 @@ export function ItemRow({
   selectable = false,
   selected = false,
   onToggleSelect,
+  showBoughtDate = false,
 }: ItemRowProps) {
   const category = getCategory(item.category)
   const priorityPill = item.priority === 'high' ? PRIORITY_PILL.high : null
@@ -219,6 +221,9 @@ export function ItemRow({
           )}
           <div className="item-content">
             <div className="item-title">{item.title}</div>
+            {showBoughtDate && item.status === 'bought' && item.boughtAt != null && (
+              <div className="item-bought-date">{formatBoughtDate(item.boughtAt)}</div>
+            )}
             {(category || priorityPill) && (
               <div className="item-pills">
                 {category && (
