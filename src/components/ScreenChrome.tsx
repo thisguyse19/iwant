@@ -29,6 +29,7 @@ export function ScreenChrome({
 }: ScreenChromeProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const chromeRef = useRef<HTMLElement>(null)
+  const toolbarRef = useRef<HTMLDivElement>(null)
   const rafRef = useRef<number | null>(null)
 
   useEffect(() => {
@@ -44,13 +45,24 @@ export function ScreenChrome({
       const reveal = Math.min(1, Math.max(0, scrollEl.scrollTop / REVEAL_RANGE))
 
       if (!useScrollTimeline) {
-        chromeEl.style.setProperty('--nav-reveal', reveal.toFixed(4))
+        scrollEl.style.setProperty('--nav-reveal', reveal.toFixed(4))
       }
 
       if (reveal > 0.55) {
         chromeEl.dataset.revealed = ''
       } else {
         delete chromeEl.dataset.revealed
+      }
+
+      const toolbarEl = toolbarRef.current
+      if (toolbarEl) {
+        const stickyTop = toolbarEl.getBoundingClientRect().top
+        const anchorTop = chromeEl.getBoundingClientRect().bottom
+        if (stickyTop <= anchorTop + 1) {
+          toolbarEl.dataset.stuck = ''
+        } else {
+          delete toolbarEl.dataset.stuck
+        }
       }
     }
 
@@ -120,7 +132,12 @@ export function ScreenChrome({
           {subtitle && <p className="screen-hero-subtitle">{subtitle}</p>}
         </div>
 
-        {toolbar && <div className="screen-toolbar-sticky">{toolbar}</div>}
+        {toolbar && (
+          <div className="screen-toolbar-sticky" ref={toolbarRef}>
+            <div className="screen-toolbar-blur" aria-hidden="true" />
+            <div className="screen-toolbar-content">{toolbar}</div>
+          </div>
+        )}
 
         <div className="screen-body">{children}</div>
       </div>

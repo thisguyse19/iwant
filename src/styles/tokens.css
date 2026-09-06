@@ -33,7 +33,8 @@
   --tab-bar-gap: 10px;
   --tab-bar-pad: 6px;
   --tab-bar-radius: 29px;
-  --tab-bar-clearance: calc(var(--tab-bar-float) + var(--tab-bar-pill-h) + 20px);
+  --tab-bar-clearance: calc(var(--tab-bar-float) + var(--tab-bar-pill-h) + 24px);
+  --screen-bottom-inset: calc(var(--tab-bar-clearance) + var(--safe-bottom));
   --tab-height: var(--tab-bar-clearance);
   --tab-inactive: rgba(60, 60, 67, 0.55);
   --tab-active: var(--accent);
