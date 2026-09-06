@@ -83,6 +83,19 @@ export interface BudgetSpendUnit {
   amount: number
   isOverride: boolean
   overrideId?: string
+  /** Default was reduced to stay within period allowance (catch-up). */
+  isCatchUpDefault?: boolean
+}
+
+export interface BudgetCatchUpState {
+  periodAllowance: number
+  spent: number
+  /** Amount ahead of the linear share of allowance through elapsed units. */
+  overAmount: number
+  isOver: boolean
+  isCatchingUp: boolean
+  /** Catch-up default for the next unit (null if period complete). */
+  nextUnitAmount: number | null
 }
 
 const MS_PER_DAY = 86400000
@@ -202,6 +215,7 @@ function buildSpendUnit(
   label: string,
   startMs: number,
   defaultAmount: number,
+  baseAmount: number,
 ): BudgetSpendUnit {
   const override = overrides.get(key)
   return {
@@ -212,30 +226,67 @@ function buildSpendUnit(
     amount: override?.amount ?? defaultAmount,
     isOverride: override != null,
     overrideId: override?.id,
+    isCatchUpDefault: override == null && defaultAmount < baseAmount - 0.001,
   }
 }
 
-export function getBudgetSpendUnits(
+function countBudgetUnitsInPeriod(
   expense: FixedExpense,
   period: FixedExpensePeriodContext,
-  actuals: RecurringExpenseActual[],
-  now = Date.now(),
-): BudgetSpendUnit[] {
+): number {
   const e = normalizeFixedExpense(expense)
-  if (e.kind !== 'budgeted') return []
+  switch (e.interval) {
+    case 'day':
+      return period.daysInPeriod
+    case 'week':
+      return Math.ceil(period.daysInPeriod / 7)
+    case 'month':
+      return countMonthOccurrences(e, period)
+    case 'year':
+      return countYearOccurrences(e, period)
+    default:
+      return 1
+  }
+}
 
-  const overrides = overrideMapForExpense(e, actuals, period.startMs)
+function computeCatchUpDefault(
+  baseAmount: number,
+  periodTotal: number,
+  runningSpent: number,
+  unitIndex: number,
+  totalUnits: number,
+): number {
+  const remainingUnits = totalUnits - unitIndex
+  if (remainingUnits <= 0) return baseAmount
+  const remainingBudget = periodTotal - runningSpent
+  const rate = remainingBudget / remainingUnits
+  return Math.max(0, Math.min(baseAmount, rate))
+}
+
+interface BudgetUnitDef {
+  key: string
+  label: string
+  startMs: number
+}
+
+function getElapsedBudgetUnitDefs(
+  expense: FixedExpense,
+  period: FixedExpensePeriodContext,
+  now = Date.now(),
+): BudgetUnitDef[] {
+  const e = normalizeFixedExpense(expense)
   const elapsedDays = elapsedDaysInPeriod(period, now)
-  const units: BudgetSpendUnit[] = []
+  const defs: BudgetUnitDef[] = []
 
   switch (e.interval) {
     case 'day':
       for (let d = 0; d < elapsedDays; d++) {
         const startMs = period.startMs + d * MS_PER_DAY
-        const key = recurringActualUnitKey(e, startMs, period.startMs)
-        units.push(
-          buildSpendUnit(overrides, key, formatDayUnitLabel(startMs), startMs, e.amount),
-        )
+        defs.push({
+          key: recurringActualUnitKey(e, startMs, period.startMs),
+          label: formatDayUnitLabel(startMs),
+          startMs,
+        })
       }
       break
     case 'week': {
@@ -246,16 +297,11 @@ export function getBudgetSpendUnits(
           : 0
       for (let w = 0; w < elapsedWeeks; w++) {
         const startMs = period.startMs + w * 7 * MS_PER_DAY
-        const key = recurringActualUnitKey(e, startMs, period.startMs)
-        units.push(
-          buildSpendUnit(
-            overrides,
-            key,
-            formatWeekUnitLabel(period.startMs, w),
-            startMs,
-            e.amount,
-          ),
-        )
+        defs.push({
+          key: recurringActualUnitKey(e, startMs, period.startMs),
+          label: formatWeekUnitLabel(period.startMs, w),
+          startMs,
+        })
       }
       break
     }
@@ -273,12 +319,14 @@ export function getBudgetSpendUnits(
         } else if (dueAt >= now) {
           continue
         }
-        const key = recurringActualUnitKey(e, dueAt, period.startMs)
-        const label = new Date(dueAt).toLocaleDateString(undefined, {
-          month: 'long',
-          day: 'numeric',
+        defs.push({
+          key: recurringActualUnitKey(e, dueAt, period.startMs),
+          label: new Date(dueAt).toLocaleDateString(undefined, {
+            month: 'long',
+            day: 'numeric',
+          }),
+          startMs: dueAt,
         })
-        units.push(buildSpendUnit(overrides, key, label, dueAt, e.amount))
       }
       break
     case 'year':
@@ -288,17 +336,92 @@ export function getBudgetSpendUnits(
         } else if (dueAt >= now) {
           continue
         }
-        const key = recurringActualUnitKey(e, dueAt, period.startMs)
-        const label = new Date(dueAt).toLocaleDateString(undefined, {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
+        defs.push({
+          key: recurringActualUnitKey(e, dueAt, period.startMs),
+          label: new Date(dueAt).toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          }),
+          startMs: dueAt,
         })
-        units.push(buildSpendUnit(overrides, key, label, dueAt, e.amount))
       }
       break
     default:
       break
+  }
+
+  return defs
+}
+
+export function getBudgetCatchUpState(
+  expense: FixedExpense,
+  period: FixedExpensePeriodContext,
+  actuals: RecurringExpenseActual[],
+  now = Date.now(),
+): BudgetCatchUpState {
+  const e = normalizeFixedExpense(expense)
+  const empty: BudgetCatchUpState = {
+    periodAllowance: 0,
+    spent: 0,
+    overAmount: 0,
+    isOver: false,
+    isCatchingUp: false,
+    nextUnitAmount: null,
+  }
+  if (e.kind !== 'budgeted') return empty
+
+  const periodAllowance = getFixedExpensePeriodTotal(e, period)
+  const units = getBudgetSpendUnits(e, period, actuals, now)
+  const spent = units.reduce((sum, unit) => sum + unit.amount, 0)
+  const totalUnits = countBudgetUnitsInPeriod(e, period)
+  const elapsedUnits = units.length
+  const elapsedAllowance = totalUnits > 0 ? periodAllowance * (elapsedUnits / totalUnits) : 0
+  const overAmount = Math.max(0, spent - elapsedAllowance, spent - periodAllowance)
+
+  let nextUnitAmount: number | null = null
+  if (elapsedUnits < totalUnits) {
+    const remainingUnits = totalUnits - elapsedUnits
+    const remainingBudget = periodAllowance - spent
+    nextUnitAmount = Math.max(0, Math.min(e.amount, remainingBudget / remainingUnits))
+  }
+
+  const isCatchingUp = units.some((u) => u.isCatchUpDefault)
+    || (nextUnitAmount != null && nextUnitAmount < e.amount - 0.001)
+
+  return {
+    periodAllowance,
+    spent,
+    overAmount,
+    isOver: overAmount > 0.001,
+    isCatchingUp,
+    nextUnitAmount,
+  }
+}
+
+export function getBudgetSpendUnits(
+  expense: FixedExpense,
+  period: FixedExpensePeriodContext,
+  actuals: RecurringExpenseActual[],
+  now = Date.now(),
+): BudgetSpendUnit[] {
+  const e = normalizeFixedExpense(expense)
+  if (e.kind !== 'budgeted') return []
+
+  const overrides = overrideMapForExpense(e, actuals, period.startMs)
+  const defs = getElapsedBudgetUnitDefs(e, period, now)
+  const periodTotal = getFixedExpensePeriodTotal(e, period)
+  const totalUnits = countBudgetUnitsInPeriod(e, period)
+
+  let runningSpent = 0
+  const units: BudgetSpendUnit[] = []
+
+  for (let i = 0; i < defs.length; i++) {
+    const def = defs[i]
+    const catchUpDefault = computeCatchUpDefault(e.amount, periodTotal, runningSpent, i, totalUnits)
+    const unit = buildSpendUnit(overrides, def.key, def.label, def.startMs, catchUpDefault, e.amount)
+    runningSpent += unit.amount
+    units.push(unit)
   }
 
   return units
@@ -343,6 +466,30 @@ export function formatBudgetUnitIntervalLabel(
       label = 'period'
   }
   return capitalize ? `${label.charAt(0).toUpperCase()}${label.slice(1)}` : label
+}
+
+export function formatBudgetCatchUpHint(
+  state: BudgetCatchUpState,
+  expense: FixedExpense,
+  currency: string,
+): string | null {
+  if (!state.isOver && !state.isCatchingUp) return null
+  const e = normalizeFixedExpense(expense)
+  const intervalShort = FIXED_INTERVAL_SHORT[e.interval]
+
+  if (state.isOver) {
+    let hint = `${formatPrice(state.overAmount, currency)} over budget`
+    if (state.nextUnitAmount != null && state.nextUnitAmount < e.amount - 0.001) {
+      hint += ` — catching up at ${formatPrice(state.nextUnitAmount, currency)}/${intervalShort}`
+    }
+    return hint
+  }
+
+  if (state.nextUnitAmount != null && state.nextUnitAmount < e.amount - 0.001) {
+    return `Next ${intervalShort} defaults to ${formatPrice(state.nextUnitAmount, currency)} to stay within allowance`
+  }
+
+  return null
 }
 
 export function getFixedExpensePeriodTotal(expense: FixedExpense, period: FixedExpensePeriodContext): number {
