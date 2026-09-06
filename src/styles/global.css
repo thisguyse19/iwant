@@ -69,8 +69,9 @@ a {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: calc(12px + var(--safe-top)) 16px calc(var(--tab-height) + var(--safe-bottom) + 16px);
-  scroll-padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 16px);
+  /* Content extends beneath floating Liquid Glass tab bar (Apple navigation layer) */
+  padding: calc(12px + var(--safe-top)) 16px calc(20px + var(--safe-bottom));
+  scroll-padding-bottom: calc(var(--tab-bar-clearance) + var(--safe-bottom));
 }
 
 .screen-header {
@@ -651,7 +652,7 @@ a {
 
 .update-banner {
   position: fixed;
-  bottom: calc(var(--tab-height) + var(--safe-bottom) + 8px);
+  bottom: calc(var(--tab-bar-clearance) + var(--safe-bottom) + 8px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 200;

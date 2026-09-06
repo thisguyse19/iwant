@@ -1,6 +1,6 @@
 .selection-bar-dock {
   position: fixed;
-  bottom: calc(var(--tab-height) + var(--safe-bottom) + 6px);
+  bottom: calc(var(--tab-bar-clearance) + var(--safe-bottom));
   left: 50%;
   transform: translateX(-50%);
   width: 100%;

@@ -1,6 +1,6 @@
 /* Budget screen: floating summary above tab bar (portaled to body) */
 .screen-budget {
-  padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 180px);
+  padding-bottom: calc(var(--tab-bar-clearance) + var(--safe-bottom) + 180px);
 }
 
 .budget-scroll {
@@ -9,7 +9,7 @@
 
 .budget-dock {
   position: fixed;
-  bottom: calc(var(--tab-height) + var(--safe-bottom) + 4px);
+  bottom: calc(var(--tab-bar-clearance) + var(--safe-bottom) + 4px);
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
