@@ -16,6 +16,7 @@ export function BasketDetailScreen() {
     updateItem,
     markBasketBought,
     removeBasket,
+    removeItem,
     items,
   } = useApp()
   const [closing, setClosing] = useState(false)
@@ -97,6 +98,7 @@ export function BasketDetailScreen() {
                 item={item}
                 onTap={() => setViewingItem(item)}
                 onMarkBought={() => updateItem(item.id, { status: 'bought' })}
+                onRemove={() => removeItem(item.id)}
               />
             ))}
           </div>

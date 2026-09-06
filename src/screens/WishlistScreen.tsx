@@ -8,7 +8,7 @@ import '../components/ItemRow.css'
 import './WishlistScreen.css'
 
 export function WishlistScreen() {
-  const { categoryFilter, setCategoryFilter, setAddOpen, setViewingItem, updateItem } = useApp()
+  const { categoryFilter, setCategoryFilter, setAddOpen, setViewingItem, updateItem, removeItem } = useApp()
   const filtered = useFilteredItems()
   const activeItems = useActiveItems()
   const listTotal = useListTotal(filtered)
@@ -69,7 +69,7 @@ export function WishlistScreen() {
 
       <div className="item-list">
         {filtered.length === 0 ? (
-          <div className="empty-state">
+          <div className="empty-state item-list-empty">
             <p>{categoryFilter === 'all' ? 'Nothing on your list.' : 'Nothing in this category.'}</p>
             <button type="button" className="text-btn" onClick={() => setAddOpen(true)}>
               Add something
@@ -82,6 +82,7 @@ export function WishlistScreen() {
               item={item}
               onTap={() => setViewingItem(item)}
               onMarkBought={() => handleMarkBought(item.id)}
+              onRemove={() => removeItem(item.id)}
             />
           ))
         )}

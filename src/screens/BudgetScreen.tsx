@@ -8,7 +8,7 @@ import '../components/ItemRow.css'
 import './BudgetScreen.css'
 
 export function BudgetScreen() {
-  const { settings, updateSettings, setViewingItem, updateItem } = useApp()
+  const { settings, updateSettings, setViewingItem, updateItem, removeItem } = useApp()
   const summary = useBudgetSummary()
   const [editOpen, setEditOpen] = useState(false)
   const [budgetInput, setBudgetInput] = useState('')
@@ -89,6 +89,7 @@ export function BudgetScreen() {
                     item={item}
                     onTap={() => setViewingItem(item)}
                     onMarkBought={() => updateItem(item.id, { status: 'bought' })}
+                    onRemove={() => removeItem(item.id)}
                   />
                 ))}
               </div>
@@ -105,6 +106,7 @@ export function BudgetScreen() {
                     item={item}
                     onTap={() => setViewingItem(item)}
                     onMarkBought={() => updateItem(item.id, { status: 'bought' })}
+                    onRemove={() => removeItem(item.id)}
                   />
                 ))}
               </div>

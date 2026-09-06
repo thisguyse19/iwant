@@ -77,7 +77,7 @@ a {
 }
 
 .screen-title {
-  font-size: 34px;
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -128,24 +128,36 @@ a {
 .item-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 0.5px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.item-row-swipe {
+  border-bottom: 0.5px solid var(--border-subtle);
+}
+
+.item-row-swipe:last-child {
+  border-bottom: none;
 }
 
 .item-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0;
   padding: 0;
   background: var(--bg-card);
-  border-radius: var(--radius-md);
-  border: 0.5px solid var(--border-subtle);
-  transition: transform 0.2s var(--spring), opacity 0.2s var(--spring);
+  border-radius: 0;
+  border: none;
+  transition: background 0.15s;
   position: relative;
   overflow: hidden;
 }
 
-.item-row:active {
-  transform: scale(0.985);
+.item-row-main:active {
+  background: var(--bg-elevated);
 }
 
 .item-thumb-placeholder {
@@ -159,8 +171,9 @@ a {
 }
 
 .item-title {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 500;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -176,7 +189,7 @@ a {
 }
 
 .item-price {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
@@ -185,7 +198,7 @@ a {
 .item-price.muted {
   color: var(--text-tertiary);
   font-weight: 400;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .empty-state {
@@ -268,19 +281,19 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
+  padding: 9px 12px;
   background: var(--bg-card);
   border-radius: var(--radius-md);
   border: 0.5px solid var(--border-subtle);
 }
 
 .total-bar-label {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-secondary);
 }
 
 .total-bar-amount {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -446,6 +459,44 @@ a {
   z-index: 5;
 }
 
+.open-page-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accent);
+  margin-top: 6px;
+  padding: 2px 0;
+}
+
+.open-page-link:active {
+  opacity: 0.6;
+}
+
+.item-list-empty {
+  background: transparent;
+  border: none;
+  padding: 32px 16px;
+}
+
+.item-list-empty.empty-state {
+  padding: 32px 16px;
+}
+
+.field-price-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.field-price-row .field {
+  flex: 1;
+  margin-bottom: 0;
+}
+
 .field label {
   display: block;
   font-size: 13px;
@@ -458,11 +509,11 @@ a {
 .field textarea,
 .field select {
   width: 100%;
-  padding: 12px 14px;
+  padding: 10px 12px;
   background: var(--bg-elevated);
   border-radius: var(--radius-sm);
   border: 0.5px solid var(--border-subtle);
-  font-size: 17px;
+  font-size: 16px;
   transition: border-color 0.15s;
 }
 
@@ -644,6 +695,53 @@ a {
 }
 
 /* Search autocomplete */
+.search-suggestions-inline {
+  list-style: none;
+  margin-top: 6px;
+  border-radius: var(--radius-sm);
+  border: 0.5px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+
+.search-suggestion-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 14px;
+  border-bottom: 0.5px solid var(--border-subtle);
+  transition: background 0.12s;
+}
+
+.search-suggestion-inline:last-child {
+  border-bottom: none;
+}
+
+.search-suggestion-inline:active {
+  background: var(--bg-card);
+}
+
+.search-suggestion-inline-title {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+.search-suggestion-inline-tag {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
 .search-suggestions {
   list-style: none;
   background: var(--bg-card);

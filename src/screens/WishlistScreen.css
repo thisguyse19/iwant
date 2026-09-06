@@ -1,5 +1,5 @@
 .header-subtitle {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--text-secondary);
   margin-top: 4px;
   font-variant-numeric: tabular-nums;
@@ -21,8 +21,8 @@
 
 .filter-chip {
   flex-shrink: 0;
-  padding: 7px 14px;
-  font-size: 13px;
+  padding: 6px 12px;
+  font-size: 12px;
   font-weight: 500;
   border-radius: 20px;
   background: var(--bg-elevated);

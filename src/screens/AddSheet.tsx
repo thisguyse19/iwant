@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useApp } from '../store'
 import { Sheet } from '../components/Sheet'
 import { SearchAutocomplete } from '../components/SearchAutocomplete'
@@ -19,7 +19,6 @@ export function AddSheet() {
   const [showMore, setShowMore] = useState(false)
   const [saving, setSaving] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
-  const searchAnchorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (addOpen && addBasketId) setBasketId(addBasketId)
@@ -66,6 +65,7 @@ export function AddSheet() {
       if (match?.category) setCategory(match.category)
       if (match?.price != null) setPrice(match.price.toString())
     }
+    setSearchFocused(false)
   }
 
   const handleSave = async () => {
@@ -85,11 +85,14 @@ export function AddSheet() {
     handleClose()
   }
 
+  const pageUrl = link.trim()
+    || (title.trim() ? `https://www.google.com/search?q=${encodeURIComponent(title.trim())}` : '')
+
   return (
     <Sheet open={addOpen} onClose={handleClose} title="Add to list" autoFocus>
       <div className="field field-search">
         <label htmlFor="add-title">What is it?</label>
-        <div className="field-with-action" ref={searchAnchorRef}>
+        <div className="field-with-action">
           <input
             id="add-title"
             type="text"
@@ -109,7 +112,6 @@ export function AddSheet() {
           query={title}
           visible={addOpen}
           focused={searchFocused}
-          anchorRef={searchAnchorRef}
           onSelect={handleSelectSuggestion}
         />
       </div>
@@ -125,18 +127,30 @@ export function AddSheet() {
         <CategoryPicker value={category} onChange={setCategory} />
       </div>
 
-      <div className="field">
-        <label htmlFor="add-price">Price</label>
-        <input
-          id="add-price"
-          type="number"
-          inputMode="decimal"
-          min="0"
-          step="any"
-          placeholder="Optional"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-        />
+      <div className="field-price-row">
+        <div className="field">
+          <label htmlFor="add-price">Price</label>
+          <input
+            id="add-price"
+            type="number"
+            inputMode="decimal"
+            min="0"
+            step="any"
+            placeholder="Optional"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+          />
+        </div>
+        {pageUrl && (
+          <a
+            href={pageUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="open-page-link"
+          >
+            Open page ↗
+          </a>
+        )}
       </div>
 
       {baskets.length > 0 && (

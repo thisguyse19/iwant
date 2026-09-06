@@ -1,7 +1,21 @@
 .basket-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 0.5px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.basket-list .basket-card {
+  border: none;
+  border-radius: 0;
+  border-bottom: 0.5px solid var(--border-subtle);
+}
+
+.basket-list .basket-card:last-child {
+  border-bottom: none;
 }
 
 .basket-card {
@@ -9,16 +23,16 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 16px;
+  padding: 11px 12px;
   background: var(--bg-card);
   border-radius: var(--radius-md);
   border: 0.5px solid var(--border-subtle);
   text-align: left;
-  transition: transform 0.15s var(--spring);
+  transition: background 0.15s;
 }
 
 .basket-card:active {
-  transform: scale(0.985);
+  background: var(--bg-elevated);
 }
 
 .basket-card-info {
@@ -28,7 +42,7 @@
 
 .basket-card-name {
   display: block;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -40,7 +54,7 @@
 }
 
 .basket-card-total {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
