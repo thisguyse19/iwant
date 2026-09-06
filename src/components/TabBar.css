@@ -1,5 +1,28 @@
 /* Tab bar — CSS glass on the same elements as content (no separate WebGL shells) */
 
+/* Fixed to viewport so pill + FAB stay aligned in iOS standalone PWA. */
+.tab-bar-root {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 520px;
+  z-index: 50;
+  pointer-events: none;
+  padding: 0 var(--tab-bar-h-inset) calc(var(--tab-bar-float) + var(--safe-bottom));
+  box-sizing: border-box;
+}
+
+.tab-bar-bottom-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--tab-bar-gap);
+  pointer-events: none;
+}
+
 .tab-bar-scroll-edge {
   position: absolute;
   left: 0;
@@ -27,11 +50,9 @@
 }
 
 .tab-bar-liquid {
-  position: absolute;
-  bottom: calc(var(--tab-bar-float) + var(--safe-bottom));
-  left: var(--tab-bar-h-inset);
-  right: calc(var(--tab-bar-h-inset) + var(--tab-bar-action-size) + var(--tab-bar-gap));
-  width: auto;
+  position: relative;
+  flex: 1;
+  min-width: 0;
   height: var(--tab-bar-pill-h);
   min-height: var(--tab-bar-pill-h);
   max-height: var(--tab-bar-pill-h);
@@ -145,9 +166,8 @@
 }
 
 .tab-action-liquid {
-  position: absolute;
-  bottom: calc(var(--tab-bar-float) + var(--safe-bottom));
-  right: var(--tab-bar-h-inset);
+  position: relative;
+  flex-shrink: 0;
   width: var(--tab-bar-action-size);
   height: var(--tab-bar-action-size);
   min-width: var(--tab-bar-action-size);
@@ -183,8 +203,8 @@
   min-width: 220px;
   padding: 7px;
   border-radius: 22px;
-  right: var(--tab-bar-h-inset);
-  bottom: calc(var(--tab-bar-float) + var(--safe-bottom) + var(--tab-bar-action-size) + 12px);
+  right: 0;
+  bottom: calc(100% + 12px);
   pointer-events: auto;
 }
 

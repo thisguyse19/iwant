@@ -14,6 +14,8 @@ const HOST_SELECTOR = [
 const SKIP_SELECTOR = [
   '.haptic-skip',
   '.haptic-switch-overlay',
+  '.tab-action-liquid',
+  '.tab-bar-liquid',
   'input:not(.haptic-switch-overlay)',
   'textarea',
   'select',
@@ -118,6 +120,7 @@ function attachIOSSwitchOverlay(host: HTMLElement) {
   if (shouldSkip(host)) return
 
   const style = window.getComputedStyle(host)
+  if (style.position === 'absolute' || style.position === 'fixed') return
   if (style.position === 'static') {
     host.style.position = 'relative'
   }
