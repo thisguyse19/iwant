@@ -1,16 +1,13 @@
 /* Tab bar — CSS glass on the same elements as content (no separate WebGL shells) */
 
-/* Fixed to viewport — tab bar does not rubberband with page scroll. */
+/* Absolute in .app-shell (not fixed) so scroll-edge stays scoped to content. */
 .tab-bar-chrome {
-  position: fixed;
+  position: absolute;
+  left: 0;
+  right: 0;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 520px;
   z-index: 50;
   pointer-events: none;
-  box-sizing: border-box;
 }
 
 .tab-bar-row {
