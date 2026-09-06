@@ -9,15 +9,17 @@ import {
   type RefObject,
 } from 'react'
 import { LiquidGlass } from '@ybouane/liquidglass'
-import { TAB_PILL_GLASS } from './config'
+import { pinGlassDimensions, TAB_PILL_GLASS } from './config'
 
 interface LiquidGlassContextValue {
   refresh: () => Promise<void>
+  markChanged: (element?: HTMLElement) => void
   enabled: boolean
 }
 
 const LiquidGlassContext = createContext<LiquidGlassContextValue>({
   refresh: async () => {},
+  markChanged: () => {},
   enabled: false,
 })
 
@@ -39,6 +41,10 @@ export function LiquidGlassProvider({
   const instanceRef = useRef<LiquidGlass | null>(null)
   const [enabled, setEnabled] = useState(false)
 
+  const markChanged = useCallback((element?: HTMLElement) => {
+    instanceRef.current?.markChanged(element)
+  }, [])
+
   const refresh = useCallback(async () => {
     const shell = shellRef.current
     if (!shell || prefersReducedGlass()) {
@@ -50,7 +56,17 @@ export function LiquidGlassProvider({
     }
 
     const glassElements = Array.from(shell.querySelectorAll<HTMLElement>('.liquid-glass-panel'))
-    if (!glassElements.length) return
+    if (!glassElements.length) {
+      instanceRef.current?.destroy()
+      instanceRef.current = null
+      shell.classList.remove('liquid-glass-active')
+      setEnabled(false)
+      return
+    }
+
+    for (const el of glassElements) {
+      pinGlassDimensions(el)
+    }
 
     instanceRef.current?.destroy()
 
@@ -63,13 +79,12 @@ export function LiquidGlassProvider({
       shell.classList.add('liquid-glass-active')
       setEnabled(true)
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          instanceRef.current?.markChanged()
-        })
+        instanceRef.current?.markChanged()
       })
     } catch (err) {
       console.warn('LiquidGlass init failed, using CSS fallback', err)
       shell.classList.remove('liquid-glass-active')
+      instanceRef.current = null
       setEnabled(false)
     }
   }, [shellRef])
@@ -88,6 +103,9 @@ export function LiquidGlassProvider({
     }
 
     const onResize = () => {
+      for (const el of shell.querySelectorAll<HTMLElement>('.liquid-glass-panel')) {
+        pinGlassDimensions(el)
+      }
       instanceRef.current?.markChanged()
     }
 
@@ -112,7 +130,7 @@ export function LiquidGlassProvider({
   }, [refresh, shellRef])
 
   return (
-    <LiquidGlassContext.Provider value={{ refresh, enabled }}>
+    <LiquidGlassContext.Provider value={{ refresh, markChanged, enabled }}>
       {children}
     </LiquidGlassContext.Provider>
   )
