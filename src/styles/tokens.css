@@ -3,6 +3,7 @@
 
   --font-display: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-body: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-amount: 'IBM Plex Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, monospace;
 
   /* Warm paper */
   --bg-base: #f7f4ef;
@@ -11,8 +12,8 @@
   --bg-card: #fffcf8;
   --bg-list: #fffdf9;
   --text-primary: #2a2826;
-  --text-secondary: rgba(42, 40, 38, 0.62);
-  --text-tertiary: rgba(42, 40, 38, 0.4);
+  --text-secondary: rgba(42, 40, 38, 0.72);
+  --text-tertiary: rgba(42, 40, 38, 0.5);
   --border-subtle: rgba(42, 36, 32, 0.09);
   --border-strong: rgba(42, 36, 32, 0.14);
   --accent: #3d5a6e;
@@ -123,8 +124,8 @@
     --bg-card: #1a1a1c;
     --bg-list: #161618;
     --text-primary: #f2f0ec;
-    --text-secondary: rgba(242, 240, 236, 0.62);
-    --text-tertiary: rgba(242, 240, 236, 0.38);
+    --text-secondary: rgba(242, 240, 236, 0.74);
+    --text-tertiary: rgba(242, 240, 236, 0.5);
     --border-subtle: rgba(255, 255, 255, 0.09);
     --border-strong: rgba(255, 255, 255, 0.13);
     --accent: #8eb4d4;
@@ -231,6 +232,15 @@
   --liquid-glass-tint: rgba(74, 107, 82, 0.06);
 }
 
+:root[data-accent='pride'] {
+  --accent: #8a5a82;
+  --accent-pressed: #734a6c;
+  --accent-soft: rgba(138, 90, 130, 0.12);
+  --ready-stripe: #8a5a82;
+  --interval-month: #8a5a82;
+  --liquid-glass-tint: rgba(138, 90, 130, 0.05);
+}
+
 @media (prefers-color-scheme: dark) {
   :root[data-accent='terracotta'] {
     --accent: #e09068;
@@ -244,5 +254,12 @@
     --accent-pressed: #92b89a;
     --accent-soft: rgba(122, 159, 130, 0.14);
     --interval-month: #7a9f82;
+  }
+
+  :root[data-accent='pride'] {
+    --accent: #c49ab8;
+    --accent-pressed: #d4aac8;
+    --accent-soft: rgba(196, 154, 184, 0.14);
+    --interval-month: #c49ab8;
   }
 }
