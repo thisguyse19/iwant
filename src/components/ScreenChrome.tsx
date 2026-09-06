@@ -1,14 +1,7 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-  type ReactNode,
-} from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import './ScreenChrome.css'
 
-const COLLAPSE_RANGE = 72
+const REVEAL_RANGE = 72
 
 export interface ScreenBackAction {
   label: string
@@ -35,91 +28,99 @@ export function ScreenChrome({
   children,
 }: ScreenChromeProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
-  const [collapse, setCollapse] = useState(0)
-
-  const updateCollapse = useCallback(() => {
-    const el = scrollRef.current
-    if (!el) return
-    const next = Math.min(1, Math.max(0, el.scrollTop / COLLAPSE_RANGE))
-    setCollapse((prev) => (Math.abs(prev - next) < 0.01 ? prev : next))
-  }, [])
+  const chromeRef = useRef<HTMLElement>(null)
+  const rafRef = useRef<number | null>(null)
 
   useEffect(() => {
-    const el = scrollRef.current
-    if (!el) return
-    updateCollapse()
-    el.addEventListener('scroll', updateCollapse, { passive: true })
-    return () => el.removeEventListener('scroll', updateCollapse)
-  }, [updateCollapse])
+    const scrollEl = scrollRef.current
+    const chromeEl = chromeRef.current
+    if (!scrollEl || !chromeEl) return
 
-  const chromeStyle = { '--nav-collapse': collapse } as CSSProperties
-  const collapsed = collapse > 0.92
-  const showCompactBack = back && collapse > 0.35
-  const showLargeBack = back && collapse <= 0.35
+    // Scroll-driven CSS handles reveal when supported; JS only for fallback + pointer-events.
+    const useScrollTimeline = CSS.supports('animation-timeline', 'scroll()')
+
+    const applyReveal = () => {
+      rafRef.current = null
+      const reveal = Math.min(1, Math.max(0, scrollEl.scrollTop / REVEAL_RANGE))
+
+      if (!useScrollTimeline) {
+        chromeEl.style.setProperty('--nav-reveal', reveal.toFixed(4))
+      }
+
+      if (reveal > 0.55) {
+        chromeEl.dataset.revealed = ''
+      } else {
+        delete chromeEl.dataset.revealed
+      }
+    }
+
+    const onScroll = () => {
+      if (rafRef.current != null) return
+      rafRef.current = requestAnimationFrame(applyReveal)
+    }
+
+    applyReveal()
+    scrollEl.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      scrollEl.removeEventListener('scroll', onScroll)
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current)
+    }
+  }, [])
 
   return (
     <div className={`screen-layout screen-enter ${className}`.trim()}>
       <div className="screen-scroll" ref={scrollRef}>
-        <header
-          className="screen-sticky-chrome"
-          style={chromeStyle}
-          data-scrolled={collapse > 0.04 ? '' : undefined}
-          data-collapsed={collapsed ? '' : undefined}
-        >
+        <header className="screen-sticky-chrome" ref={chromeRef}>
           <div className="screen-sticky-blur" aria-hidden="true" />
           <div className="screen-sticky-edge" aria-hidden="true" />
 
           <div className="screen-sticky-row screen-sticky-row-compact">
-            {showCompactBack ? (
-              <button type="button" className="screen-nav-back" onClick={back.onClick}>
-                <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden="true">
-                  <path
-                    d="M10 2L2 10l8 8"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <span>{back.label}</span>
-              </button>
-            ) : (
-              <span className="screen-sticky-side" aria-hidden="true" />
-            )}
+            <div className="screen-sticky-side screen-sticky-side-start">
+              {back ? (
+                <button type="button" className="screen-nav-back" onClick={back.onClick}>
+                  <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden="true">
+                    <path
+                      d="M10 2L2 10l8 8"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span>{back.label}</span>
+                </button>
+              ) : null}
+            </div>
 
             <h1 className="screen-sticky-title screen-sticky-title-compact">{title}</h1>
 
-            <div className="screen-sticky-side screen-sticky-trailing">
-              {trailing}
-            </div>
-          </div>
-
-          <div className="screen-sticky-large">
-            {showLargeBack && (
-              <button type="button" className="screen-nav-back screen-nav-back-large" onClick={back.onClick}>
-                <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden="true">
-                  <path
-                    d="M10 2L2 10l8 8"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <span>{back.label}</span>
-              </button>
-            )}
-            <div className="screen-sticky-large-head">
-              <h1 className="screen-sticky-title screen-sticky-title-large">{title}</h1>
-              {trailing && (
-                <div className="screen-sticky-trailing screen-sticky-trailing-large">{trailing}</div>
-              )}
-            </div>
-            {subtitle && <p className="screen-sticky-subtitle">{subtitle}</p>}
+            <div className="screen-sticky-side screen-sticky-trailing">{trailing}</div>
           </div>
 
           {toolbar && <div className="screen-sticky-toolbar">{toolbar}</div>}
         </header>
+
+        <div className="screen-hero">
+          {back && (
+            <button type="button" className="screen-nav-back screen-nav-back-large" onClick={back.onClick}>
+              <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden="true">
+                <path
+                  d="M10 2L2 10l8 8"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span>{back.label}</span>
+            </button>
+          )}
+          <div className="screen-hero-head">
+            <h1 className="screen-sticky-title screen-sticky-title-large">{title}</h1>
+            {trailing && <div className="screen-sticky-trailing screen-sticky-trailing-large">{trailing}</div>}
+          </div>
+          {subtitle && <p className="screen-hero-subtitle">{subtitle}</p>}
+        </div>
 
         <div className="screen-body">{children}</div>
       </div>

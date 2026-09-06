@@ -15,7 +15,7 @@
   }
 }
 
-.screen-sticky-chrome {
+.screen-enter .screen-hero {
   animation: fadeSlideDown 0.38s var(--spring) both;
 }
 
@@ -195,7 +195,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .screen-enter,
-  .screen-sticky-chrome,
+  .screen-enter .screen-hero,
   .screen-sticky-toolbar,
   .screen-body > .item-list,
   .screen-body > .total-bar,

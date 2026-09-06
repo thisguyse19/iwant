@@ -1,4 +1,10 @@
-/* iOS large-title navigation: sticky chrome collapses on scroll (UINavigationBar pattern) */
+/* iOS large-title navigation — hero scrolls away; compact bar fades in (compositor-only) */
+
+@property --nav-reveal {
+  syntax: '<number>';
+  initial-value: 0;
+  inherits: true;
+}
 
 .screen-layout {
   display: flex;
@@ -16,26 +22,39 @@
   -webkit-overflow-scrolling: touch;
   padding: 0 16px calc(20px + var(--safe-bottom));
   scroll-padding-bottom: calc(var(--tab-bar-clearance) + var(--safe-bottom));
+  scroll-timeline: --nav-scroll block;
 }
 
 .screen-sticky-chrome {
-  --nav-collapse: 0;
+  --nav-reveal: 0;
   position: sticky;
   top: 0;
   z-index: 25;
-  margin: 0 -16px 12px;
+  margin: 0 -16px;
   padding: 0 16px;
   padding-top: var(--safe-top);
+  pointer-events: none;
+  animation: nav-reveal linear both;
+  animation-timeline: --nav-scroll;
+  animation-range: 0px 72px;
+}
+
+.screen-sticky-chrome[data-revealed] {
+  pointer-events: auto;
+}
+
+.screen-sticky-chrome[data-revealed] .screen-sticky-row-compact {
+  pointer-events: auto;
 }
 
 .screen-sticky-blur {
   position: absolute;
   inset: 0;
-  opacity: var(--nav-collapse);
+  opacity: var(--nav-reveal);
   background: var(--nav-chrome-bg);
   backdrop-filter: blur(40px) saturate(180%);
   -webkit-backdrop-filter: blur(40px) saturate(180%);
-  border-bottom: 0.5px solid var(--border-subtle);
+  border-bottom: 0.5px solid color-mix(in srgb, var(--border-subtle) calc(var(--nav-reveal) * 100%), transparent);
   pointer-events: none;
 }
 
@@ -45,7 +64,7 @@
   right: 10%;
   bottom: 0;
   height: 0.5px;
-  opacity: calc(var(--nav-collapse) * 0.7);
+  opacity: calc(var(--nav-reveal) * 0.65);
   background: linear-gradient(
     90deg,
     transparent,
@@ -59,16 +78,13 @@
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: minmax(80px, 1fr) auto minmax(80px, 1fr);
+  grid-template-columns: minmax(72px, 1fr) auto minmax(72px, 1fr);
   align-items: center;
   gap: 8px;
   height: 44px;
-  opacity: var(--nav-collapse);
+  opacity: var(--nav-reveal);
+  transform: translate3d(0, calc((1 - var(--nav-reveal)) * 4px), 0);
   pointer-events: none;
-}
-
-.screen-sticky-chrome[data-collapsed] .screen-sticky-row-compact {
-  pointer-events: auto;
 }
 
 .screen-sticky-side {
@@ -77,7 +93,7 @@
   align-items: center;
 }
 
-.screen-sticky-side:first-child {
+.screen-sticky-side-start {
   justify-content: flex-start;
 }
 
@@ -97,21 +113,14 @@
   text-overflow: ellipsis;
 }
 
-.screen-sticky-large {
+.screen-hero {
   position: relative;
   z-index: 1;
-  padding-top: 4px;
-  opacity: calc(1 - var(--nav-collapse));
-  max-height: calc(96px * (1 - var(--nav-collapse) * 0.95) + 0.01px);
-  overflow: hidden;
-  pointer-events: auto;
+  margin: calc(-1 * (var(--safe-top) + 44px)) -16px 12px;
+  padding: 4px 16px 0;
 }
 
-.screen-sticky-chrome[data-collapsed] .screen-sticky-large {
-  pointer-events: none;
-}
-
-.screen-sticky-large-head {
+.screen-hero-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -126,7 +135,7 @@
   line-height: 1.08;
 }
 
-.screen-sticky-subtitle {
+.screen-hero-subtitle {
   font-size: 14px;
   color: var(--text-secondary);
   margin-top: 4px;
@@ -148,16 +157,15 @@
   padding: 4px 0;
   max-width: 100%;
   white-space: nowrap;
-  transition: opacity 0.2s var(--spring);
+}
+
+.screen-nav-back-large {
+  margin-bottom: 2px;
 }
 
 .screen-nav-back span {
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.screen-nav-back-large {
-  margin-bottom: 2px;
 }
 
 .screen-nav-back:active {
@@ -166,13 +174,29 @@
 
 .screen-sticky-toolbar {
   position: relative;
-  z-index: 1;
-  padding-top: 10px;
+  z-index: 2;
+  padding-top: 2px;
   padding-bottom: 8px;
+  pointer-events: auto;
 }
 
 .screen-body {
   min-height: 0;
+}
+
+@keyframes nav-reveal {
+  from {
+    --nav-reveal: 0;
+  }
+  to {
+    --nav-reveal: 1;
+  }
+}
+
+@supports not (animation-timeline: scroll()) {
+  .screen-sticky-chrome {
+    animation: none;
+  }
 }
 
 @supports not (backdrop-filter: blur(1px)) {
@@ -182,8 +206,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .screen-sticky-blur {
-    transition: none;
+  .screen-sticky-chrome {
+    animation: none;
+  }
+
+  .screen-sticky-row-compact {
+    transform: none;
   }
 }
 
