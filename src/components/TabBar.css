@@ -98,17 +98,25 @@
   pointer-events: none;
 }
 
+.tab-indicator-glass-surface {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  overflow: hidden;
+}
+
 .tab-indicator-glass {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: rgba(255, 255, 255, 0.34);
-  backdrop-filter: blur(16px) saturate(170%);
-  -webkit-backdrop-filter: blur(16px) saturate(170%);
-  border: 0.5px solid rgba(255, 255, 255, 0.42);
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.08),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.38);
+  pointer-events: none;
+  background: var(--liquid-glass-indicator);
+  backdrop-filter: var(--liquid-glass-blur-indicator);
+  -webkit-backdrop-filter: var(--liquid-glass-blur-indicator);
+  border: 0.5px solid var(--liquid-glass-indicator-border);
+  box-shadow: var(--liquid-glass-indicator-shadow);
+  isolation: isolate;
 }
 
 .tab-indicator-glass::before {
@@ -117,7 +125,43 @@
   inset: 0;
   border-radius: inherit;
   background: var(--liquid-glass-lens);
-  opacity: 0.4;
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.tab-indicator-glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    var(--liquid-glass-specular),
+    var(--liquid-glass-caustic);
+  opacity: 0.58;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+.app-shell.liquid-glass-active .tab-indicator-glass-surface {
+  z-index: 1;
+}
+
+.app-shell.liquid-glass-active .tab-indicator-glass {
+  z-index: 2;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.app-shell.liquid-glass-active .tab-indicator-glass::before {
+  opacity: 0.38;
+  background: var(--liquid-glass-lens);
+}
+
+.app-shell.liquid-glass-active .tab-indicator-glass::after {
+  opacity: 0.45;
 }
 
 .tab-liquid-item {
@@ -305,8 +349,13 @@
 
 @media (prefers-color-scheme: dark) {
   .tab-indicator-glass {
-    background: rgba(72, 72, 74, 0.44);
-    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(72, 72, 74, 0.28);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .app-shell.liquid-glass-active .tab-indicator-glass {
+    background: transparent;
+    border-color: transparent;
   }
 }
 

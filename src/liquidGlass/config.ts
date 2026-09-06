@@ -5,20 +5,20 @@ import type { GlassConfig } from '@ybouane/liquidglass'
  * Avoid high blurAmount / tintStrength (reads as frosted plastic).
  */
 export const TAB_PILL_GLASS: Partial<GlassConfig> = {
-  blurAmount: 0.14,
-  refraction: 0.74,
-  chromAberration: 0.07,
-  edgeHighlight: 0.16,
-  specular: 0.2,
-  fresnel: 0.92,
-  distortion: 0.018,
+  blurAmount: 0.1,
+  refraction: 0.84,
+  chromAberration: 0.1,
+  edgeHighlight: 0.24,
+  specular: 0.08,
+  fresnel: 0.96,
+  distortion: 0.024,
   cornerRadius: 31,
   zRadius: 30,
   opacity: 1,
-  saturation: 0.05,
+  saturation: 0.1,
   tintStrength: 0,
-  brightness: -0.03,
-  shadowOpacity: 0.26,
+  brightness: -0.1,
+  shadowOpacity: 0.28,
   shadowSpread: 14,
   shadowOffsetY: 3,
   floating: false,
@@ -26,13 +26,30 @@ export const TAB_PILL_GLASS: Partial<GlassConfig> = {
   bevelMode: 0,
 }
 
+export const TAB_INDICATOR_GLASS: Partial<GlassConfig> = {
+  ...TAB_PILL_GLASS,
+  button: true,
+  blurAmount: 0.08,
+  refraction: 0.88,
+  chromAberration: 0.12,
+  edgeHighlight: 0.28,
+  specular: 0.14,
+  fresnel: 0.98,
+  distortion: 0.028,
+  zRadius: 22,
+  brightness: -0.06,
+  shadowOpacity: 0.2,
+  shadowSpread: 6,
+  shadowOffsetY: 1,
+}
+
 export const TAB_ACTION_GLASS: Partial<GlassConfig> = {
   ...TAB_PILL_GLASS,
   cornerRadius: 31,
   zRadius: 28,
   button: true,
-  specular: 0.24,
-  refraction: 0.7,
+  specular: 0.1,
+  refraction: 0.8,
 }
 
 export const ADD_MENU_GLASS: Partial<GlassConfig> = {
